@@ -1,0 +1,96 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+
+
+
+<dom-module id="gm-mappu-layermanager">
+ <style>
+ 	#layerdiv {
+ 		position: absolute;
+ 		z-index: 10;
+ 		top: 10px;
+ 		left: 10px;
+		width: auto;
+		height: auto;
+	}
+	.layer {
+		background: white;
+	}
+	.collapse-content {
+		padding: 15px;
+		border: 1px solid #dedede;
+	  }
+	  .removeLayer {
+	  	  font-size: 6pt;
+	  	  color: red;
+	  }
+	
+ </style>
+ <template>
+ 	<div id='layerdiv'>
+ 	<h3>Layers</h3>
+ 	 <template is="dom-repeat" items="{{layers}}">
+ 	 	<paper-item class='layer' on-click='toggle' >
+ 	 		<paper-item-body>{{item.name}}</paper-item-body>
+        </paper-item>
+        <iron-collapse>
+        	<paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
+        	<div>
+        		<span class="removeLayer" on-click="removeLayer">verwijder laag</span>
+        	</div>
+        </iron-collapse>
+    </template>
+ 	</div>
+ </template>
+ 
+</dom-module>
+
+<script>
+var layers = null;
+var map = null; //For debug
+Polymer({
+    is: 'gm-mappu-layermanager',
+    properties: {
+    	map: {
+    		type: Object,
+    		observer: 'mapChanged'
+    	},
+    	layers: {
+    	  type: Array,
+          value: function() { return []; },
+          notify: true
+    	}
+    },
+    mapChanged: function(){
+    	var self = this;
+    	this.layers = this.map.layers;
+    	layers = this.layers;
+    },
+    ready: function(){
+    	
+    },
+    toggle: function(e) {
+       //TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
+       e.currentTarget.nextElementSibling.toggle();
+    },
+    removeLayer: function(e){
+    	var layer = e.model.item;
+    	var index = this.map.layers.indexOf(layer);
+    	if (index > -1) {
+    		//Pff, annoying. Because the dom-repeat wants it's own splicing method 
+    		//(otherwhise it doesn't refresh) we have to make a d-tour.
+    		this.splice('layers',index, 1);
+		}
+    	this.map.removeLayer(layer); 
+    },
+    setOpacity: function(e){
+    	var opacity = e.target.value;
+    	if (e.model.item){
+    		e.model.item.opacity = opacity;
+    		this.map.redraw();
+    	}
+    }
+});
+</script>

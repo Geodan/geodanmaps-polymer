@@ -1,0 +1,43 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-lod-connector">
+ <style>
+ </style>
+ <template>
+ <content>
+ </content>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-connector',
+    properties: {
+    	url: {
+    		type: 'string',
+    		observer: 'urlChanged'
+    	},
+    	output: {
+    		type: 'array',
+    		notify: true //needed for notifying outside element
+    	}
+    },
+    urlChanged: function(){
+    	var self = this;
+    	function callback(e,data){
+    		if (e){
+    			console.warn(e);
+    		}
+    		self.output = data["@graph"][0]['http://www.w3.org/ns/dcat#dataset'];
+    		console.log(self.output);
+    	}
+    	d3.json(this.url)
+    		.header('Accept','application/ld+json')
+    		.get(callback);
+    },
+    ready: function(){
+    	
+    }
+});
+</script>

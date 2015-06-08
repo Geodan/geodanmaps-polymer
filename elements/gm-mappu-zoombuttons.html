@@ -1,0 +1,38 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<dom-module id="gm-mappu-zoombuttons">
+ <style>
+ #zoombuttons {
+ 	 position: absolute;
+ 	 right: 10px;
+ 	 top: 10px;
+ }
+ </style>
+ <template>
+ 	<div id="zoombuttons">
+ 		 <paper-fab mini id="zoomIn" icon="add" on-click="zoomIn"></paper-fab>
+ 		 <paper-fab mini id="zoomOut" icon="remove" on-click="zoomOut"></paper-fab>
+ 	</div>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-mappu-zoombuttons',
+    properties: {
+    	map: Object,
+    },
+    ready: function(){
+
+    },
+    zoomIn: function(){
+    	this.map.zoom++;
+    },
+    zoomOut: function(){
+    	this.map.zoom--;
+    }
+    
+});
+</script>

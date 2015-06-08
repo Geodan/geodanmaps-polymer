@@ -1,0 +1,86 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="../bower_components/d3-plugins/jsonp/jsonp.js"></script>
+<dom-module id="gm-lod-datacatalog">
+ <style>
+ </style>
+ <template>
+ <content>
+ </content>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-datacatalog',
+    properties: {
+    	datasets: {
+    		type: 'array'
+    	},
+    	input: {
+    		type: 'array',
+    		observer: 'inputChanged'
+    	}
+    },
+    _processKeyVals: function(data){
+    	//Manage keyval registry
+   		function getLabel(d){
+   			return new Promise(function(resolve, reject) {
+   			  d3.json(d)
+   			  	.header('Accept','application/ld+json')
+   			  	.get(function(e,d){
+				  if (e) {
+					reject(Error("It broke"));
+				  }
+				  else {
+					resolve(d);
+				  }
+			    });
+			});
+   		}
+		data.forEach(function(collection){
+			for (var key in collection){
+				console.log(key);
+				getLabel(key).then(function(d){
+					console.log(d);
+				}, function(err){
+					console.warn(err);
+				});
+			}
+		});
+    },
+    
+    inputChanged: function(){
+    	var self = this;
+    	var datasets = this.input;
+    	var keyvals = [];
+    	datasets.forEach(function(d){
+    		function callback2(e,data){
+    			if (e){
+					console.warn(e);
+					return -1;
+				}
+				self._processKeyVals(data);
+    			data = data.filter(function(d){
+						//must have title
+						return d["http://purl.org/dc/terms/title"];
+				});
+				console.log(data[0]["http://purl.org/dc/terms/title"][0]["@value"]);
+    		}
+    		function callback(e,data){
+    			if (e){
+					console.warn(e);
+					return -1;
+				}
+				jsonld.flatten(data, null, callback2);
+    		};
+			d3.json(d)
+				.header('Accept','application/ld+json')
+				.get(callback);
+		});
+    },
+    ready: function(){
+    	
+    }
+});
+</script>

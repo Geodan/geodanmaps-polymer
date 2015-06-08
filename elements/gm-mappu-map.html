@@ -1,0 +1,51 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<!-- debug version!! -->
+<script src="../../d3.mappu/bower_components/d3-plugins/geo/tile/tile.js"></script>
+<script src="../../d3.mappu/dist/d3.mappu.js"></script>
+<dom-module id="gm-mappu-map">
+ <style>
+ 	#mapdiv {
+		width: 100%;
+		height: 100%;
+	}
+ </style>
+ <template>
+ 	<div id="mapdiv"></div>
+ </template>
+ 
+</dom-module>
+
+<script>
+var map = null; //For debug
+Polymer({
+    is: 'gm-mappu-map',
+    properties: {
+    	map: Object,
+    	center: {
+    		type: Array,
+    		value: [5,52]
+    	}
+    },
+    ready: function(){
+    	 this.map = new d3.mappu.Map(this.$.mapdiv,{
+            center: this.center
+         });
+         var testlayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
+            ogc_type: 'tms',
+            url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 var sketchlayer = new d3.mappu.VectorLayer('Sketch', {
+		 }).addTo(this.map);
+		 
+		 var self = this;
+		 window.setTimeout(function(){ //TT: WHY!?
+				 self.map.resize();
+		 },1000);
+		 map = this.map; //for debug
+    }
+    
+    
+});
+</script>

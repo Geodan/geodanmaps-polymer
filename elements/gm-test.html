@@ -1,0 +1,31 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-test">
+ 
+ <template>
+  	 <template is="dom-repeat" items="{{data}}">
+ 	 	<div>{{item.name}}</div>
+    </template>
+ </template>
+ 
+</dom-module>
+
+<script>
+
+var tmp;
+Polymer({
+    is: 'gm-test',
+    properties: {
+    	data: {
+    		type: Array,
+    		value: [{name: 'test'}]
+    	}
+    },
+    ready: function(){
+    	var self = this;
+    	this.data.push({name: 'jan'});
+    	
+    	tmp = this.data;
+    }
+});
+</script>

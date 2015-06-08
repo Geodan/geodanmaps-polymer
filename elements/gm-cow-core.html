@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="../bower_components/underscore/underscore.js"></script>
+<script src="../bower_components/cow/dist/cow.min.js"></script>
+
+<dom-module id="gm-cow-core">
+ <style>
+ </style>
+ <template>
+ <content>
+ </content>
+ </template>
+ 
+</dom-module>
+
+<script>
+var cow; //for debug
+Polymer({
+    is: 'gm-cow-core',
+    properties: {
+    	url: String,
+    	port: Number,
+    	protocol: String,
+    	key: String,
+    	core: Object,
+    	connection: Object
+    },
+    ready: function(){
+    	var core = new Cow.core({'herdname': this.key});
+    	core.socketservers({
+    		_id: 'default', 
+    		data: {
+    			protocol:this.protocol,
+    			ip:this.url, 
+    			port:this.port
+    		}
+		});
+		core.socketserver('default');
+    	this.core = core;
+    	window.core = core;
+    },
+    connect: function(){
+		return core.connect().then(function(d){
+				//todo, add event;
+				this.connection = d;
+		}, function(e){
+			console.log('Connecting error', e);
+		});
+    }
+});
+</script>
