@@ -1,0 +1,122 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<script src="../bower_components/terraformer/terraformer.min.js"></script>
+<script src="../bower_components/terraformer-wkt-parser/terraformer-wkt-parser.js"></script>
+<dom-module id="gm-mappu-geosearch">
+ <style>
+ 	iron-selector > * {
+        padding: 8px;
+      }
+
+      .iron-selected {
+        background-color: #ddd;
+      }
+ </style>
+ <template>
+ 	<paper-input label="Find location" size=40 id="geosuggest" on-keydown="suggest"></paper-input>
+ 	<iron-selector id="suggestlist">
+	  <template is="dom-repeat" items="{{suggestions}}">
+		<div value="{{item.id}}" name="{{item.displayname}}" on-click="lookmeup">{{item.displayname}}</div>
+	  </template>
+	</iron-selector>
+ <iron-ajax
+    id='suggest' 
+    auto
+    url="/service/geosearch/suggest"
+    params='{"q":""}'
+    handleAs="json"
+    debounce-duration="300"
+    on-response="handleSuggestResponse"></iron-ajax>
+   </div>
+   <iron-ajax
+    id='lookup' 
+    auto
+    url="/service/geosearch/lookup"
+    params='{"q":""}'
+    handleAs="json"
+    on-response="handleLookupResponse"></iron-ajax>
+   </div>	
+ 	
+ </template>
+ 
+ 
+ 
+ 
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-mappu-geosearch',
+    properties: {
+    	map: Object,
+    	suggestions: {
+    		type: Array,
+    		value: []
+    	},
+    	iselected: {
+    		type: Number,
+    		value: 0
+    	}
+    },
+    ready: function(){
+
+    },
+    suggest: function(e){
+     	 if (e.keyCode == 13 && this.$.suggestlist.selectedItems[0]){ //enter
+			 this.$.geosuggest.value =  this.$.suggestlist.selectedItems[0].name;
+			 var id = this.$.suggestlist.selectedItems[0].value;
+			 this.$.lookup.params = {"q":id};
+			 this.suggestions = [];
+			 this.iselected = -1;
+     	 }
+     	 else if (e.keyCode == 40){ //down arrow
+     	 	 this.iselected++;
+     	 	 this.$.suggestlist.select(this.iselected);
+     	 }
+     	 else if (e.keyCode == 38){ //up arrow
+     	 	 this.iselected--;
+     	 	 this.$.suggestlist.select(this.iselected);
+     	 }
+     	 else {
+     	 	 var value = this.$.geosuggest.value;
+     	 	 this.$.suggest.params = {"q":value};
+		 }
+     },
+     handleSuggestResponse: function(e){
+     	 this.suggestions = e.detail.response.response.docs;
+     	 this.iselected = 0;
+     },
+     lookup: function(a,b,c){
+     	 var id = c.getAttribute('value');
+     	 var name = c.getAttribute('name');
+     	 this.$.geosuggest.value = name;
+     	 this.$.lookup.params = '{"q":"'+id+'"}';
+     	 this.suggestions = [];
+     },
+     handleLookupResponse: function(e){
+     	 if (e.detail.response.response.docs[0]){
+			 var msg = e.detail.response.response.docs[0] ? e.detail.response.response.docs[0] : "";
+			 //msg.centroid = new turf.point(msg.centroid[0].replace('POINT(', '').replace(')','').split(' '));
+			 msg.centroid = {id: 1,type: 'Feature', geometry: Terraformer.WKT.parse(msg.centroid[0]).toJSON()};
+			 msg.geom = {
+			 	id: 1,
+			 	type: 'Feature', 
+			 	geometry: Terraformer.WKT.parse(msg.geom).toJSON(), 
+			 	style: {stroke: 'red', "stroke-width": '1px', fill: 'none'}, 
+			 	properties: {name: msg.displayname}
+			 }; 
+			 this.map.center = msg.centroid.geometry.coordinates;
+		 }
+     },
+     lookmeup: function(e){
+     	 this.$.geosuggest.value =  e.model.item.displayname;
+		 var id = e.model.item.id;
+		 this.$.lookup.params = {"q":id};
+		 this.suggestions = [];
+		 this.iselected = -1;
+     }
+    
+});
+</script>

@@ -1,0 +1,32 @@
+{
+  "name": "geodanmaps-polymer",
+  "version": "0.0.1",
+  "homepage": "https://github.com/geodan/geodanmaps-polymer",
+  "description": "Polymer implementation for GeodanMaps",
+  "keywords": [
+    "polymer",
+    "geodanmaps"
+  ],
+  "authors": [
+    "Tom van Tilburg",
+    "Steven Ottens"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.0",
+    "iron-elements": "PolymerElements/iron-elements#^1.0.0",
+    "cow": "~2.0.3",
+    "d3-plugins": "*",
+    "underscore": "~1.8.3",
+    "terraformer": "https://github.com/Esri/Terraformer.git#~1.0.4",
+    "terraformer-wkt-parser": "~1.0.0"
+  }
+}
