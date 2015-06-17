@@ -1,0 +1,94 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="./gm-ogcparser.html">
+
+<dom-module id="gm-mappu-catalog">
+ <style>
+	.layer {
+		background: white;
+	}
+	.collapse-content {
+		padding: 15px;
+		border: 1px solid #dedede;
+	  }
+ </style>
+ <template>
+ 	<gm-ogcparser id="ogcparser" title="{{title}}" layers="{{catlayers}}"></gm-ogcparser>
+ 	<h3>{{title}}</h3>
+ 	 <template is="dom-repeat" items="{{catlayers}}">
+ 	 	<paper-item class='layer' on-click='toggle' >
+ 	 		<paper-icon-button icon="menu" on-click="addLayer"></paper-icon-button>
+ 	 		<paper-item-body>{{item.name}}</paper-item-body>
+        </paper-item>
+        <iron-collapse>
+        	<span>{{item.title}}</span><br>
+        	<span>{{item._abstract}}</span>
+        </iron-collapse>
+    </template>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-mappu-catalog',
+    properties: {
+    	map: {
+    		type: Object
+    	},
+    	catlayers: {
+    	  type: Array,
+          value: function() { return []; },
+          notify: true
+    	},
+    	title: String
+    },
+    ready: function(){
+    	
+    },
+    toggle: function(e) {
+       e.currentTarget.nextElementSibling.toggle();
+    },
+    addLayer: function(e){
+    	var layer = e.model.item;
+    	
+  	  	var l;
+		switch (layer.mappu_config.source.type){
+			case 'OGC_WMS':
+			l = new d3.mappu.RasterLayer(layer.mappu_config.source.featureName, {
+					ogc_type: 'wms',
+					url: layer.mappu_config.source.url,
+					layers: layer.mappu_config.source.featureName,
+					visible: layer.mappu_config.options.visible,
+					config: layer.mappu_config,
+					minZoom: 24
+			});
+			break;
+			case 'OGC_WMTS': //TODO: work in progress
+			l = new d3.mappu.RasterLayer(layer.source.featureName, {
+					ogc_type: 'wmts',
+					url: layer.source.url,
+					layers: layer.source.featureName,
+					visible: layer.options.visible,
+					config: layer,
+					minZoom: 24
+			}); 	 
+			break;
+			case 'OGC_TMS': //NOT TESTED YET
+			l = new d3.mappu.RasterLayer(layer.source.featureName, {
+					ogc_type: 'tms',
+					url: layer.source.url + "/{z}/{x}/{y}.png",
+					visible: layer.options.visible,
+					config: layer,
+					minZoom: 24
+			});
+			break;
+		}
+		l.addTo(map);
+    }
+
+
+});
+</script>

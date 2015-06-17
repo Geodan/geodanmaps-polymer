@@ -1,12 +1,17 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
 <link rel="import" href="../../elements/gm-mappu-map.html">
 <link rel="import" href="../../elements/gm-mappu-layermanager.html">
 <link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
 <link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-ogcparser.html">
 
 <dom-module id="demo-mappu">
 <style>
-#map {
+	#map {
 		width: 100%;
 		height: 100%;
 	}
@@ -16,13 +21,49 @@
 		right: 10;
 		width: auto;
 	}
+	#catalog_button {
+		position: absolute;
+		top: 10;
+		left: 100;
+		height: auto;
+		width: auto;
+		z-index: 10;
+	}
+
+    #dialog {
+    	position: absolute;
+    	left:100px;
+    	top: 0px;
+    	width: 300px;
+    	height: auto;
+    }
+    #layermanager {
+    	position: absolute;
+    	left: 10px;
+    	top: 70px;
+    	min-width: 200px;
+    }
+	
+	
 </style>
 <template>
+		
 		<gm-mappu-map id="mapelement"></gm-mappu-map>
 		<gm-mappu-geosearch id="geosearch" map="{{map}}"></gm-mappu-geosearch>
 		<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
 		<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
-	
+		<paper-button id="catalog_button" on-click="toggleCatalog">plain dialog</paper-button>
+		<paper-dialog id='dialog'>
+			Layer catalog
+			<paper-dialog-scrollable>
+				<gm-mappu-catalog id="catalog" layers="{{catlayers}}" map="{{map}}"></gm-mappu-catalog>
+			</paper-dialog-scrollable>
+			<div class="buttons">
+				<paper-button>OK</paper-button>
+			</div>
+		</paper-dialog>
+		
+		
 	</template>
 </dom-module>
 
@@ -34,6 +75,9 @@ Polymer({
     },
     ready: function(){
     	this.map = this.$.mapelement.map;
+    },
+    toggleCatalog: function(){
+    	this.$.dialog.toggle();
     }
 });
 </script>

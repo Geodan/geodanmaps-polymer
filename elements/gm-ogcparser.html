@@ -1,0 +1,90 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<script src="../bower_components/w3c-schemas/scripts/lib/XLink_1_0.js"></script>
+<script src="../bower_components/ogc-schemas/scripts/lib/WMS_1_3_0.js"></script>
+<script src="../bower_components/jsonix/dist/Jsonix-min.js"></script>
+
+<dom-module id="gm-ogcparser">
+ <style>
+ </style>
+ <template>
+ 	<iron-ajax
+ 		auto
+ 		verbose
+ 		handle-as="xml"
+    	on-error="error"
+    	id="getCapabilities"
+		url="{{url}}"
+		params='{"service":"WMS","request":"GetCapabilities","version":"1.3.0"}'
+		on-response="handleResponse"
+	></iron-ajax>
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-ogcparser',
+    properties: {
+    	url: {
+    		type: String,
+    		value: '/service/osgis_geoserver/wms',
+    	},
+    	layers: {
+    		type: Array,
+    		value: function() { return []; },
+    		notify: true
+    	},
+    	title: {
+    		type: String,
+    		value: 'Layers',
+    		notify: true
+    	}
+    },
+    ready: function(){
+    	this.catalogus = [];
+		var context = new Jsonix.Context([XLink_1_0, WMS_1_3_0],
+			{
+				namespacePrefixes : {
+					"http://www.opengis.net/wms" : "",
+					"http://www.w3.org/1999/xlink" : "xlink"
+				},
+				mappingStyle : "simplified"
+			});
+		this.unmarshaller = context.createUnmarshaller();
+    },
+    //The response from the document service will be parsed here.
+	handleResponse: function(d,e){
+  	  var result = this.unmarshaller.unmarshalDocument(d.detail.response);
+ 	  var layers = result.WMS_Capabilities.capability.layer.layer;
+ 	  var self = this;
+ 	  layers.forEach(function(l){
+	 	try {
+	 		 var legendUrl = l.style[0] ? l.style[0].legendURL[0] ? l.style[0].legendURL[0].onlineResource.href: null: null;
+	 	}
+	 	catch(err){
+	 		var legendUrl = null;
+	 		console.warn(err.message);
+	 	}
+		l.mappu_config = {
+			groupName: "WMS",
+			info: {fields: {}},
+			isBaseLayer: false,
+			legendUrl: legendUrl,
+			options: {opacity: 1},
+			source: {
+				contenttype: "image/png",
+				featureName: l.name,
+				type: "OGC_WMS",
+				url: self.url
+			},
+			title: l.name
+		 };
+	  });
+	  this.layers = layers;
+  	  this.title = result.WMS_Capabilities.capability.layer.title;
+	},
+    error: function(){
+    	console.warn(e.detail.xhr.statustext);
+    }
+});
+</script>
