@@ -30,15 +30,6 @@ Polymer({
     	 this.map = new d3.mappu.Map(this.$.mapdiv,{
             center: this.center
          });
-         var testlayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
-            ogc_type: 'tms',
-            url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
-            visible: true
-		 })
-		 .addTo(this.map);
-		 var sketchlayer = new d3.mappu.VectorLayer('Sketch', {
-		 }).addTo(this.map);
-		 
 		 var self = this;
 		 window.setTimeout(function(){ //TT: WHY!?
 				 self.map.resize();

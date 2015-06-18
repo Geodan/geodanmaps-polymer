@@ -3,10 +3,11 @@
 <dom-module id="gm-test">
  
  <template>
-  	 <template is="dom-repeat" items="{{data}}">
+  	 <template id='list' is="dom-repeat" items="{{data}}">
  	 	<div>{{item.name}}</div>
     </template>
  </template>
+ 
  
 </dom-module>
 
@@ -16,16 +17,24 @@ var tmp;
 Polymer({
     is: 'gm-test',
     properties: {
-    	data: {
-    		type: Array,
-    		value: [{name: 'test'}]
-    	}
     },
     ready: function(){
-    	var self = this;
-    	this.data.push({name: 'jan'});
-    	
+    	this.data = [{
+    			name: 'jan'
+    		},{
+    			name: 'piet'
+    	}];
     	tmp = this.data;
+    	var self = this;
+    	window.setTimeout(function(){
+    		self.data = [{name:'joris'}];
+    	},1000);
     }
 });
 </script>
+
+<html>
+<body>
+<gm-test></gm-test>
+</body>
+</html>

@@ -22,7 +22,7 @@
 		margin-right: 1px;
 		cursor: move;
 	}
-	paper-item {
+	paper-icon-item {
 		cursor: pointer;
 		min-height: 20px;
 	}
@@ -67,25 +67,15 @@ Polymer({
     	map: {
     		type: Object,
     		observer: 'mapChanged'
-    	},
-    	layers: {
-    	  type: Array,
-          value: function() { return []; },
-          notify: true,
-          //observer: 'layersChanged'
-    	},
-    	reverselayers: {
-    		type: Array,
-    		value: function() { return []; }
     	}
     },
     mapChanged: function(){
-    	this.reverselayers = this.map.layers.reverse();
+    	this.reverselayers = this.map.layers.slice(0).reverse();
     	var self = this;
     	Object.observe(this.map.layers, function(){
+    		self.reverselayers = self.map.layers.slice(0).reverse();
     		self.$.layerlist.render(); //somehow it's not autorefreshing
     	});
-    	layers = this.layers; //debug
     },
     ready: function(){
     	
@@ -100,7 +90,7 @@ Polymer({
     	if (index > -1) {
     		//Pff, annoying. Because the dom-repeat wants it's own splicing method 
     		//(otherwhise it doesn't refresh) we have to make a d-tour.
-    		this.splice('reverselayers',this.layers.length - index, 1);
+    		this.splice('reverselayers',this.map.layers.length - index, 1);
 		}
     	this.map.removeLayer(layer); 
     },
