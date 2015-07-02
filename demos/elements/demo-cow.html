@@ -1,9 +1,17 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-status.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
 
 <dom-module id="demo-cow">
 <template>
-	<gm-cow-core id="core"></gm-cow-core>
+		<gm-cow-core id="cow_core" config="{{cowconfig}}" core="{{cowcore}}"></gm-cow-core>
+		<div id='cowpanel'>
+			<h3>COW</h3>
+			<gm-cow-status id="cow_status" core="{{cowcore}}"></gm-cow-status>
+			<gm-cow-userlist id="cow_userlist" core="{{cowcore}}"></gm-cow-userlist>
+		</div>
+
 </template>
 </dom-module>
 
@@ -13,7 +21,15 @@ Polymer({
     properties: {
     },
     ready: function(){
-    	
+    	//COW
+    	this.cowconfig = {
+    		url: 'websocket.geodan.nl/eagle',
+    		port: 443,
+    		protocol: 'wss',
+    		dir: 'eagle',
+    		key: 'eagle'
+    	};
+
     }
 });
 </script>

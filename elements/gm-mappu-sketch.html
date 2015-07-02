@@ -22,11 +22,13 @@
 		box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
 		margin-left: 1px;
 		margin-right: 1px;
-		cursor: move;
 	}
 	paper-icon-item {
 		cursor: pointer;
 		min-height: 20px;
+	}
+	svg {
+		cursor: pointer;
 	}
  	.collapse-content {
  		max-width: 200px;
@@ -92,10 +94,18 @@ Polymer({
 	properties: {
 		layer: {
 			observer: '_layerChanged'
+		},
+		styleset: {
+			observer: '_stylesetChanged'
 		}
 	},
 	ready: function(){
 		
+	},
+	_stylesetChanged: function(){
+		this.iconset = this.styleset.iconset;
+		this.lineset = this.styleset.lineset;
+		this.polygonset = this.styleset.polygonset;
 	},
 	_layerChanged: function(){
 		var self = this;

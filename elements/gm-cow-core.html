@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <script src="../bower_components/underscore/underscore.js"></script>
-<script src="../bower_components/cow/dist/cow.min.js"></script>
+<script src="/sites/cow/dist/cow.min.js"></script>
 
 <dom-module id="gm-cow-core">
  <style>
@@ -17,26 +17,33 @@ var cow; //for debug
 Polymer({
     is: 'gm-cow-core',
     properties: {
-    	url: String,
-    	port: Number,
-    	protocol: String,
-    	key: String,
-    	core: Object,
+    	config: {
+    		type: Object,
+    		observer: '_configChanged'
+    	},
+    	core: {
+    		type: Object,
+    		notify: true
+    	},
     	connection: Object
     },
-    ready: function(){
-    	var core = new Cow.core({'herdname': this.key});
+    _configChanged: function(){
+    	var core = new Cow.core({'herdname': this.config.key});
+    	this.core = core;
+    	window.core = core;
     	core.socketservers({
     		_id: 'default', 
     		data: {
-    			protocol:this.protocol,
-    			ip:this.url, 
-    			port:this.port
+    			protocol:this.config.protocol,
+    			ip:this.config.url, 
+    			port:this.config.port,
+    			dir: this.config.dir
     		}
 		});
 		core.socketserver('default');
-    	this.core = core;
-    	window.core = core;
+    },
+    ready: function(){
+    	
     },
     connect: function(){
 		return core.connect().then(function(d){

@@ -1,0 +1,99 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-lod-connector.html">
+<link rel="import" href="../../elements/gm-lod-meterlist.html">
+<link rel="import" href="../../elements/gm-lod-baglist.html">
+<link rel="import" href="../../elements/gm-lod-emparelist.html">
+<link rel="import" href="../../elements/gm-lod-datacatalog.html">
+
+<dom-module id="demo-lod">
+<style>
+html, body {
+        margin: 0;
+        height: 100%;
+}
+leaflet-map {
+	width: 100%;
+	height: 100%;
+}
+
+.strokes {
+      @apply(--layout-horizontal);
+      @apply(--layout-top);
+}
+#mapelement {
+		width: 100%;
+		height: 100%;
+}
+</style>
+<template>
+	<gm-lod-connector id="connector" url="[[url]]" output="{{datasets}}"></gm-lod-connector>
+	<div class='strokes'> 
+		<gm-lod-meterlist id="meterlist" records="{{meterdata}}"></gm-lod-meterlist>
+		<gm-mappu-map id="mapelement" center="[4.742518,52.889661]"></gm-mappu-map>
+	</div>
+	<!--<gm-lod-emparelist id="emparelist"></gm-lod-emparelist>
+	
+	<!--<gm-lod-datacatalog id="catalog" input="{{datasets}}"></gm-lod-datacatalog>-->
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-lod',
+    properties: {
+    	datasets: {
+    		value: [],
+    		type: 'array'
+    	},
+    	url: 'String',
+    	meterdata: {
+    		observer: 'meterdataChanged'
+    	}
+    },
+    meterdataChanged: function(){
+    	//WAAROM WERKT DIT NIET?!
+    	console.log('!!', document.querySelector('#meterlist').records.length);
+    },
+    hasAddress: function(item){
+    	return item['locn:#postCode'] != null;
+    },
+    ready: function(){
+		 var self = this;
+		 //MAP
+    	this.map = this.$.mapelement.map;
+    	var baselayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
+            ogc_type: 'tms',
+            url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 this.meterlayer = new d3.mappu.VectorLayer('Meters',{
+    		reproject: true,
+			style: {
+				stroke: 'blue',
+				fill: 'blue'
+			}
+    	}).addTo(this.map);
+		 Object.observe(this.meterdata, function(data){
+		 		var records = document.querySelector('#meterlist').records;
+		 		var features = [];
+		 		records.forEach(function(d,i){
+		 			if (d.lat){
+						features.push({
+							type: 'Feature',
+							id: i,
+							geometry: {
+								type: 'Point',
+								coordinates: [d.lat, d.lon]
+							}
+						});
+		 			}
+		 		});
+		 		self.meterlayer.data = features;
+		 		self.meterlayer.refresh();
+		 });
+    }
+});
+</script>

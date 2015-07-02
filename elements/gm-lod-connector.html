@@ -1,5 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
+<!--
+Connects to a LOD dataset and 
+
+-->
+
 <dom-module id="gm-lod-connector">
  <style>
  </style>
@@ -29,8 +34,9 @@ Polymer({
     		if (e){
     			console.warn(e);
     		}
-    		self.output = data["@graph"][0]['http://www.w3.org/ns/dcat#dataset'];
-    		console.log(self.output);
+    		var graph = data["@graph"][0]; //only take the first graph for now
+   			self.output = graph["http://www.w3.org/ns/dcat#dataset"];
+    		//console.log(self.output);
     	}
     	d3.json(this.url)
     		.header('Accept','application/ld+json')

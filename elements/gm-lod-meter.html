@@ -1,0 +1,67 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-lod-meter">
+<style>
+.locn {
+	color: steelBlue;
+}
+.bag {
+	color: darkBlue;
+}
+
+</style>
+<template>
+	<gm-lod-sparql id="sparql" url="{{bagurl}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	<p>
+		<span>{{data.meter}}</span><br>
+		<span>{{data.@id}}</span><br>
+		<span class='locn'>{{data.locn:#thoroughfare.@value}}</span> <span class='bag'>{{data.bag:huisnummer}}</span> <span class='bag'>{{data.bag:huisletter.@value}}</span><br>
+		<span class='locn'>{{data.locn:#postCode.@value}}</span> <span class='locn'>{{data.locn:#postName.@value}}</span><br>
+		<span class='bag'>{{data.lon}}</span>
+	</p>
+</template>
+
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-meter',
+    properties: {
+    	bagurl: {
+    		type: String,
+    		value: 'http://lod.geodan.nl/sparql?query='
+    	},
+    	query: {
+    		type: String
+    	},
+    	data: {
+    		type: Object,
+    		value: {},
+    		observer: 'dataChanged',
+    		notify: true
+    	},
+    	jsonld: {
+    		type: Object,
+    		observer: 'jsonldChanged'
+    	}
+    },
+    ready: function(){
+    	
+    },
+    dataChanged: function(){
+    	if (this.data && this.data['locn:#postCode']) {
+			var item = {
+				postcode: this.data['locn:#postCode']['@value'],
+				nummer: this.data['bag:huisnummer']
+			};
+			this.query = queries.findBag(item);
+		}
+    },
+    jsonldChanged: function(){
+    	var point = this.jsonld['@graph'][0]['http://lod.geodan.nl/vocab/bag#geometrie'][0]['@value'];
+    	var loc = point.replace('POINT(','').replace(')','').split(' ');
+    	this.set('data.lat', loc[1]);
+    	this.set('data.lon', loc[0]);
+    }
+});
+</script>

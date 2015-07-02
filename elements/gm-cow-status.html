@@ -1,0 +1,44 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-cow-status">
+ <style>
+ </style>
+ <template>
+ Connected:
+ <div>{{connectionstatus}}</div>
+ Current user:
+ <div>{{username}}</div>
+ Current project:
+ <div>{{projectname}}</div>
+ Peers:
+ <div>{{numpeers}}</div>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+	is: 'gm-cow-status',
+	properties: {
+		core: {
+			type: Object,
+			observer: '_coreChanged'
+		}
+	},
+	_coreChanged: function(){
+		var core = this.core;
+		var self = this;
+		Object.observe(core._websocket, function(){
+			self.connectionstatus = core._websocket._connected;
+		});
+		Object.observe(core, function(){
+			self.username = core.user() ? core.user().data('name') : null;
+			self.projectname = core.project() ? core.project().data('name') : null;
+		});
+		Object.observe(core._peerStore._records, function(){
+			self.numpeers = core.peers() ? core.peers().filter(function(d){return !d.deleted();}).length : 0;
+		});
+	}
+		
+});
+</script>

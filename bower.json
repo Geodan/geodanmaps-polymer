@@ -30,6 +30,7 @@
     "terraformer-wkt-parser": "~1.0.0",
     "jsonix": "~2.2.1",
     "ogc-schemas": "~2.2.0",
-    "w3c-schemas": "~1.1.0"
+    "w3c-schemas": "~1.1.0",
+    "leaflet-map": "~1.0.1"
   }
 }
