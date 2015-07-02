@@ -9,6 +9,11 @@
 <link rel="import" href="../../elements/gm-mappu-catalog.html">
 <link rel="import" href="../../elements/gm-mappu-sketch.html">
 <link rel="import" href="../../elements/gm-ogcparser.html">
+<link rel="import" href="../../elements/gm-routing.html">
+<link rel="import" href="../../elements/gm-cas.html">
+
+<link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-status.html">
 
 <dom-module id="demo-mappu">
 <style>
@@ -25,7 +30,7 @@
 	#catalog_button {
 		position: absolute;
 		top: 10;
-		left: 100;
+		right: 100;
 		height: auto;
 		width: auto;
 		z-index: 10;
@@ -50,25 +55,29 @@
     	bottom: 70px;
     	min-width: 200px;
     }
-	
+    gm-cas {
+    	position: absolute;
+    	right: 10px;
+    	bottom: 10px;
+    	z-index: 100;
+    }
 	
 </style>
 <template>
-		
+		<gm-cas></gm-cas>
+		<gm-routing></gm-routing>
 		<gm-mappu-map id="mapelement"></gm-mappu-map>
 		<gm-mappu-geosearch id="geosearch" map="{{map}}"></gm-mappu-geosearch>
-		<gm-mappu-sketch id="sketch" layer="{{sketchlayer}}" iconset="{{iconset}}" lineset="{{lineset}}" polygonset="{{polygonset}}"></gm-mappu-sketch>
+		<gm-mappu-sketch id="sketch" layer="{{sketchlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
 		<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
 		<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
-		<paper-button id="catalog_button" on-click="toggleCatalog">plain dialog</paper-button>
+
+		<paper-fab icon="add" id="catalog_button" on-click="toggleCatalog">plain dialog</paper-fab>
 		<paper-dialog id='dialog'>
-			Layer catalog
+			<h2>Layer catalog</h2>
 			<paper-dialog-scrollable>
 				<gm-mappu-catalog id="catalog" layers="{{catlayers}}" map="{{map}}"></gm-mappu-catalog>
 			</paper-dialog-scrollable>
-			<div class="buttons">
-				<paper-button>OK</paper-button>
-			</div>
 		</paper-dialog>
 		
 		
@@ -80,13 +89,21 @@ Polymer({
     is: 'demo-mappu',
     properties: {
     	map: Object,
-    	sketchlayer: Object
+    	sketchlayer: Object,
     },
     ready: function(){
+    	//MAP
     	this.map = this.$.mapelement.map;
     	var testlayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
             ogc_type: 'tms',
-            url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q',
+            //url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 var testlayer2 = new d3.mappu.RasterLayer('Esri layer',  {
+            ogc_type: 'esri',
+            url: 'http://egis3.lacounty.gov/arcgis/rest/services/Geography/simpleGeo/MapServer/export',
             visible: true
 		 })
 		 .addTo(this.map);
@@ -99,8 +116,8 @@ Polymer({
 			labelfield: 'name'
     	}).addTo(this.map);
     	
-    	
-    	this.iconset = [
+    	this.styleset = {
+    		iconset:[
          {"cat":"none", "text":"ZW", "url":"/sites/eagle/assets/icons/mapicons/direction_downleft.png"}
         ,{"cat":"none", "text":"Z","url":"/sites/eagle/assets/icons/mapicons/direction_down.png"}
         ,{"cat":"none", "text":"ZO","url":"/sites/eagle/assets/icons/mapicons/direction_downright.png"}
@@ -139,17 +156,17 @@ Polymer({
         ,{"cat":"none", "text":"Gemeentehuis","url":"/sites/eagle/assets/icons/mapicons/moderntower.png"}
         ,{"cat":"none", "text":"Commentaar","url":"/sites/eagle/assets/icons/mapicons/comment-map-icon.png"}
         ,{"cat":"none", "text":"Happy","url":"/sites/eagle/assets/icons/mapicons/smiley_happy.png"}
-        ];
-        this.lineset = [
-        	{"stroke":"blue","fill":"none"},
+        ],
+        lineset:[
+        	{"stroke":"blue","fill":"none","stroke-width":"4px" },
     		{"stroke":"red","fill":"none"},
     		{"stroke":"green","fill":"none"},
     		{"stroke":"orange","fill":"none"},
     		{"stroke":"yellow","fill":"none"},
     		{"stroke":"purple","fill":"none"},
     		{"stroke":"violet","fill":"none"}
-        ];
-    	this.polygonset =[
+        ],
+    	polygonset: [
     		{"stroke":"blue","fill":"blue"},
     		{"stroke":"red","fill":"red"},
     		{"stroke":"green","fill":"green"},
@@ -157,7 +174,7 @@ Polymer({
     		{"stroke":"yellow","fill":"yellow"},
     		{"stroke":"purple","fill":"purple"},
     		{"stroke":"violet","fill":"violet"}
-    	];
+    	]};
     	
     },
     toggleCatalog: function(){

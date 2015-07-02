@@ -1,0 +1,91 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./gm-mappu-map.html">
+<link rel="import" href="./gm-mappu-layermanager.html">
+
+<dom-module id="gm-lod-map">
+<style>
+gm-mappu-map {
+	height: 100%;
+}
+#layermanager {
+    	position: absolute;
+    	right: 10px;
+    	top: 70px;
+    	min-width: 200px;
+    }
+</style>
+<template>
+	<gm-mappu-map id="map" center="[4.80,52.89]"></gm-mappu-map>
+	<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+</template>
+</dom-module>
+
+<script>
+var tmp;
+Polymer({
+    is: 'gm-lod-map',
+    properties: {
+    	data: {
+    		type: Array,
+    		value: function(){
+    			return [];
+    		},
+    	}
+    },
+    observers: [
+    	'dataChanged(data.splices)'
+    ],
+    dataChanged: function(){
+    	var self = this;
+    	if (this.meterlayer) this.meterlayer.data = [];
+    	this.data.forEach(function(d,i){
+    		Object.observe(d, function(x){
+    		  if (d.lat && d.lon){
+    			self.meterlayer.addFeature(
+    			{
+					type: 'Feature',
+					id: i,
+					geometry: {
+						type: 'Point',
+						coordinates: [d.lon, d.lat]
+					}
+				});
+			  }
+    		});
+    	});
+    },
+    ready: function(){
+    	//MAP
+    	this.map = this.$.map.map;
+    	
+    	var baselayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
+            ogc_type: 'tms',
+            url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 var baselayer = new d3.mappu.RasterLayer('Laagspanning',  {
+            ogc_type: 'wms',
+            url: 'http://research.geodan.nl/service/geoserver/wms',
+            layers: 'cerise:laagspanning',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 var baselayer = new d3.mappu.RasterLayer('Middenspanning',  {
+            ogc_type: 'wms',
+            url: 'http://research.geodan.nl/service/geoserver/wms',
+            layers: 'cerise:middenspanning',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 this.meterlayer = new d3.mappu.VectorLayer('Meters',{
+    		reproject: true,
+			style: {
+				stroke: 'blue',
+				fill: 'blue'
+			}
+    	}).addTo(this.map);
+    }
+});
+
+</script>

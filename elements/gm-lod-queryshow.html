@@ -1,0 +1,32 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-lod-queryshow">
+<style>
+
+</style>
+<template>
+	<h2>Query</h2>
+	<p>{{query}}</p>
+</template>
+</dom-module>
+
+<script>
+var tmp;
+Polymer({
+    is: 'gm-lod-queryshow',
+    properties: {
+    	query: {
+    		type: String,
+    		observer: 'queryChanged'
+    	}
+    },
+    
+    queryChanged: function(){
+    	
+    },
+    ready: function(){
+    	
+    }
+});
+
+</script>

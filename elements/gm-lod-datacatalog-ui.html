@@ -1,0 +1,69 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="./gm-lod-datacatalog.html">
+<link rel="import" href="./gm-lod-dataset.html">
+
+<dom-module id="gm-lod-datacatalog-ui">
+ <style>
+ </style>
+ <template>
+ 
+ <gm-lod-datacatalog id="catalog" uri="{{uri}}" meta="{{meta}}" datasets="{{datasets}}"></gm-lod-datacatalog> 
+ <paper-radio-group selected="{{curlang}}" id="langselect">
+  <paper-radio-button name="en">English</paper-radio-button><br>
+  <paper-radio-button name="nl">Nederlands</paper-radio-button><br>
+  <paper-radio-button name="sw">Swahili</paper-radio-button><br>
+ </paper-radio-group>
+ <br>
+ <template id="list" is="dom-repeat" items="{{meta}}" as='meta'>
+ 	<b>{{meta.key}}</b><span>{{meta.val}}</span><br>
+ </template>
+ <hr>
+ <h3>datasets:</h3>
+ <template is="dom-repeat" items="{{datasets}}" as='dataset'>
+	<span>{{dataset.@id}}</span><br>
+	<template is="dom-repeat" items="{{dataset.meta}}" as='meta'>
+		<b>{{meta.key}}</b><span>{{meta.val}}</span><br>
+	 </template>
+ </template>
+ <template is="dom-repeat" items="{{datasets}}" as='dataset'>
+ 	<gm-lod-dataset uri='{{dataset.@id}}' meta="{{dataset.meta}}"></gm-lod-dataset>
+ </template>
+ 
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-datacatalog-ui',
+    properties: {
+    	datasets: {
+    		type: 'array',
+    		value: function(){return [];}
+    	},
+    	meta: {
+    		type: Array,
+    		value: function(){return [];}
+    	},
+    	curlang: {
+    		type: String,
+    		value: 'nl',
+    		observer: '_langChanged'
+    	},
+    	test: {
+    		type:Number,
+    		observer: 'testChanged'
+    	}
+    },
+    testChanged: function(){
+    	console.log(this.test);
+    },
+    _langChanged: function(){
+    	this.$.catalog.curlang = this.$.langselect.selected;
+    },
+    
+    ready: function(){
+    }
+});
+</script>

@@ -1,0 +1,143 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<link rel="import" href="./gm-lod-meterchart.html">
+
+<dom-module id="gm-lod-meter">
+<style>
+paper-material {
+	display: block;
+	background: white;
+	box-sizing: border-box;
+	margin: 16px;
+	padding: 16px;
+	border-radius: 2px;
+  }
+.locn {
+	background: steelBlue
+}
+.bag {
+	background: magenta;
+}
+.meter {
+	background: gray;
+}
+
+paper-collapse {
+  box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
+}
+
+#collapsequery {
+	font-size: small;
+}
+paper-toast {
+	z-index: 100;
+	width: 800px;
+}
+</style>
+<template>
+	<!--
+	<gm-lod-sparql id="sparql" url="{{bagurl}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	-->
+	<paper-toast id="toast" duration=10000></paper-toast>
+	<paper-material elevation="1">
+	  <b>Cerise:</b><br>
+	  <small>{{data.@id}}</small>
+	  <div>
+	   <span>{{data.locn:#thoroughfare.@value}}</span> <span>{{data.bag:huisnummer}}</span> <span>{{data.bag:huisletter.@value}}</span><br>
+	   <span>{{data.locn:#postCode.@value}}</span> <span>{{data.locn:#postName.@value}}</span><br>
+	  </div>
+	  <b>Bag:</b>
+	  <small>{{data.bagid}}</small>
+	  <div>
+	  	Oppervlak:<span>{{data.oppervlakte}}</span><br>
+	  	Gebruik: <span>{{data.gebruiksdoel}}</span><br>
+	    Locatie: [<span>{{data.lon}}</span> , <span>{{data.lat}}</span>]</small>
+	  </div>
+	  <paper-button on-click='toggle'>Data</paper-button>
+	  <paper-button on-click='toggleQuery'>Query</paper-button>
+	  <iron-collapse id="collapse">
+	   <gm-lod-meterchart id="chart" data="[[timeseries]]"></gm-lod-meterchart>
+	  </iron-collapse>
+	  <iron-collapse id="querycollapse">
+	  <span>{{query}}</span>
+	  </iron-collapse>
+	</paper-material>
+	
+</template>
+
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-meter',
+    properties: {
+    	bagurl: {
+    		type: String,
+    		value: 'http://lod.geodan.nl/sparql?query='
+    	},
+    	query: {
+    		type: String,
+    	},
+    	data: {
+    		type: Object,
+    		value: {},
+    		observer: 'dataChanged',
+    		notify: true
+    	},
+    	jsonld: {
+    		type: Object,
+    		//observer: 'jsonldChanged'
+    	},
+    	timeseries: Array
+    },
+    observers: [
+    	//'dataChanged(data.lat)'
+    ],
+    ready: function(){
+    	
+    },
+    
+    toggleQuery: function(){
+    	//this.query = queries.getMeterValues(this.data.meter);
+    	this.$.toast.text = queries.getMeterValues(this.data.meters[0]['@id']);
+    	this.$.toast.show();
+    },
+    toggle: function() {
+    	var self = this;
+    	this.$.collapse.toggle();
+    	this.$.chart.loadMeter(this.data.meters[0]['@id']);
+	},
+    dataChanged: function(){
+    	var self = this;
+    	if (this.data && this.data['locn:#postCode']) {
+			var item = {
+				postcode: this.data['locn:#postCode']['@value'],
+				nummer: this.data['bag:huisnummer']
+			};
+			var url = 'http://lod.geodan.nl/sparql?query=';
+			var query = queries.findBag(item);
+			var url = encodeURI(url) + encodeURIComponent(query);
+			var callback = function(e,d){
+				var point = d['@graph'][0]['http://lod.geodan.nl/vocab/bag#geometrie'][0]['@value'];
+				var loc = point.replace('POINT(','').replace(')','').split(' ');
+				self.set('data.lat',loc[1]);
+				self.set('data.lon',loc[0]);
+				self.set('data.bagid',d['@graph'][0]['@id']);
+				self.set('data.gebruiksdoel',d['@graph'][0]['http://lod.geodan.nl/vocab/bag#gebruiksdoel'][0]['@value']);
+				self.set('data.oppervlakte', d['@graph'][0]['http://lod.geodan.nl/vocab/bag#oppervlakte'][0]);
+			};
+			d3.json(url).header('Accept', 'application/ld+json').get(callback);
+			this.query = queries.findBag(item);
+		}
+    },
+    jsonldChanged: function(){
+    	var point = this.jsonld['@graph'][0]['http://lod.geodan.nl/vocab/bag#geometrie'][0]['@value'];
+    	var loc = point.replace('POINT(','').replace(')','').split(' ');
+    	this.set('data.lat', loc[1]);
+    	this.set('data.lon', loc[0]);
+    }
+});
+</script>

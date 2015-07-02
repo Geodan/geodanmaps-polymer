@@ -1,0 +1,84 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../elements/gm-lod-meterlist.html">
+<link rel="import" href="../../elements/gm-lod-baglist.html">
+<link rel="import" href="../../elements/gm-lod-emparelist.html">
+<link rel="import" href="../../elements/gm-lod-datacatalog-ui.html">
+<link rel="import" href="../../elements/gm-lod-map.html">
+<link rel="import" href="../../elements/gm-lod-queryshow.html">
+
+<dom-module id="demo-lod">
+<style>
+html, body {
+    margin: 0px;
+    height: 100%;
+}
+
+.strokes {
+    @apply(--layout-horizontal);
+    @apply(--layout-top);
+    height: 100%;
+}
+#mapelement {
+	height: 100%;
+	width: 100%;
+}
+#meterlist {
+	overflow: scroll;
+ 	max-height: 100%;
+ 	width: 500px;
+}
+  
+</style>
+<template>
+	<template is="dom-repeat" items="{{catalogus}}">
+		<div>{{item.title}}<div>
+	</template>
+
+	<gm-lod-datacatalog-ui id="catalog" input="{{catalogus}}" uri="{{uri}}"></gm-lod-datacatalog>
+	<!--
+	<div class='strokes'> 
+		<gm-lod-meterlist 
+			id="meterlist"
+			query="{{query}}"
+			records="{{meterdata}}"></gm-lod-meterlist>
+		<gm-lod-map id="mapelement" data="{{meterdata}}"></gm-lod-map>
+	</div>
+	-->
+	<!--<gm-lod-emparelist id="emparelist"></gm-lod-emparelist>-->
+	
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-lod',
+    properties: {
+    	catalogus: {
+    		value: function(){return []},
+    		type: Array
+    	},
+    	uri: String,
+    	query: String
+    },
+    observers: [
+    	'meterdataChanged(meterdata.splices)'
+    ],
+    meterdataChanged: function(meterdata){
+    	var records = document.querySelector('#meterlist').records;
+    },
+    hasAddress: function(item){
+    	return item['locn:#postCode'] != null;
+    },
+    ready: function(){
+		 var self = this;
+		 //TEST: this.uri = 'http://purl.org/dc/terms/publisher';
+		 this.uri = 'http://research.geodan.nl/sites/geodanmaps-polymer/demos/data/testcatalogus/testcatalogus.nq';
+		 //this.uri = 'http://lod.geodan.nl/cerisesg/datasets/';
+    },
+    toggle: function() {
+	  this.$.collapse.toggle();
+	}
+});
+</script>

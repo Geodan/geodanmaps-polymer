@@ -1,14 +1,19 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<!--
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+-->
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <script src="../bower_components/terraformer/terraformer.min.js"></script>
 <script src="../bower_components/terraformer-wkt-parser/terraformer-wkt-parser.js"></script>
 <dom-module id="gm-mappu-geosearch">
  <style>
  	iron-selector > * {
         padding: 8px;
-        
+        position: absolute;
+        top: 10px;
       }
       .item {
       	  background-color: white;
@@ -17,14 +22,27 @@
       .iron-selected {
         background-color: #ddd;
       }
+      #menuButton {
+      	  display: none;
+      }
+      
  </style>
  <template>
  	<paper-input label="Find location" size=40 id="geosuggest" on-keydown="suggest"></paper-input>
+ 	<paper-dropdown-menu id="suggestlist" label="Title" selected-item-label="{{selected}}">
+        <paper-menu class="dropdown-content">
+            <template is="dom-repeat" items="{{suggestions}}">
+                <paper-item on-click="lookmeup">{{item.displayname}}</paper-item>
+            </template>
+        </paper-menu>
+    </paper-dropdown-menu>
+    <!--
  	<iron-selector id="suggestlist">
 	  <template is="dom-repeat" items="{{suggestions}}">
 		<div class='item' value="{{item.id}}" name="{{item.displayname}}" on-click="lookmeup">{{item.displayname}}</div>
 	  </template>
 	</iron-selector>
+	-->
  <iron-ajax
     id='suggest' 
     auto
@@ -68,9 +86,9 @@ Polymer({
 
     },
     suggest: function(e){
-     	 if (e.keyCode == 13 && this.$.suggestlist.selectedItems[0]){ //enter
-			 this.$.geosuggest.value =  this.$.suggestlist.selectedItems[0].name;
-			 var id = this.$.suggestlist.selectedItems[0].value;
+     	 if (e.keyCode == 13 && this.$.suggestlist.selectedItem){ //enter
+			 this.$.geosuggest.value =  this.$.suggestlist.selectedItem.name;
+			 var id = this.$.suggestlist.selectedItem.value;
 			 this.$.lookup.params = {"q":id};
 			 this.suggestions = [];
 			 this.iselected = -1;
@@ -91,6 +109,7 @@ Polymer({
      handleSuggestResponse: function(e){
      	 this.suggestions = e.detail.response.response.docs;
      	 this.iselected = 0;
+     	 this.$.suggestlist.open();
      },
      lookup: function(a,b,c){
      	 var id = c.getAttribute('value');

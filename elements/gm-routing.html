@@ -1,0 +1,68 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="gm-routing">
+ <style>
+ </style>
+ <template>
+ 	<iron-ajax
+ 		auto
+ 		verbose
+ 		handle-as="json"
+    	on-error="error"
+    	id="getCapabilities"
+		url="{{url}}"
+		params="{{params}}"
+		on-response="handleResponse"
+	></iron-ajax>
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-routing',
+    properties: {
+    	url: {
+    		type: String,
+    		value: '/service/route',
+    	},
+    	params: {
+    		type: Object,
+    		value: {}
+    	}
+    },
+    ready: function(){
+    	this.calculate();
+    },
+    calculate: function(){
+    	this.params = {
+    		fromcoordx: 4.91311,
+    		fromcoordy: 52.34232,
+    		tocoordx: 5.29969,
+    		tocoordy: 51.69176,
+    		srs: 'epsg:4326',
+    		routetype: 'cost',
+    		returntype: 'coords',
+    		outputformat: 'json'
+    	}
+    	/*
+    	http://services.geodan.nl/routing/route?
+    		fromcoordx=4.91311&
+    		fromcoordy=52.34232&
+    		tocoordx=5.29969&
+    		tocoordy=51.69176&
+    		srs=epsg:4326&
+    		routetype=cost&
+    		returntype=coords&
+    		outputformat=json
+    		*/
+    },
+    //The response from the document service will be parsed here.
+	handleResponse: function(d,e){
+		//TODO console.log(d,e);
+	},
+    error: function(){
+    	console.warn(e.detail.xhr.statustext);
+    }
+});
+</script>

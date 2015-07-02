@@ -1,0 +1,67 @@
+<rdf:RDF
+    xmlns:dcat="http://www.w3.org/ns/dcat#"
+    xmlns:void="http://rdfs.org/ns/void#"
+    xmlns:schema="http://schema.org/"
+    xmlns:geosparql="http://www.opengis.net/ont/geosparql#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:sd="http://www.w3.org/ns/sparql-service-description#"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/"
+    xmlns:wv="http://vocab.org/waiver/terms/norms"
+    xmlns:dct="http://purl.org/dc/terms/"
+    xmlns="http://research.geodan.nl/services/metalodui/testcatalogus#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:geodan="http://lod.geodan.nl/org/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+  <geosparql:Geometry rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#extent_netherlands">
+    <geosparql:asWKT rdf:datatype="http://www.opengis.net/ont/geosparql#wktLiteral"
+    >POLYGON((4.732 52.880,4.732 52.899,4.820 52.899,4.820 52.880,4.732 52.880))</geosparql:asWKT>
+  </geosparql:Geometry>
+  <geosparql:Geometry rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#extent_uk">
+    <geosparql:asWKT rdf:datatype="http://www.opengis.net/ont/geosparql#wktLiteral"
+    >POLYGON((-8.5 49,-8.5 61,2 61,2 49, -8.5 59))</geosparql:asWKT>
+  </geosparql:Geometry>
+  <dcat:Catalog rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#testcatalog">
+    <dcat:dataset rdf:resource="http://cerise.tudelft.nl/dataset"/>
+    <dct:publisher rdf:resource="http://lod.geodan.nl/org/geodan"/>
+    <dct:description xml:lang="nl">This is een datacatalogus voor het testen van MetaLODUI, een module voor webapplicaties die is bedoeld voor interactie met metadata van datasets. Datasets in deze catalogus kunnen echt of verzonnen zijn. De metadata bedoeld om divers te zijn, maar wel gebaseerd op standaarden.</dct:description>
+    <dcat:dataset rdf:resource="http://lod.geodan.nl/cerisesg/ebif/julianadorp/"/>
+    <dcat:dataset>
+      <dcat:Dataset rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#ukbedrock">
+        <dct:spatial rdf:resource="http://research.geodan.nl/services/metalodui/testcatalogus#exent_uk"/>
+        <dct:description xml:lang="nl">Nog in te vullen</dct:description>
+        <dct:description xml:lang="en">The 1:625k DiGMap data covering the whole of the United Kingdom is available in this OGC WFS service for all uses - including commercial use subject to the conditions in the Access Constraints section. It is being served as a contribution to the OneGeology initiative(www.onegeology.org). The data is returned in GeoSciML v3 format using IUGS-CGI dictionary values in most cases where applicable. For information about more of the British Geological Survey's maps that are available digitally please visit http://www.bgs.ac.uk/products/digitalmaps/digmapgb.html</dct:description>
+        <dct:title xml:lang="nl">Geologie vasteland Verenigd Koninkrijk</dct:title>
+        <dct:title xml:lang="en">UK onshore bedrock geological data WFS</dct:title>
+      </dcat:Dataset>
+    </dcat:dataset>
+    <dcat:dataset rdf:resource="http://lod.geodan.nl/basisreg/bag/"/>
+    <dcat:dataset>
+      <dcat:Dataset rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#linkedgeodata">
+        <dct:spatial>
+          <geosparql:Geometry rdf:about="http://research.geodan.nl/services/metalodui/testcatalogus#exent_world">
+            <geosparql:asWKT rdf:datatype="http://www.opengis.net/ont/geosparql#wktLiteral"
+            >POLYGON((-180 -90, -180 90, 180 90, 180 -90, -180 -90))</geosparql:asWKT>
+          </geosparql:Geometry>
+        </dct:spatial>
+        <dct:license rdf:resource="http://opendatacommons.org/licenses/odbl/1.0/"/>
+        <foaf:homepage rdf:resource="http://linkedgeodata.org/"/>
+        <dct:description>Data van OpenStreetMap gepubliceerd als Linked Open Data</dct:description>
+        <dct:description xml:lang="en">OpenStreetMap data published as Linked Open Data</dct:description>
+        <dct:title xml:lang="nl">LinkedGeodData</dct:title>
+        <dct:title xml:lang="en">LinkedGeoData</dct:title>
+      </dcat:Dataset>
+    </dcat:dataset>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date"
+    >2015-07-26</dct:modified>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date"
+    >2015-07-28</dct:modified>
+    <dct:description xml:lang="en">This is a data catalog for testing MetaLODUI, a web application module for interacting with dataset metadata. Datasets in this catalog can be real or can be made up. Metadata are intended to be diverse, but based on standards</dct:description>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date"
+    >2015-07-27</dct:modified>
+    <dct:title xml:lang="nl">Catalogus van datasets voor het testen van MetaLODUI</dct:title>
+    <dct:title xml:lang="en">Catalog of datasets for testing MetaLODUI</dct:title>
+    <dct:issued rdf:datatype="http://www.w3.org/2001/XMLSchema#date"
+    >2015-07-25</dct:issued>
+    <foaf:homepage rdf:resource="http://research.goedan.nl/services/metalodui/"/>
+  </dcat:Catalog>
+</rdf:RDF>

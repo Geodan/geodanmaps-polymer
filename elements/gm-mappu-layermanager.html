@@ -3,7 +3,7 @@
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
-
+<!--<link rel="import" href="./gm-drag-drop.html">-->
 
 
 <dom-module id="gm-mappu-layermanager">
@@ -35,7 +35,15 @@
 		color: red;
 		cursor: pointer;
 	}
-	
+	.legendImg, .transparent {    
+		padding: 5px 5px 5px 15px;
+    .legendImg {
+		font-weight: 500;
+	}
+	.zoomin .legendImg {
+		border: red solid 1px;
+	}
+}
  </style>
  <template>
  	<div class='container'>
@@ -46,6 +54,11 @@
 				<paper-item-body>{{item.name}}</paper-item-body>
 			</paper-icon-item>
 			<iron-collapse class='collapse-content'>
+				<template is="dom-if" if="{{item.options.config.legendUrl}}">
+					<div class="legendImg" draggable="false">
+						<img src="{{item.options.config.legendUrl}}"/>
+					</div>
+				</template>
 				<paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
 				<div>
 					<span class="removeLayer" on-click="removeLayer">verwijder laag</span>
@@ -69,13 +82,25 @@ Polymer({
     		observer: 'mapChanged'
     	}
     },
+    observers: [
+    	
+    ],
+    reverse: function(){
+    	this.reverselayers = self.map.layers.slice(0).reverse();
+    	this.$.layerlist.render(); //somehow it's not autorefreshing
+    },
     mapChanged: function(){
     	this.reverselayers = this.map.layers.slice(0).reverse();
     	var self = this;
+    	this.layers = this.map.layers;
+    	//Only way to observe since layers is not a polymer object
+    	//This only works in Chrome 
+    	//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe#Browser_compatibility
     	Object.observe(this.map.layers, function(){
     		self.reverselayers = self.map.layers.slice(0).reverse();
     		self.$.layerlist.render(); //somehow it's not autorefreshing
     	});
+    	
     },
     ready: function(){
     	

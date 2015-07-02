@@ -1,0 +1,68 @@
+<!--
+Gives a button that shows the status of the current socket connection.
+Connected or disconnected;
+
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<dom-module id="gm-cow-status">
+ <style>
+ .connected{
+ 	 background: green;
+ }
+ .disconnected{
+ 	 background: red;
+ }
+ </style>
+ <template>
+ <paper-fab mini on-click='toggle' icon='{{connIcon(connectionstatus)}}' class$='{{connClass(connectionstatus)}}'></paper-fab>
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+	is: 'gm-cow-status',
+	properties: {
+		core: {
+			type: Object,
+			observer: '_coreChanged'
+		}
+	},
+	connectionChanged: function(){
+		this.connectionstatus = this.core._websocket._connected;
+	},
+	connClass: function(d){
+		if (d)return 'connected';
+		return 'disconnected';
+	},
+	connIcon: function(d){
+		if (d)return 'notification:sync';
+		return 'notification:sync-disabled';
+	},
+	toggle: function(){
+		if (this.core._websocket._connected){
+			this.core.disconnect();
+		} else {
+			this.core.connect();
+		}
+	},
+	_coreChanged: function(){
+		var core = this.core;
+		var self = this;
+		core._websocket.on('closed', function(){
+			self.connectionstatus = core._websocket._connected;
+		});
+		core._websocket.on('error', function(){
+			self.connectionstatus = core._websocket._connected;
+		});
+		core._websocket.on('connected', function(){
+			self.connectionstatus = core._websocket._connected;
+		});
+	}
+		
+});
+</script>

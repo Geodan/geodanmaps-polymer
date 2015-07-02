@@ -1,0 +1,121 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../bower_components/paper-radio-button/paper-radio-button.html">
+
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="./gm-lod-sparql.html">
+<link rel="import" href="./gm-lod-meter.html">
+
+<dom-module id="gm-lod-meterlist">
+<style>
+#toast {
+	z-index: 100;
+	width: 800px;
+}
+#postcode {
+	width: 200px;
+	margin-left: 20px;
+}
+</style>
+<template>
+	<paper-toast id="toast" duration=10000></paper-toast>
+	<gm-lod-sparql id="sparql" url="{{url}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	<h2>Zoek:</h2>
+	<paper-input id="postcode" value="{{postcodeValue::input}}" label="Postcode" pattern="[0-9]{4}[a-zA-Z]{2}" error-message="e.g.: 1787BH"></paper-input>
+	<paper-radio-group id='radiogroup' selected="GasMeter">
+	  <paper-radio-button name="GasMeter">Gas</paper-radio-button>
+	  <paper-radio-button name="ElectricityMeter">Electra</paper-radio-button>
+	</paper-radio-group>
+	<paper-radio-group id='radiogroupDataset' selected="Julianadorp">
+	  <paper-radio-button name="Julianadorp">Julianadorp</paper-radio-button>
+	  <paper-radio-button name="Empare">Empare</paper-radio-button>
+	</paper-radio-group>
+	<br>
+	<paper-button on-click='submit'>Zoek</paper-button>
+	<hr>
+	
+	<iron-collapse>
+	</iron-collapse>
+	<template is="dom-repeat" items="{{records}}" observe="lat lon">
+		<gm-lod-meter data="{{item}}"></gm-lod-record><br>
+	</template>
+</template>
+</dom-module>
+
+<script>
+var tmp;
+Polymer({
+    is: 'gm-lod-meterlist',
+    properties: {
+    	url: {
+    		type: String,
+    	},
+    	jsonld: {
+    		type: Object,
+    		observer: 'jsonldChanged'
+    	},
+    	records: {
+    		type: Array,
+    		value: function() {
+				return [];
+			},
+    		notify: true
+    	},
+    	query: {
+    		type: String,
+    		notify: true
+    	},
+    	postcodeValue: {
+    		type: String
+    		
+    	}
+    },
+    
+    ready: function(){
+    	
+    },
+    submit: function(){
+    	this.records = [];
+    	var postcode = this.$.postcode.value;
+    	var metertype = this.$.radiogroup.selected;
+    	var dataset = this.$.radiogroupDataset.selected;
+    	if (dataset == 'Empare'){
+    		this.url = '/service/lodempare/snorql?query=';
+    	}
+    	else if (dataset == 'Julianadorp'){
+    		this.url = 'http://lod.geodan.nl/sparql?query=';
+    	}
+    	this.query = queries.allMeters(postcode,metertype);
+    	this.$.toast.text = this.query;
+    	this.$.toast.show();
+    },
+    jsonldChanged: function(){
+    	var context = {
+    		ical: "http://www.w3.org/2002/12/cal/ical#",
+    		xsd: "http://www.w3.org/2001/XMLSchema#",
+    		locn: "http://www.w3.org/ns/locn",
+    		bag: "http://lod.geodan.nl/vocab/bag#",
+    		ebif: "http://lod.geodan.nl/vocab/ebif#"
+    	};
+    	var self = this;
+    	var data = jsonld.compact(this.jsonld, context, function(err, compacted) {
+    		var metertype = self.$.radiogroup.selected;
+    		//Get all address records
+    		var graph = compacted['@graph'];
+    		var addresses = graph.filter(function(d){return d['@type'].indexOf("locn:#Address") > -1});
+			//var meters = compacted['@graph'].filter(function(d){return d['@type'].indexOf("ebif:"+metertype) > -1});
+			addresses.forEach(function(d){
+				//find meters connected to address (if any)
+				d.meters = graph.filter(function(x){
+					return x['@type'].indexOf("ebif:Meter") > -1 && x['locn:#address'] == d['@id'];
+				});
+				self.push('records', d);
+			});
+		}); 
+        
+    }
+});
+
+</script>

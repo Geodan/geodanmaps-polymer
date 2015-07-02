@@ -1,0 +1,463 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-progress/paper-progress.html">
+<script src="../bower_components/proj4/dist/proj4.js"></script>
+<dom-module id="gm-icm-natuurbrand">
+<style>
+</style>
+<template>
+	<paper-toggle-button on-change="toggle"></paper-toggle-button>
+	<div id="main" disabled>
+		<b>Status:</b>
+		<div>Cropping terrain: <span>{{makeSubsetStatus}}</span></div>
+		<paper-progress value="{{makeSubsetProgress}}"></paper-progress>
+		<div>Prepairing model: <span>{{makeLcpStatus}}</span></div>
+		<paper-progress value="{{makeLcpProgress}}"></paper-progress>
+		<div>Running model: <span>{{fireStatus}}</span></div>
+		<paper-progress value="{{fireProgress}}"></paper-progress>
+		<br>
+		<div layout vertical>
+			<b>Inputs:</b>
+			Current area: 
+			<div><span>{{area}}</span> km&sup2; <span style="color: red; display:{{area>100?'inline':'none'}}"><small> (max 100!)</small></span></div>
+			
+			<paper-input 
+				id="windspeed" 
+				pattern="^[0-9]." 
+				value="4" 
+				type="number" 
+				label="Windspeed" 
+				floatingLabel 
+				error-message="Value must be a number!">
+				<!--isInvalid="{{!$.windspeed.validity.valid}}">-->
+			</paper-input>
+			<paper-input 
+				id="winddir" 
+				type="number" 
+				value="225" 
+				label="Winddir" 
+				floatingLabel 
+				error-message="Value must be a number!"> 
+				<!--isInvalid="{{!$.winddir.validity.valid}}">-->
+			</paper-input>
+			
+			<paper-input id="date" type="date" value="{{date}}" label="Date" floatingLabel>
+			</paper-input>
+			<paper-input id="time" type="time" value="{{time}}" label="Time" floatingLabel>
+			</paper-input>
+			<paper-input id="name" value="Testrun" label="Name" floatingLabel>
+			</paper-input><br>
+		</div>
+		<iron-ajax id="wps_call"
+			url="/service/geoserver/ows?"
+			params='{}'
+			handle-as="xml"
+			on-response="{{handleStatus}}"></iron-ajax>
+		<paper-button on-click="startBatch">Start</paper-button>
+	</div>
+</template>
+</dom-module>
+
+
+<script>
+function combineParams(o, sep) {
+	if (!sep) {
+		sep = ';';
+	}
+	var s = '';
+	for (var key in o) {
+		s += key + '=' + o[key] + sep;
+	}
+	return s;
+};
+
+var Natuurbrand_utils = {
+	makesubset: function(bounds){
+		var params = {
+			service: 'WPS',
+			version: '1.1.0',
+			request: 'execute',
+			identifier: 'py:wildfire_makesubset',
+			datainputs: combineParams({
+				userid: 1,
+				name: 'polymertest', // naam van subset
+				left: bounds[0][0],
+				lower: bounds[0][1],
+				right: bounds[1][0],
+				upper: bounds[1][1]
+			}, ';'),
+			RawDataOutput: 'string',
+			mimeType: 'application/json'
+		};
+		return params;
+	},
+	makelcp: function(terreinid){
+		var params = {
+			service: 'WPS',
+			version: '1.1.0',
+			request: 'execute',
+			identifier: 'py:wildfire_makelcp',
+			datainputs: combineParams({
+				userid: 1,
+				terreinid: terreinid,
+				landscapename: 'Polymertest'
+			}, ';'),
+			RawDataOutput: 'string',
+			mimeType: 'application/json'
+		};
+		return params;
+	}	
+}
+function zpad(i, width) {
+    var s = Math.round(i) + '';
+    while (s.length < width) {
+        s = '0' + s;
+    }
+    return s;
+};
+
+Polymer({
+	is: 'gm-icm-natuurbrand',
+	properties: {
+		date: {
+			type: String,
+			value: new Date().toJSON().slice(0,10)
+		},
+		time: {
+			type: String,
+			value: new Date().toJSON().slice(11,16)
+		},
+		makeLcpStatus: {
+			type: String,
+			value: 'idle'
+		},
+		makeSubsetStatus: {
+			type: String,
+			value: 'idle'
+		},
+		fireStatus: {
+			type: String,
+			value: 'idle'
+		},
+		area: {
+			type: String,
+			value:null
+		},
+		map: {
+			type: Object,
+			observer: 'init'
+		}
+	},
+	ready: function(){
+		this.extent = [];
+		this.layer = {};
+	},
+	zoomChanged: function(){
+		var extent = this.map.extent;
+		var mercator = proj4.defs('EPSG:900913');
+		var bl = proj4(mercator,extent[0]);
+		var ur = proj4(mercator,extent[1]);
+		var width = ur[0] - bl[0];
+		var height = ur[1] - bl[1];
+		this.area = Math.round((width * height)/1000000);
+	},
+	observe: {
+		//'layer.map.zoom': 'zoomChanged'
+	},
+	init: function(){
+		var self = this;
+		var map = this.map;
+		this.extent = map.extent;
+		this.zoom = map.zoom;
+		
+		map.dispatch.on('zoomend', function(){
+				self.zoomChanged();
+		});
+		this.layer = new d3.mappu.VectorLayer('Natuurbrand invoer',{
+            visible: true,
+            reproject: true,
+            labels: false,
+            style: {
+            	stroke: 'blue',
+            	'stroke-width': '2px'
+            },
+            events: [{
+				event: 'click',
+				action: function(d){
+					var offset = 30;
+					var location = [d3.event.offsetX -15, d3.event.offsetY -15];
+					d3.event.stopPropagation();
+					d3.select(map.mapdiv).selectAll('.menu').remove();
+					//Startlijn
+					d3.select(map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click', function(){
+							d.style.stroke = 'red';
+							d.properties.type = 'start';
+							d3.select(map.mapdiv).selectAll('.menu').remove();
+							map.redraw();
+						})
+						.attr('icon', 'social:whatshot')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'red')
+						.transition()
+						.style('left', location[0] + 0 + 'px')
+						.style('top', location[1] + offset + 'px')
+					//Stoplijn
+					d3.select(map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click', function(){
+							d.style.stroke = 'black';
+							d.properties.type = 'stop';
+							d3.select(map.mapdiv).selectAll('.menu').remove();
+							map.redraw();
+						})
+						.attr('icon', 'block')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'black')
+						.transition()
+						.style('left', location[0] + offset + 'px')
+						.style('top', location[1] - offset + 'px');
+					//textedit
+					d3.select(map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click',function(){
+							d.style.stroke = 'gray';
+							d.properties.type = '';
+							d3.select(map.mapdiv).selectAll('.menu').remove();
+							map.redraw();
+						})
+						.attr('icon', 'remove')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'gray')
+						.transition()
+						.style('left', location[0] - offset + 'px')
+						.style('top', location[1] - offset + 'px');
+				}
+            }]
+         }).addTo(map);
+	},
+	toggle: function(e){
+		if (e.srcElement.checked){ //ON
+			//Save previous sketch layer (if any)
+			var em = document.querySelector('#eaglemap');
+			this.prevlayer = em.layer;
+			em.sketchlayer = this.layer;
+		}
+		else { //OFF, back to previous sketch layer
+			var em = document.querySelector('#eaglemap');
+			em.sketchlayer = this.prevlayer;
+		}
+	},
+	startBatch: function(){
+		this.startSubset();
+	},
+	
+	startSubset: function(){
+		if (this.area > 100){
+			this.status = 'Too big area';
+			console.warn('Area too big');
+			return;
+		}
+		
+		/** 1. Get extents and send makesubset **/
+		var map = this.map;
+		var extent = map.extent;
+		var mercator = proj4.defs('EPSG:900913');
+		extent[0] = proj4(mercator,extent[0]);
+		extent[1] = proj4(mercator,extent[1]);
+		var params = Natuurbrand_utils.makesubset(extent);
+		this.$.wps_call.params = params; 
+		this.$.wps_call.go(); 
+		console.log(params);
+	},
+	startMakeLcp: function(terreinid){
+		/** 2. Make terrain **/
+		var map = this.map;
+		var params = Natuurbrand_utils.makelcp(terreinid);
+		this.$.wps_call.params = params; 
+		this.$.wps_call.go();
+		console.log(params);
+	},
+	startFire: function(landscapeid){
+		/** 3. Start fire **/
+		var RD = '+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs';
+		var startarr = [];
+		var projected = [];
+		this.layer.data.filter(function(d){
+			return d.properties.type == 'start';
+		}).forEach(function(d){
+			d.geometry.coordinates.forEach(function(x,i){
+				projected.push(proj4(RD,x).join(' '));
+			});
+			startarr.push(d.geometry.type.toUpperCase() + '(' + projected.join(',') + ')');
+		});
+		var geom = startarr.join('!');
+		
+		var stoparr = [];
+		var projected = [];
+		this.layer.data.filter(function(d){
+			return d.properties.type == 'stop';
+		}).forEach(function(d){
+			d.geometry.coordinates.forEach(function(x,i){
+				projected.push(proj4(RD,x).join(' '));
+			});
+			stoparr.push(d.geometry.type.toUpperCase() + '(' + projected.join(',') + ')');
+		});
+
+		var date = new Date(this.date+" "+this.time);
+		var startmonth = zpad(date.getMonth()+1,2);
+		var startday = zpad(date.getDate(),2);
+		var starthour = zpad(date.getHours(),2)+zpad(date.getMinutes(),2);
+		
+		var stoplines = stoparr.join('!');
+		
+		var winddir = zpad(this.$.winddir.value,3);
+		var windspeed = zpad(this.$.windspeed.value,2);
+		//var windString="(03,19,1100,12,225,00),(03,19,1200,12,225,00),(03,19,1300,12,225,00),(03,19,1400,12,225,00),(03,19,1500,12,225,00),(03,19,1600,12,225,00),(03,19,1700,12,225,00),(03,19,1800,12,225,00),(03,19,1900,12,225,00),(03,19,2000,12,225,00),(03,19,2100,12,225,00),(03,19,2200,12,225,00),(03,19,2300,12,225,00),(03,20,1100,12,225,00)";
+		//var weatherString="(03,13,00,0500,1500,-1,18,97,38,0000),(03,14,00,0500,1500,-2,13,99,53,0000),(03,15,00,0500,1500,07,12,91,57,0000),(03,16,00,0500,1500,07,12,86,66,0000),(03,17,00,0500,1500,06,12,94,67,0000),(03,18,00,0500,1500,06,10,95,76,0000),(03,19,00,0500,1500,07,16,86,42,0000),(03,20,00,0500,1500,07,16,86,42,0000)";
+		var weatherArr = [];
+		for (var i=7;i>=-1;i--){
+			//Start from 6 days in advance, until one day after
+			var date = new Date(this.date+" "+this.time);
+			date.setDate(date.getDate()-i);
+			var month = zpad(date.getMonth()+1,2);
+			var day = zpad(date.getDate(),2);
+			var str = "("+month+","+day+",00,0500,1500,20,28,20,20,0000)";
+			weatherArr.push(str);
+		}
+		var weatherString = weatherArr.join(',');
+		
+		var windArr = [];
+		for (var i=0;i<=6;i++){
+			//Run for 6 hours
+			var date = new Date(this.date+" "+this.time);
+			date.setHours(date.getHours()+i);
+			var month = zpad(date.getMonth()+1,2);
+			var day = zpad(date.getDate(),2);
+			var hour = zpad(date.getHours(),2)+zpad(date.getMinutes(),2);
+			var str = "("+month+","+day+","+hour+","+windspeed+","+winddir+",00)";
+			windArr.push(str);
+		}
+		//Add some extra wind till the next day, farsite doesn't like without
+		date.setHours(date.getHours()+24);
+		windArr.push("("+month+","+zpad(date.getDate(),2)+","+hour+","+windspeed+","+winddir+",00)");
+			
+		var windString = windArr.join(',');
+		var name = this.$.name.value;
+		var run_params = {
+			service: 'WPS',
+			version: '1.1.0',
+			request: 'execute',
+			identifier: 'py:wildfire_startRun',
+			datainputs: combineParams({
+				userid: 1,
+				name: name, // naam van brand
+				fuelmodel: landscapeid, // runid van fuelmodel (resultaat van makelcp)
+				geom: geom, // wkt LINESTRING(x y, ...) RD projectie
+				windstring: windString,
+				weatherstring: weatherString,
+				startmonth: startmonth, // 0-padded; month geeft 0..11
+				startday: startday, // 0-padded, laatste dag van weather/wind-string
+				starthour: starthour, // hhmm,
+				stoplines: stoplines
+			}, ';'),
+			RawDataOutput: 'string',
+			mimeType: 'application/json'
+		}; 
+		this.$.wps_call.params = run_params;
+		console.log(run_params);
+		this.$.wps_call.go();
+	},
+	handleStatus: function(res){
+		var self = this;
+		var result = JSON.parse(res.detail.xhr.response);
+		switch(result.modelname) {
+		case 'makeSubset':
+			this.makeSubsetStatus = result.status;
+			this.makeSubsetProgress = result.percentage;
+			break;
+		case 'makeLcp':
+			this.makeLcpStatus = result.status;
+			this.makeLcpProgress = result.percentage;
+			break;
+		case 'farsiteRun':
+			this.fireStatus = result.status;
+			this.fireProgress = result.percentage;
+			break;
+		}
+		this.status = result.status;
+		var runid = result.runid;
+		if (result.percentage == 100){
+			switch(result.modelname) {
+				case 'makeSubset':
+					self.startMakeLcp(runid);
+					//TODO: add correct URL
+					var map = self.map
+					d3.json(url, function(res){
+					 	var layer =  new d3.mappu.RasterLayer('terrain'+runid,{
+					 		ogc_type: 'wms',
+					 		url: "/service/geoserver/model_wildfire/ows?",
+					 		layers: 'model_wildfire:terrein_'+runid
+					 	}).addTo(map);       
+					});
+					break;
+				case 'makeLcp':
+					self.startFire(runid);
+					break;
+				case 'farsiteRun':
+					//Add fire layer
+					var map = self.map
+					var url = '/service/geoserver/model_wildfire/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=model_wildfire:result_'+runid+'&maxFeatures=100&outputFormat=json&srsName=EPSG:4326'; 
+					d3.json(url, function(res){
+					 	var layer =  new d3.mappu.VectorLayer('fire'+runid,{
+					 		reproject: true,
+							labels: true,
+							labelfield: 'elapsed_mi',
+							style: {
+								stroke: 'red',
+								fill: 'none'
+							}
+					 }).addTo(map);
+					 	layer.data = res.features;
+					 });
+					 this.makeSubsetStatus = 'idle';
+					 this.makeSubsetProgress = 0;
+					 this.makeLcpStatus = 'idle';
+					 this.makeLcpProgress = 0;
+					 this.fireStatus = 'idle';
+					 this.fireProgress = 0;
+					 break;
+			}
+			return;
+		}
+		var run_params = {
+			service: 'WPS',
+			version: '1.1.0',
+			request: 'execute',
+			identifier: 'py:checkModelStatus',
+			RawDataOutput: 'string',
+			mimeType: 'application/json',
+			datainputs: combineParams({
+				runid: result.runid
+			}, ';')
+		};
+		this.$.wps_call.params = run_params;
+		window.setTimeout(function(){
+			self.$.wps_call.go();
+		},2000);
+	}
+});
+</script>

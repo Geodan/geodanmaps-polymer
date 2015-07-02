@@ -1,0 +1,48 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="gm-cas">
+ <style>
+ </style>
+<template>
+	<iron-ajax 
+		method="get" 
+	   id="ajaxRequest"
+	   auto
+	   url="https://services.geodan.nl/geocas/whoami.jsp"  
+	   withCredentials=true 
+	   on-complete="{{handleResponse}}"></iron-ajax>
+	<template is="dom-if" if="{{account.ID==undefined}}">
+		<div style="min-height:60px">
+		U bent momenteel niet ingelogd.
+		<br/>
+		<paper-button><a href="https://services.geodan.nl/cas/login?service={{host}}">Inloggen</a></paper-button>
+		</div>
+	</template>
+	<template is="dom-if" if="{{account.ID!=undefined}}">
+		Welkom {{account.FirstName}} {{account.LastName}}!
+		<br/>
+		U bent ingelogd als lid van <strong>{{account.Organisation}}</strong>
+	</template>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-cas',
+    properties: {
+    	account: Object
+    },
+    ready: function() {
+    	this.account = this.account || {};
+        this.host = window.location.href.split('?')[0];
+  },
+  handleResponse: function(d) {
+    if(d.detail&&d.detail.xhr&&d.detail.xhr.response&&d.detail.xhr.response.indexOf('{')==0) {
+        this.account = JSON.parse(d.detail.xhr.response);
+    }
+    
+  }
+});
+</script>

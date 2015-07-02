@@ -1,0 +1,71 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./gm-lod-sparql.html">
+
+<dom-module id="gm-lod-emparelist">
+<template>
+	<gm-lod-sparql id="sparql" url="{{url}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	Emparelist:<br>
+	<template is="dom-repeat" items="{{records}}">
+		<span>{{item.straat}}</span><span>{{item.nummer}}</span><br>
+	</template>
+</template>
+</dom-module>
+
+<script>
+
+Polymer({
+    is: 'gm-lod-emparelist',
+    properties: {
+    	url: {
+    		type: String,
+    		observer: 'urlChanged'
+    	},
+    	jsonld: {
+    		type: Object,
+    		observer: 'jsonldChanged'
+    	},
+    	records: {
+    		type: Array,
+    		value: []
+    	}
+    },
+    ready: function(){
+    	this.url = 'http://cerise.tudelft.nl/snorql?format="application/json-ld"&query=';
+    	this.query = queries.empareMeters;
+    },
+    jsonldChanged: function(){
+        if (this.jsonld) {
+          this.addresses = [];
+          for (var i = 0; i < this.jsonld.length; i++) {
+            var store = this.jsonld[i];
+            if (!store.postcode || !store.nummer) {
+              console.log('Error in jsonld - missing postcode or nummer field.')
+            }
+            var address = {
+            	straat: store.straat.value, 
+            	nummer: store.nummer.value,
+            	postcode: store.postcode.value
+            };
+            this.push('records',address);
+          }
+        }
+      
+    },
+});
+
+var queries = window.queries || {};
+queries.empareMeters = 'select ?meter ?woonplaats ?straat ?nummer ?letter ?postcode  \
+	where { \
+	?meter a ebif:ElecrticityMeter . \
+	?meter locn:address ?adres . \
+	?adres locn:postName ?woonplaats . \
+	?adres locn:thoroughfare ?straat . \
+	?adres locn:postCode ?postcode . \
+	?adres bag:huisnummer ?nummer . \
+	optional {?adres bag:huisletter ?letter .} \
+	} \
+	order by ?woonplaats ?straat ?nummer';
+	
+
+
+</script>
