@@ -8,6 +8,10 @@
  <style>
  	iron-selector > * {
         padding: 8px;
+        
+      }
+      .item {
+      	  background-color: white;
       }
 
       .iron-selected {
@@ -18,7 +22,7 @@
  	<paper-input label="Find location" size=40 id="geosuggest" on-keydown="suggest"></paper-input>
  	<iron-selector id="suggestlist">
 	  <template is="dom-repeat" items="{{suggestions}}">
-		<div value="{{item.id}}" name="{{item.displayname}}" on-click="lookmeup">{{item.displayname}}</div>
+		<div class='item' value="{{item.id}}" name="{{item.displayname}}" on-click="lookmeup">{{item.displayname}}</div>
 	  </template>
 	</iron-selector>
  <iron-ajax

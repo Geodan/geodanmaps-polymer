@@ -1,0 +1,192 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./gm-lod-sparql.html">
+<link rel="import" href="./gm-lod-meter.html">
+
+<dom-module id="gm-lod-meterlist">
+<template>
+	<gm-lod-sparql id="sparql" url="{{url}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	<h2>Meterlist:</h2>
+	<span>{{title}}</span>
+	<span>{{timespan}}</span>
+	<template is="dom-repeat" items="{{records}}" filter="hasAddress">
+		<gm-lod-meter data="{{item}}"></gm-lod-record><br>
+	</template>
+</template>
+</dom-module>
+
+<script>
+var tmp;
+Polymer({
+    is: 'gm-lod-meterlist',
+    properties: {
+    	url: {
+    		type: String,
+    	},
+    	jsonld: {
+    		type: Object,
+    		observer: 'jsonldChanged'
+    	},
+    	records: {
+    		type: Array,
+    		value: [],
+    		notify: true
+    	}
+    },
+    ready: function(){
+    	this.url = 'http://lod.geodan.nl/sparql?query=';
+    	this.query = queries.allMeters;
+    },
+    jsonldChanged: function(){
+    	var context = {
+    		ical: "http://www.w3.org/2002/12/cal/ical#",
+    		xsd: "http://www.w3.org/2001/XMLSchema#",
+    		locn: "http://www.w3.org/ns/locn",
+    		bag: "http://lod.geodan.nl/vocab/bag#",
+    		ebif: "http://lod.geodan.nl/vocab/ebif#"
+    	};
+    	var self = this;
+    	var data = jsonld.compact(this.jsonld, context, function(err, compacted) {
+			var meters = compacted['@graph'].filter(function(d){return d['@type'].indexOf("ebif:GasMeter") > -1})
+			meters.forEach(function(d){
+				var adreslink = d['locn:#address'];
+				var adres = compacted['@graph'].filter(function(d){return d['@id'] == adreslink;});
+				adres[0].meter = d['@id'];
+				self.push('records',adres[0]);
+			});
+		}); 
+        
+    },
+    hasAddress: function(item){
+    	return item['locn:#postCode'] != null;
+    }
+});
+
+var queries = window.queries || {};
+queries.findBag = function(item){
+	return 'prefix bag: <http://lod.geodan.nl/vocab/bag#> \
+		construct { \
+ 			?adresseerbaarobjectmut bag:geometrie ?geometrie . \
+ 		} \
+		where { \
+			?numaandmut a bag:Nummeraanduidingmutatie . \
+			?numaandmut bag:openbareRuimte ?openbareruimte . \
+			?numaandmut bag:nummeraanduiding ?nummeraanduiding . \
+			?numaandmut bag:postcode "'+item.postcode+'"^^xsd:string . \
+			?numaandmut bag:postcode ?postcode . \
+			?numaandmut bag:huisnummer "'+item.nummer+'"^^xsd:integer . \
+			?numaandmut bag:huisnummer ?huisnummer . \
+			?adresseerbaarobjectmut a bag:Adresseerbaarobjectmutatie . \
+			?adresseerbaarobjectmut bag:hoofdadres ?nummeraanduiding . \
+			?adresseerbaarobjectmut bag:oppervlakte ?oppervlakte . \
+			?adresseerbaarobjectmut bag:gebruiksdoel ?gebruiksdoel . \
+			?adresseerbaarobjectmut bag:verblijfsobjectstatus ?status . \
+			?adresseerbaarobjectmut bag:geometrie ?geometrie . \
+		}';
+};
+
+queries.allJulianadorpData = 'select * \
+	from <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> \
+	where {?s ?p ?o}';
+;
+
+queries.allMeters = '\
+	prefix ebif: <http://lod.geodan.nl/vocab/ebif#> \
+	prefix locn: <http://www.w3.org/ns/locn#> \
+	construct { \
+	 ?meter a ?type . \
+	 ?meter locn:address ?adres . \
+	 ?adres ?p_adres ?o_adres . \
+	} \
+	from <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> \
+	where { \
+	 ?meter a ?type . \
+	 ?meter locn:address ?adres . \
+	 ?adres ?p_adres ?o_adres . \
+	} \
+'
+
+/*
+queries.allMeters = 'prefix ebif: <http://lod.geodan.nl/vocab/ebif#> \
+	prefix locn: <http://www.w3.org/ns/locn#> \
+	prefix bag: <http://lod.geodan.nl/vocab/bag#> \
+	describe ?meter ?straat ?nummer ?letter ?postcode ?woonplaats \
+	from <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> \
+	where { \
+	?meter a ebif:GasMeter . \
+	?meter locn:address ?adres . \
+	?adres locn:postName ?woonplaats . \
+	?adres locn:thoroughfare ?straat . \
+	?adres locn:postCode ?postcode . \
+	?adres bag:huisnummer ?nummer . \
+	optional {?adres bag:huisletter ?letter .} \
+	} \
+	order by ?woonplaats ?straat ?nummer';
+*/
+queries.geocodedMeters = 'prefix bag: <http://lod.geodan.nl/vocab/bag#> \
+        prefix ebif: <http://lod.geodan.nl/vocab/cerisesg/ebif#>  \
+        prefix locn: <http://www.w3.org/ns/locn#> \
+        select ?meter ?metertype ?woonplaats ?straat ?nummer ?letter ?postcode ?oppervlakte ?gebruiksdoel ?geom \
+        from <http://lod.geodan.nl/basisreg/bag/verblijfsobject/> \
+        from <http://lod.geodan.nl/basisreg/bag/nummeraanduiding/> \
+        from <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> \
+        where { \
+            { \
+                graph <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> { \
+                    ?meter a ebif:GasMeter . \
+                    ?meter rdf:type ?metertype . \
+                    ?meter locn:address ?adres . \
+                    ?adres locn:postCode ?postcode . \
+                    ?adres bag:huisnummer ?nummer . \
+                    ?adres locn:postName ?woonplaats . \
+                    ?adres locn:thoroughfare ?straat . \
+                    optional {?adres bag:huisletter ?letter .} \
+                    filter (bound(?letter)) . \
+                } \
+                graph <http://lod.geodan.nl/basisreg/bag/nummeraanduiding/> { \
+                    ?NumAandMut a bag:Nummeraanduidingmutatie . \
+                    ?NumAandMut bag:lastKnown "true"^^xsd:boolean . \
+                    ?NumAandMut bag:postcode ?postcode . \
+                    ?NumAandMut bag:huisletter ?letter . \
+                    ?NumAandMut bag:huisnummer ?nummer . \
+                    ?NumAandMut bag:nummeraanduiding ?NumAand . \
+                } \
+                graph <http://lod.geodan.nl/basisreg/bag/verblijfsobject/> { \
+                    ?VobjMut a bag:Verblijfsobjectmutatie . \
+                    ?VobjMut bag:lastKnown "true"^^xsd:boolean . \
+                    ?VobjMut bag:hoofdadres ?NumAand . \
+                    ?VobjMut bag:oppervlakte ?oppervlakte . \
+                    ?VobjMut bag:gebruiksdoel ?gebruiksdoel . \
+                    ?VobjMut bag:geometrie ?geom \
+                } \
+            } union { \
+                graph <http://lod.geodan.nl/cerisesg/ebif/julianadorp/> { \
+                    ?meter a ebif:GasMeter . \
+                    ?meter rdf:type ?metertype . \
+                    ?meter locn:address ?adres . \
+                    ?adres locn:postCode ?postcode . \
+                    ?adres bag:huisnummer ?nummer . \
+                    ?adres locn:postName ?woonplaats . \
+                    ?adres locn:thoroughfare ?straat . \
+                    optional {?adres bag:huisletter ?letter} . \
+                    filter (!bound(?letter)) . \
+                } \
+                graph <http://lod.geodan.nl/basisreg/bag/nummeraanduiding/> { \
+                    ?NumAandMut a bag:Nummeraanduidingmutatie . \
+                    ?NumAandMut bag:lastKnown "true"^^xsd:boolean . \
+                    ?NumAandMut bag:postcode ?postcode . \
+                    ?NumAandMut bag:huisnummer ?nummer . \
+                    ?NumAandMut bag:nummeraanduiding ?NumAand . \
+                } \
+                graph <http://lod.geodan.nl/basisreg/bag/verblijfsobject/> { \
+                    ?VobjMut a bag:Verblijfsobjectmutatie . \
+                    ?VobjMut bag:lastKnown "true"^^xsd:boolean . \
+                    ?VobjMut bag:hoofdadres ?NumAand . \
+                    ?VobjMut bag:oppervlakte ?oppervlakte . \
+                    ?VobjMut bag:gebruiksdoel ?gebruiksdoel . \
+                    ?VobjMut bag:geometrie ?geom  \
+                } \
+            } \
+        } \
+        order by ?meter';
+
+</script>

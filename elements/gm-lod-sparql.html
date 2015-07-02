@@ -1,0 +1,47 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-lod-sparql">
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-sparql',
+    properties: {
+    	url: {
+    		type: 'string'
+    	},
+    	query: {
+    		type: 'string',
+    		observer: 'urlChanged'
+    	},
+    	jsonld: {
+    		type: 'Object',
+    		notify: true //needed for notifying outside element
+    	},
+    	data: {
+    		type: 'Array',
+    		value: [],
+    		notify: true
+    	}
+    },
+    urlChanged: function(){
+    	var self = this;
+    	function callback(e,data){
+    		if (e){
+    			console.warn(e);
+    			return;
+    		}
+    		self.jsonld = data;
+    	}
+    	if (this.url && this.query){
+    		var url = encodeURI(this.url) + encodeURIComponent(this.query);
+    		d3.json(url).header('Accept', 'application/ld+json').get(callback);
+    	} else {
+    		console.warn('Missing url or query');
+    	}
+    },
+    ready: function(){
+    	
+    }
+});
+</script>

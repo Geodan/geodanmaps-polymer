@@ -1,0 +1,72 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./gm-lod-sparql.html">
+
+<dom-module id="gm-lod-baglist">
+<template>
+	<gm-lod-sparql id="sparql" url="{{url}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
+	BAG list:<br>
+	<template is="dom-repeat" items="{{records}}">
+		<span>item.id</span><br>
+	</template>
+</template>
+
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-baglist',
+    properties: {
+    	url: {
+    		type: String,
+    		observer: 'urlChanged'
+    	},
+    	jsonld: {
+    		type: Object,
+    		observer: 'jsonldChanged'
+    	},
+    	records: {
+    		type: Array,
+    		value: []
+    	}
+    },
+    ready: function(){
+    	this.url = 'http://lod.geodan.nl/sparql?format="application/json-ld"&query=';
+    	this.query = queries.allBuildings;
+    },
+    urlChanged: function(){
+    	var self = this;
+    	function callback(e,data){
+    		if (e){
+    			console.warn(e);
+    		}
+    		self.jsonld = data["@graph"][0]; //only take the first graph for now
+    	}
+    	
+    	var sparqlEndpoint = 'http://lod.geodan.nl/sparql?format="application/json-ld"&query='; 
+    	var query = "select * from <http://lod.geodan.nl/basisreg/bag/> where {?s ?p ?o}";
+    	var url = encodeURI(sparqlEndpoint) + encodeURIComponent(query);
+    	d3.csv(url, callback);
+    },
+    jsonldChanged: function(){
+        if (this.jsonld) {
+          this.addresses = [];
+          for (var i = 0; i < this.jsonld.length; i++) {
+            var store = this.jsonld[i];
+            if (!store.name || !store.address) {
+              console.log('Error in jsonld - missing name or address field.')
+            }
+            var address = [store.name];
+            var keys = Object.keys(store.address);
+            for (var j = 0, key; key = keys[j]; j++) {
+              // Hack: Looks for "address" fields independent of case.
+              if (key.indexOf('ddress') !== -1) {
+                address.push(store.address[key]);
+              }
+            }
+            this.addresses.push({'address': address.join(',')});
+          }
+        }
+      
+    },
+});
+</script>

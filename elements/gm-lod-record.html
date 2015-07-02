@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-lod-record">
+<style>
+.uri {
+	color: blue
+}
+.typed-literal {
+	color: black
+}
+
+</style>
+<template>
+	<template is="dom-repeat" items="{{record}}" filter="isNotUri">
+		<span class$="{{item.type}}">{{item.value}}</span>
+	</template>
+	<br>
+</template>
+
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-lod-record',
+    properties: {
+    	data: {
+    		type: Object,
+    		observer: 'dataChanged',
+    		value: {}
+    	},
+    	record: {
+    		type: Array,
+    		value: []
+    	}
+    },
+    dataChanged: function(){
+    	this.record = [];
+    	for (var key in this.data){
+    		this.push('record',this.data[key]);
+    	}
+    	 
+    },
+    isNotUri: function(item){
+    	return item.type != 'uri';
+    },
+    ready: function(){
+    	
+    }
+});
+</script>
