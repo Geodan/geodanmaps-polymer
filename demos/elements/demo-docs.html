@@ -1,0 +1,26 @@
+<link rel="import"
+      href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../elements/gm-docs.html">
+<link rel="import" href="../../elements/gm-cas.html">
+<dom-module id="gm-wrapper">
+
+	<template>
+<gm-cas account="{{acount}}"></gm-cas>
+<gm-docs account="{{acount}}"></gm-docs>
+	</template>
+<script>
+  // register a new element called proto-element
+  Polymer({
+    is: "gm-wrapper",
+	properties: {		
+		account: Object
+	},
+    ready: function() {
+		this.account = this.account || {};	
+    }
+  });
+</script>
+
+
+
+</dom-module>
