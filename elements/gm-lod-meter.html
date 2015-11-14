@@ -66,6 +66,7 @@ paper-toast {
 	  </iron-collapse>
 	</paper-material>
 	
+
 </template>
 
 </dom-module>
@@ -79,7 +80,7 @@ Polymer({
     		value: 'http://lod.geodan.nl/sparql?query='
     	},
     	query: {
-    		type: String,
+    		type: String
     	},
     	data: {
     		type: Object,
@@ -89,47 +90,20 @@ Polymer({
     	},
     	jsonld: {
     		type: Object,
-    		//observer: 'jsonldChanged'
-    	},
-    	timeseries: Array
+
+    		observer: 'jsonldChanged'
+    	}
     },
-    observers: [
-    	//'dataChanged(data.lat)'
-    ],
     ready: function(){
     	
     },
-    
-    toggleQuery: function(){
-    	//this.query = queries.getMeterValues(this.data.meter);
-    	this.$.toast.text = queries.getMeterValues(this.data.meters[0]['@id']);
-    	this.$.toast.show();
-    },
-    toggle: function() {
-    	var self = this;
-    	this.$.collapse.toggle();
-    	this.$.chart.loadMeter(this.data.meters[0]['@id']);
-	},
     dataChanged: function(){
-    	var self = this;
+
     	if (this.data && this.data['locn:#postCode']) {
 			var item = {
 				postcode: this.data['locn:#postCode']['@value'],
 				nummer: this.data['bag:huisnummer']
 			};
-			var url = 'http://lod.geodan.nl/sparql?query=';
-			var query = queries.findBag(item);
-			var url = encodeURI(url) + encodeURIComponent(query);
-			var callback = function(e,d){
-				var point = d['@graph'][0]['http://lod.geodan.nl/vocab/bag#geometrie'][0]['@value'];
-				var loc = point.replace('POINT(','').replace(')','').split(' ');
-				self.set('data.lat',loc[1]);
-				self.set('data.lon',loc[0]);
-				self.set('data.bagid',d['@graph'][0]['@id']);
-				self.set('data.gebruiksdoel',d['@graph'][0]['http://lod.geodan.nl/vocab/bag#gebruiksdoel'][0]['@value']);
-				self.set('data.oppervlakte', d['@graph'][0]['http://lod.geodan.nl/vocab/bag#oppervlakte'][0]);
-			};
-			d3.json(url).header('Accept', 'application/ld+json').get(callback);
 			this.query = queries.findBag(item);
 		}
     },

@@ -111,6 +111,11 @@ Polymer({
 		this.lineset = this.styleset.lineset;
 		this.polygonset = this.styleset.polygonset;
 	},
+	_stylesetChanged: function(){
+		this.iconset = this.styleset.iconset;
+		this.lineset = this.styleset.lineset;
+		this.polygonset = this.styleset.polygonset;
+	},
 	_layerChanged: function(){
 		var self = this;
 		this.map = this.layer.map;

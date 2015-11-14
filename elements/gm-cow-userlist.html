@@ -98,6 +98,7 @@ Polymer({
 			self.users = core.activeUsers();
 			self.offlineusers = core.users().filter(function(d){return !d.deleted();}); //TODO: filter for online users
 		});
+
 		//Object.observe(core, function(){
 		//	self.curuser = core.user() ? core.user().data('name') : null;
 		//});
