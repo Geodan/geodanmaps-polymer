@@ -34,15 +34,21 @@ Polymer({
 		account: {
 			type: Object,
 			notify: true,
+			value: function(){return {};},
 			observer: '_accountHandler'
+		},
+		loggedin: {
+			type: Boolean,
+			value: false,
+			notify: true
 		}
 	},
 	_accountHandler: function(acc){
-		this.loggedIn=acc.ID?true:false; 			
+		this.loggedin=acc.ID?true:false; 			
 	},
 	ready: function() {
-		this.loggedIn = false;	
-		this.account = this.account || {};
+		//this.loggedIn = false;	
+		//this.account = this.account || {};
 		
 		this.host = window.location.href.split('?')[0];
 		console.log(this.host)
@@ -50,7 +56,7 @@ Polymer({
   handleResponse: function(d,e) {
     if(d.detail&&d.detail.xhr&&d.detail.xhr.response) {
         this.account = d.detail.xhr.response;
-		this.loggedIn = true;
+		this.loggedin = true;
     }
     
   }
