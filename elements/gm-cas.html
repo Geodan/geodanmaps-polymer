@@ -11,14 +11,14 @@
    verbose="true"
    with-credentials="true"
    on-response="handleResponse"></iron-ajax>
-<template is="dom-if" if="{{!loggedIn}}">
+<template is="dom-if" if="{{!loggedin}}">
 <div style="min-height:60px">
 U bent momenteel niet ingelogd.
 <br/>
 <a href="https://services.geodan.nl/cas/login?service={{host}}">Inloggen</a>
 </div>
 </template>
-<template is="dom-if" if="{{loggedIn}}">
+<template is="dom-if" if="{{loggedin}}">
 Welkom {{account.FirstName}} {{account.LastName}}!
 <br/>
 U bent ingelogd als lid van <strong>{{account.Organisation}}</strong>
@@ -47,9 +47,6 @@ Polymer({
 		this.loggedin=acc.ID?true:false; 			
 	},
 	ready: function() {
-		//this.loggedIn = false;	
-		//this.account = this.account || {};
-		
 		this.host = window.location.href.split('?')[0];
 		console.log(this.host)
   },

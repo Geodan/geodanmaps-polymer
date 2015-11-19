@@ -1,0 +1,65 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+
+<dom-module id="gm-cow-projectlist">
+ <style>
+ paper-item {
+ 	 cursor: pointer;
+ }
+ </style>
+ <template>
+ 
+ <iron-selector attr-for-selected="id" selected="{{selectedproject}}">
+ 	<template is="dom-repeat" items="{{projects}}">
+ 		<paper-item id="{{item._id}}">
+			<paper-item-body two-line>
+				<div>{{item._data.name}}</div>
+				<div secondary>{{updated(item)}}</div>
+			</paper-item-body>
+		</paper-item>
+	</template>
+ </iron-selector>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+	is: 'gm-cow-projectlist',
+	properties: {
+		core: {
+			type: Object,
+			observer: '_coreChanged'
+		},
+		selectedproject: {
+			type: String,
+			notify: true,
+			observer: '_projectChanged'
+		},
+		project: {
+			type: Object,
+			notify: true
+		}
+	},
+	_coreChanged: function(){
+		var core = this.core;
+		var self = this;
+		core.projectStore().loaded.then(function(){
+			self.projects = core.projects().filter(d=>!d.deleted());
+		});
+		core.projectStore().on('datachange', function(){
+			self.projects = core.projects().filter(d=>!d.deleted());
+		});
+	},
+	updated: function(d){
+		return new Date(parseInt(d.updated())).toLocaleString();
+	},
+	_projectChanged: function(p){
+		this.core.project(p.toString());
+		this.project = this.core.project();
+	}
+		
+});
+</script>

@@ -1,5 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 
 
@@ -14,14 +16,14 @@ gm-cas {
 <paper-dialog id='cas'>
 	<gm-cas account="{{account}}" loggedin="{{loggedin}}"></gm-cas>
 </paper-dialog>
-<template is="dom-if" if="{{!loggedin}}">
+<template is="dom-if" if="[[!loggedin]]">
 	<paper-icon-button 
 		icon="social:person-outline" 
 		on-click="toggleLogin"></paper-icon-button>
 </template>
-<template is="dom-if" if="{{loggedin}}">
+<template is="dom-if" if="[[loggedin]]">
 	<paper-icon-button 
-		icon="favorite" 
+		icon="icons:account-circle" 
 		on-click="toggleLogin"></paper-icon-button>
 </template>
 </template>
@@ -30,13 +32,12 @@ gm-cas {
 Polymer({
 	is: "gm-cas-icon",
 	properties: {
-		loggedin: {
-			type: Boolean,
-			value: false
+		account: {
+			type: Object,
+			notify: true
 		}
 	},
 	ready: function() {
-		
 	},
 	toggleLogin: function(){
 		this.$.cas.toggle();

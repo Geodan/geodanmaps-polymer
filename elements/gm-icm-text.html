@@ -1,0 +1,99 @@
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../elements/gm-icm-textbox.html">
+
+<dom-module id="gm-icm-text">
+<style>
+	.view {
+		background: white;
+		margin-bottom: 10px;
+		padding: 20px;
+		
+		font-size: 16pt;
+		cursor: pointer;
+	}
+	.icon {
+		width: 24px;
+		height: 24px;
+		color: orange;
+	}
+	
+	
+</style>
+<template>
+<template is="dom-repeat" items="{{data.content}}" as="view">
+	<paper-material class='view' on-click="toggle" elevation="3">
+		{{view.title}}
+		<template is="dom-if" if="[[view.recentlyChanged]]">
+			<iron-icon icon="av:new-releases" class="icon"></iron-icon>
+		</template>
+	</paper-material>
+	<iron-collapse class='collapse-content' allowOverflow>
+		<template is="dom-repeat" items="{{view.subview}}" as="subview">
+			<gm-icm-textbox subview="{{subview}}" viewid="{{view.view}}" core="{{core}}" on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
+		</template>
+	</iron-collapse>
+</template>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-icm-text',
+	properties: {
+		reftime: {
+			value: function(){return new Date().getTime();}
+		},
+		//recentlyChanged: false,
+		//projectid: null
+	},
+	observers: [
+		//'switchProject(core._projectid)'
+	],
+	ready: function(){
+		
+	},
+	domReady: function(){
+		var self = this;
+		this.project = this.core.project();
+		/*
+		var update = function(){
+			var self = this;
+			var reftime = self.core.project().reftime; //How to decide on reftime?
+			//Get the number of new items since last opening the screen
+			var items = this.core.project().items().filter(function(d){
+				return d.data('type') == 'text' 
+					&& d.data('team') == team.id 
+					&& d.updated() > reftime;
+			});
+			this.newitems = items.length;
+		}
+		this.project.itemStore().on('datachange', update);
+		*/
+	},
+	toggle: function(e, b,c){
+		e.currentTarget.nextElementSibling.toggle();
+		/*
+		this.core.project().reftime = new Date().getTime();
+		
+		//TODO: aaaarg.... make some nice code please
+		this.teams.forEach(function(d){
+			if (d.id == parseInt(val) + 1)
+				d.recentlyChanged = false;
+		});
+		*/
+	},
+	updateme: function(a,b,c){
+		c.view.recentlyChanged = true;
+	}
+});
+</script>
+
+</polymer-element>

@@ -23,7 +23,7 @@
     "polymer": "Polymer/polymer#~1",
     "paper-elements": "PolymerElements/paper-elements#~1",
     "iron-elements": "PolymerElements/iron-elements#~1",
-    "cow": "~2",
+    "cow": "~2.0",
     "d3-plugins": "*",
     "underscore": "~1.8",
     "terraformer": "https://github.com/Esri/Terraformer.git#~1.0",

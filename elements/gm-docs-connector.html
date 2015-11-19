@@ -1,20 +1,10 @@
 <link rel="import"
       href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
 
-<dom-module id="gm-docs">
+<dom-module id="gm-docs-connector">
 
 	<template>
-	<iron-ajax
-		auto
-		url="{{deleteUrl}}"
-		id="deleteRequest"
-		method="delete"
-		verbose="true"
-		handle-as="json"
-		with-credentials="true"
-		></iron-ajax>
 		<iron-ajax
 		auto
 		url="{{listUrl}}"
@@ -24,19 +14,11 @@
 		with-credentials="true"
 		on-response="handleList"
 		on-error="handleError"></iron-ajax>
-	
-	<table>
-	<tr><th>service</th><th>name</th><th>public</th><th>url</th><th>delete</th></tr>
-	<template is="dom-repeat" items="{{documents}}">
-	<tr><td>{{item.service}}</td><td>{{item.name}}</td><td>{{item.public}}</td><td><a href="{{makeUrl(item)}}">link</a></td><td on-click="deleteItem"><paper-button raised>delete</paper-button></td></tr>
-	</template>
-	</table>
-	<p>{{error}}</p>
 	</template>
 <script>
   // register a new element called proto-element
   Polymer({
-    is: "gm-docs",
+    is: "gm-docs-connector",
 	properties: {
 		account: {
 			type: Object,
@@ -66,12 +48,6 @@
 		else {
 			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
 		}
-	},
-	deleteItem: function(d){
-		var item = d.model.item;
-		this.deleteUrl = this.baseUrl + "/document/api/" + this.account.OrganisationCode +"/"+ item.service +"/"+ item.name;
-		this.listUrl = this.baseUrl + "/document/api/"+ this.account.OrganisationCode + "/?stamp=" + new Date().getTime();
-		
 	},
     ready: function() {
 		this.account = this.account || {};		

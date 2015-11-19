@@ -1,0 +1,158 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-icon-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+
+<dom-module id="gm-icm-textbox">
+<style>
+	#textview {
+		background: white;
+		color: black;
+		padding: 20px;
+		font-size: 10pt;
+	}
+	.block {
+		padding: 10px;
+		background: white;
+		color: black;
+		font-size: 12pt;
+		margin: 10px;
+	}
+    .smallicon {
+    	width: 16px;
+    	height: 16px;
+    	color: orange;
+    }
+	
+</style>
+<template>
+	<paper-material class='block' elevation='2'>
+			<paper-item on-click='toggle' >
+				<paper-item-body two-line>{{subview.title}}
+				<template is="dom-if" if="[[itemtime]]">
+					<small secondary>Last edit at {{itemtime}} by: {{editor}}</small>
+				</template>
+				</paper-item-body>
+			</paper-item>
+			<iron-collapse class='collapse-content'>
+				<div id="textview" inner-h-t-m-l="{{text}}"></div>
+			</iron-collapse>
+	</paper-material>
+<!--
+	<paper-material class='header' on-mouseover="setSeen" elevation="1">
+		<div>{{subview.title}}</div>
+		<div>
+			<template is="dom-if" if="[[itemtime]]">
+				<small>Last edit at {{itemtime}} by: {{editor}}</small>
+			</template>
+		</div>
+	</paper-material>
+	<div id="textview" inner-h-t-m-l="{{text}}"></div>
+-->
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-icm-textbox',
+	properties: {
+		text: {
+			type: String,
+			value: ''
+		},
+		deltas: {
+			type: Array,
+			//observer: 'deltasChanged'
+		},
+		subview: {
+			type: Object
+		},
+		viewid: {
+			type: Number
+		}
+	},
+	observers: [
+		'_subviewChanged(core,viewid)'
+	],
+	toggle: function(e, b,c){
+		e.currentTarget.nextElementSibling.toggle();
+	},
+	_subviewChanged: function(){
+		var self = this;
+		var core = this.core;
+		//Get items with text
+		var items = core.project().items().filter(function(d){
+			return d.data('beeld') != undefined
+				&& d.data('beeld') == self.viewid
+				&& d.data('beeldonderdeel') == self.subview.id
+		});
+		//Fill DOM with text
+		if (items.length > 1){
+			console.warn('More than 1 item','view: ' + self.viewid + ' subview: ' + self.subview.id);
+		}
+		if (items.length > 0){
+			this.item = items[0];
+			this.deltas = items[0].deltas();
+			this.recentlyChanged = true;
+			this.text = items[0].data('beeldcontent');
+			this.itemtime = new Date(this.item.updated()).toLocaleTimeString();
+			//TODO: there should always be a delta, or is the item not synced yet? find out why there can be no delta here
+			if (this.deltas.length > 0){
+				//TODO: make cleaner user check
+				var userid = this.deltas[this.deltas.length-1].userid;
+				if (userid){
+					this.editor = core.users(userid).data('name');
+				}
+				else {
+					this.editor = '';
+				}
+			}
+		}
+		else {
+			//No data for this subview
+		}
+	},
+	domReady: function(){
+		var self = this;
+		this.deltas = [];
+		this.item = {};
+		this.core.project().itemStore().on('datachange', function(){
+			self._subviewChanged();
+		})
+	},
+	setSeen: function(){
+		this.recentlyChanged = false;
+	},
+	deltasChanged: function(){
+		var core = this.core;
+		if (this.item._id){
+			this.text = this.item.data('text');
+			this.$.a1.update(this.$.text);
+			this.itemtime = new Date(this.item.updated()).toLocaleTimeString();
+			if (this.deltas.length > 0){
+				//TODO: make cleaner user check
+				var userid = this.deltas[this.deltas.length-1].userid;
+				if (userid){
+					this.editor = core.users(userid).data('name');
+				}
+				else {
+					this.editor = '';
+				}
+				if (userid != core.user().id()){
+					this.recentlyChanged = true;
+					this.fire('said-hello');
+				}
+			}
+		}
+		//this.deltas = this.item.deltas();
+	}
+});
+</script>
