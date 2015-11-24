@@ -1,73 +1,22 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
-<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 
 <dom-module id="gm-cow-userlist">
  <style>
- 	.container {
-		-webkit-box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		-moz-box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		background: white;
-	}
-	iron-collapse {
-		background: rgba(225,225,230,0.4);
-		-webkit-box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		-moz-box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		margin-left: 1px;
-		margin-right: 1px;
-	}
-	.collapse-content {
- 		max-width: 200px;
- 	}
- 	paper-input {
- 		max-width: 200px;
- 	}
- 	.user {
-		border-top: solid 1px rgb(200,200,200);
-		border-bottom: solid 1px white;
-		background: white;
-	}
  </style>
  <template>
- <div class='container'>
- 	<h3>Current user:</h3>
-    <p>{{curuser}}</p>
-    <paper-icon-item class='user' on-click='toggle' >
-    	<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-		<paper-item-body>Active users</paper-item-body>
-	</paper-icon-item>
-    <iron-collapse class='collapse-content'>
-		<template is="dom-repeat" items="{{users}}">
-			<div class='user' on-click="toggle">{{item._id}}</div>
-			<iron-collapse>
-				<div>{{item._id}}</div>
-				<div>{{updated(item)}}</div>
-			</iron-collapse>
-		</template>
-    </iron-collapse>
-    <br>
-    <paper-input value="{{filterText::input}}"></paper-input>
-    <paper-icon-item class='user' on-click='toggle' >
-    	<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-		<paper-item-body>All users</paper-item-body>
-	</paper-icon-item>
-	<iron-collapse class='collapse-content'>
-		<iron-selector id="allusers">
-		<template id="userlist" is="dom-repeat" items="{{offlineusers}}" filter="findUser" >
-			<div class='user' on-click="toggle">{{item._id}}</div>
-			<iron-collapse>
-				<div>{{item._id}}</div>
-				<div>{{updated(item)}}</div>
-			</iron-collapse>
-		</template>
-		</iron-selector>
-    </iron-collapse>
-    </div>
+ <paper-listbox>
+ 	<template is="dom-repeat" items="{{users}}">
+ 		<paper-item>
+			<paper-item-body two-line>
+				<div>{{item._data.name}}</div>
+				<div secondary>{{updated(item)}}</div>
+			</paper-item-body>
+		</paper-item>
+	</template>
+ </paper-listbox>
  </template>
  
 </dom-module>
@@ -79,34 +28,20 @@ Polymer({
 		core: {
 			type: Object,
 			observer: '_coreChanged'
-		},
-		filterText: {
-          value: '',
-          observer: 'refreshFilter'          
-        }
-	},
-	refreshFilter: function(){
-		this.$.userlist.render();
-	},
-	findUser: function(item) {
-		return item._id.match(new RegExp(this.filterText, 'i'));
+		}
 	},
 	_coreChanged: function(){
 		var core = this.core;
 		var self = this;
+		core.userStore().loaded.then(function(){
+			self.users = core.users().filter(d=>!d.deleted());
+		});
 		core.userStore().on('datachange', function(){
-			self.users = core.activeUsers();
-			self.offlineusers = core.users().filter(function(d){return !d.deleted();}); //TODO: filter for online users
+			self.users = core.users().filter(d=>!d.deleted());
 		});
-		Object.observe(core, function(){
-			self.curuser = core.user() ? core.user().data('name') : null;
-		});
-	},
-	toggle: function(e){
-		e.currentTarget.nextElementSibling.toggle();
 	},
 	updated: function(d){
-		return new Date(d.updated()).toLocaleTimeString();
+		return new Date(parseInt(d.updated())).toLocaleString();
 	}
 		
 });

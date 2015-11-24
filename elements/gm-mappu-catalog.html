@@ -15,8 +15,8 @@
 	  }
  </style>
  <template>
- 	<gm-ogcparser id="ogcparser" title="{{title}}" layers="{{catlayers}}"></gm-ogcparser>
- 	<h3>{{title}}</h3>
+ 	<gm-ogcparser id="ogcparser" title="{{title}}" layers="{{catlayers}}" url="{{url}}"></gm-ogcparser>
+ 	<h4>{{title}}</h4>
  	 <template is="dom-repeat" items="{{catlayers}}">
  	 	<paper-item class='layer' on-click='toggle' >
  	 		<paper-icon-button icon="menu" on-click="addLayer"></paper-icon-button>
@@ -37,6 +37,10 @@ Polymer({
     properties: {
     	map: {
     		type: Object
+    	},
+    	url: {
+    		type: String,
+    		value: '/service/osgis_geoserver/wms'
     	},
     	catlayers: {
     	  type: Array,

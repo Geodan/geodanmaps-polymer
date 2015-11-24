@@ -1,0 +1,291 @@
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/fade-in-animation.html">
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-sketch.html">
+<link rel="import" href="../../elements/gm-ogcparser.html">
+
+<dom-module id="eagle-map">
+<style>
+
+	#map {
+		width: 100%;
+		height: 100%;
+	}
+	#geosearch {
+		position: absolute;
+		top: 40;
+		right: 10;
+		width: auto;
+	}
+	#catalog_button {
+		position: absolute;
+		top: 10;
+		right: 100;
+		height: auto;
+		width: auto;
+		z-index: 10;
+	}
+
+    #dialog {
+    	position: absolute;
+    	left:100px;
+    	top: 0px;
+    	width: 300px;
+    	height: auto;
+    }
+    #layermanager {
+    	position: absolute;
+    	top: 0px;
+    	left: 0px;
+    }
+    #sketch {
+    	position: absolute;
+    	left: 10px;
+    	bottom: 70px;
+    	min-width: 200px;
+    }
+  
+</style>
+<template>
+	<gm-mappu-map id="mapelement"></gm-mappu-map>
+	
+	<gm-mappu-sketch id="sketch" layer="{{sketchlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
+	<paper-dialog id="layermanager"
+		entry-animation="fade-in-animation"
+        exit-animation="fade-out-animation">
+        <h2>Layers</h2>
+  		<gm-mappu-layermanager map="{{map}}"></gm-mappu-layermanager>
+	</paper-dialog>
+	<!--
+	<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+	
+	<paper-fab icon="add" id="catalog_button" on-click="toggleCatalog">plain dialog</paper-fab>
+	<paper-dialog id='dialog'>
+		<h2>Layer catalog</h2>
+		<paper-dialog-scrollable>
+			<gm-mappu-catalog id="catalog" layers="{{catlayers}}" map="{{map}}"></gm-mappu-catalog>
+		</paper-dialog-scrollable>
+	</paper-dialog>
+	-->
+</template>
+</dom-module>
+
+<script>
+var defaultevents = [{
+	event:'click',
+	action: function(d){
+		d3.event.stopPropagation();
+		var textmenu = function(e){
+			d3.event.stopPropagation();
+			d3.select(self.map.mapdiv).selectAll('.menu').remove();
+			d3.select(self.map.mapdiv).append('core-overlay').classed('menu', true).classed('dialog', true)
+				.attr('opened','true')
+				.style('position', 'absolute')
+				.style('left', location[0] + 'px')
+				.style('top', location[1] + 'px')
+				.append('textarea')
+				.on('click', function(){
+						d3.event.stopPropagation();
+				})
+				.on('blur', function(){
+					d.properties.name = this.value;
+					//TODO: Okay, now it should be saved...
+					//self.fire('changeFeature', d);
+				})
+				.html(d.properties.name);
+			
+		}
+		var populator = function(e){
+			var populatorCallback = function(x){
+				var aantal = x.data.aantal_won;
+				d.properties.name = "aantal inwoners: " + aantal;
+				//self.fire('changeFeature', d);
+			}
+
+			d3.event.stopPropagation();
+			d3.select(self.map.mapdiv).selectAll('.menu').remove();
+			//Prepare geometry
+			var toproj = proj4.Proj('+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs ');
+			var geojson = JSON.parse(JSON.stringify(d)); //Clone object
+			Terraformer.Tools.applyConverter(geojson, function(coordinate){
+				return proj4(toproj,coordinate);
+			});
+			var geom = Terraformer.WKT.convert(geojson.geometry);
+			var url = '/sites/geofort/icm/data/populator.php';
+			d3.json(url+'?geom='+JSON.stringify(geojson.geometry),populatorCallback);
+		}
+		var offset = 30;
+		d3.select(self.map.mapdiv).selectAll('.menu').remove();
+		var location = [d3.event.offsetX -15, d3.event.offsetY -15];
+		//edit
+		d3.select(self.map.mapdiv).append('paper-fab')
+			.classed('menu', true)
+			.on('click', function(){
+				d3.select(self.map.mapdiv).selectAll('.menu').remove();
+				self.sketch.edit(d);
+			})
+			.attr('icon', 'create')
+			.attr('mini', 'true')
+			.style('position', 'absolute')
+			.style('left', location[0] + 'px')
+			.style('top', location[1] + 'px')
+			.style('background', 'orange')
+			.transition()
+			.style('left', location[0] + offset + 'px')
+			.style('top', location[1] + offset + 'px')
+		//Remove	
+		d3.select(self.map.mapdiv).append('paper-fab')
+			.classed('menu', true)
+			.on('click', function(){
+				self.layer.removeFeature(d);
+			})
+			.attr('icon', 'content-cut')
+			.attr('mini', 'true')
+			.style('position', 'absolute')
+			.style('left', location[0] + 'px')
+			.style('top', location[1] + 'px')
+			.style('background', 'red')
+			.transition()
+			.style('left', location[0] + offset + 'px')
+			.style('top', location[1] - offset + 'px');
+		//textedit
+		d3.select(self.map.mapdiv).append('paper-fab')
+			.classed('menu', true)
+			.on('click',textmenu)
+			.attr('icon', 'editor:format-size')
+			.attr('mini', 'true')
+			.style('position', 'absolute')
+			.style('left', location[0] + 'px')
+			.style('top', location[1] + 'px')
+			.style('background', 'green')
+			.transition()
+			.style('left', location[0] - offset + 'px')
+			.style('top', location[1] - offset + 'px');
+		//populator
+		if (d.geometry.type == 'Polygon'){
+		d3.select(self.map.mapdiv).append('paper-fab')
+			.classed('menu', true)
+			.on('click',populator)
+			.attr('icon', 'social:people')
+			.attr('mini', 'true')
+			.style('position', 'absolute')
+			.style('left', location[0] + 'px')
+			.style('top', location[1] + 'px')
+			.style('background', 'steelblue')
+			.transition()
+			.style('left', location[0] - offset + 'px')
+			.style('top', location[1] + offset + 'px');
+		}
+		d3.select(self.map.mapdiv).on('click', function(){
+			d3.select(self.map.mapdiv).selectAll('.menu').remove();
+		});
+	}
+}]; 
+Polymer({
+    is: 'eagle-map',
+    properties: {
+    	map: {
+    		type: Object,
+    		notify: true
+    	}
+    	//sketchlayer: function(){return {}},
+    },
+    ready:function(){
+    	//MAP
+    	this.map = this.$.mapelement.map;
+    	var testlayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
+            ogc_type: 'tms',
+            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q',
+            //url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 var testlayer2 = new d3.mappu.RasterLayer('Esri layer',  {
+            ogc_type: 'esri',
+            url: 'http://egis3.lacounty.gov/arcgis/rest/services/Geography/simpleGeo/MapServer/export',
+            visible: true
+		 })
+		 .addTo(this.map);
+    	this.sketchlayer = new d3.mappu.VectorLayer('Sketch',{
+    		reproject: true,
+			style: {
+				stroke: 'blue',
+				fill: 'blue'
+			},
+			labelfield: 'name',
+			events: window.defaultevents
+    	}).addTo(this.map);
+    	
+    	this.styleset = {
+    		iconset:[
+         {"cat":"none", "text":"ZW", "url":"/sites/eagle/assets/icons/mapicons/direction_downleft.png"}
+        ,{"cat":"none", "text":"Z","url":"/sites/eagle/assets/icons/mapicons/direction_down.png"}
+        ,{"cat":"none", "text":"ZO","url":"/sites/eagle/assets/icons/mapicons/direction_downright.png"}
+        ,{"cat":"none", "text":"O","url":"/sites/eagle/assets/icons/mapicons/direction_left.png"}
+        ,{"cat":"none", "text":"W","url":"/sites/eagle/assets/icons/mapicons/direction_right.png"}
+        ,{"cat":"none", "text":"NW","url":"/sites/eagle/assets/icons/mapicons/direction_upleft.png"}
+        ,{"cat":"none", "text":"N","url":"/sites/eagle/assets/icons/mapicons/direction_up.png"}
+        ,{"cat":"none", "text":"NO","url":"/sites/eagle/assets/icons/mapicons/direction_upright.png"}
+        ,{"cat":"none", "text":"Afgesloten","url":"/sites/eagle/assets/icons/mapicons/accesdenied.png"}
+        ,{"cat":"none", "text":"Let op!","url":"/sites/eagle/assets/icons/mapicons/caution.png"}
+        ,{"cat":"none", "text":"Groepsvervoer","url":"/sites/eagle/assets/icons/mapicons/bus.png"}
+        ,{"cat":"none", "text":"Parkeerplaats","url":"/sites/eagle/assets/icons/mapicons/parkinggarage.png"}
+        ,{"cat":"none", "text":"EHBO","url":"/sites/eagle/assets/icons/mapicons/firstaid.png"}
+        ,{"cat":"none", "text":"Noodtelefoon","url":"/sites/eagle/assets/icons/mapicons/emergencyphone.png"}
+        ,{"cat":"none", "text":"Ambulancepost","url":"/sites/eagle/assets/icons/mapicons/ambulance.png"}
+        ,{"cat":"none", "text":"Ziekenhuis","url":"/sites/eagle/assets/icons/mapicons/hospital-building.png"}
+        ,{"cat":"none", "text":"Apotheek","url":"/sites/eagle/assets/icons/mapicons/medicine.png"}
+        ,{"cat":"none", "text":"School","url":"/sites/eagle/assets/icons/mapicons/school.png"}
+        ,{"cat":"none", "text":"Zaal","url":"/sites/eagle/assets/icons/mapicons/communitycentre.png"}
+        ,{"cat":"none", "text":"Verzorgingstehuis","url":"/sites/eagle/assets/icons/mapicons/seniorsite.png"}
+        ,{"cat":"none", "text":"none","url":"/sites/eagle/assets/icons/mapicons/family.png"}
+        ,{"cat":"none", "text":"Kinderopvang","url":"/sites/eagle/assets/icons/mapicons/daycare.png"}
+        ,{"cat":"none", "text":"Calamiteit","url":"/sites/eagle/assets/icons/mapicons/blast.png"}
+        ,{"cat":"none", "text":"Dodelijke slachtoffers","url":"/sites/eagle/assets/icons/mapicons/skull.png"}
+        ,{"cat":"none", "text":"Schade aan huis","url":"/sites/eagle/assets/icons/mapicons/earthquake-3.png"}
+        ,{"cat":"none", "text":"Stroomuitval","url":"/sites/eagle/assets/icons/mapicons/poweroutage.png"}
+        ,{"cat":"none", "text":"Brand","url":"/sites/eagle/assets/icons/mapicons/fire.png"}
+        ,{"cat":"none", "text":"Overstroming","url":"/sites/eagle/assets/icons/mapicons/flood.png"}
+        ,{"cat":"none", "text":"Radio zender","url":"/sites/eagle/assets/icons/mapicons/radio-station-2.png"}
+        ,{"cat":"none", "text":"Verzamelpunt","url":"/sites/eagle/assets/icons/mapicons/regroup.png"}
+        ,{"cat":"none", "text":"Netwerk","url":"/sites/eagle/assets/icons/mapicons/wifi.png"}
+        ,{"cat":"none", "text":"Groep mensen","url":"/sites/eagle/assets/icons/mapicons/group-2.png"}
+        ,{"cat":"none", "text":"Brandweer","url":"/sites/eagle/assets/icons/mapicons/firemen.png"}
+        ,{"cat":"none", "text":"Politie","url":"/sites/eagle/assets/icons/mapicons/police.png"}
+        ,{"cat":"none", "text":"Camera","url":"/sites/eagle/assets/icons/mapicons/cctv.png"}
+        ,{"cat":"none", "text":"Gemeentehuis","url":"/sites/eagle/assets/icons/mapicons/moderntower.png"}
+        ,{"cat":"none", "text":"Commentaar","url":"/sites/eagle/assets/icons/mapicons/comment-map-icon.png"}
+        ,{"cat":"none", "text":"Happy","url":"/sites/eagle/assets/icons/mapicons/smiley_happy.png"}
+        ],
+        lineset:[
+        	{"stroke":"blue","fill":"none","stroke-width":"4px" },
+    		{"stroke":"red","fill":"none"},
+    		{"stroke":"green","fill":"none"},
+    		{"stroke":"orange","fill":"none"},
+    		{"stroke":"yellow","fill":"none"},
+    		{"stroke":"purple","fill":"none"},
+    		{"stroke":"violet","fill":"none"}
+        ],
+    	polygonset: [
+    		{"stroke":"blue","fill":"blue"},
+    		{"stroke":"red","fill":"red"},
+    		{"stroke":"green","fill":"green"},
+    		{"stroke":"orange","fill":"orange"},
+    		{"stroke":"yellow","fill":"yellow"},
+    		{"stroke":"purple","fill":"purple"},
+    		{"stroke":"violet","fill":"violet"}
+    	]};
+    },
+    toggleCatalog: function(){
+    	this.$.dialog.toggle();
+    },
+    toggleLayers: function(){
+    	this.$.layermanager.toggle();
+    }
+});
+</script>

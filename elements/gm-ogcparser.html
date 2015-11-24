@@ -25,10 +25,7 @@
 Polymer({
     is: 'gm-ogcparser',
     properties: {
-    	url: {
-    		type: String,
-    		value: '/service/osgis_geoserver/wms',
-    	},
+    	url: String,
     	layers: {
     		type: Array,
     		value: function() { return []; },
@@ -59,7 +56,7 @@ Polymer({
  	  var self = this;
  	  layers.forEach(function(l){
 	 	try {
-	 		 var legendUrl = l.style[0] ? l.style[0].legendURL[0] ? l.style[0].legendURL[0].onlineResource.href: null: null;
+	 		 var legendUrl = l.style ? l.style[0] ? l.style[0].legendURL[0] ? l.style[0].legendURL[0].onlineResource.href: null: null: null;
 	 	}
 	 	catch(err){
 	 		var legendUrl = null;

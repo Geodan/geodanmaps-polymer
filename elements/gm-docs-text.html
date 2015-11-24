@@ -1,0 +1,74 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="gm-docs-text">
+	<template>
+		<iron-ajax
+		auto
+		url="{{documentUrl}}"
+		id="getDocument"		
+		verbose="true"
+		handle-as="json"
+		with-credentials="true"
+		on-response="handleDocument"
+		on-error="handleError"></iron-ajax>
+	</template>
+<script>
+  // register a new element called proto-element
+  Polymer({
+    is: "gm-docs-text",
+	properties: {
+		account: {
+			type: Object,
+			
+		},
+		projectid: {
+			type: String,
+		},
+		data: {
+			type: Object,
+			notify: true
+		}
+	},
+	observers: [
+		'_urlHandler(projectid, account)'
+	],
+	_urlHandler: function(id,acc){
+		if(acc.ID) {
+			//https://services.geodan.nl/document/api/data/GEOF7646XXXX/text/1433231122171
+			this.documentUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/text/" + id;
+		}
+	},
+    // add a callback to the element's prototype
+	handleDocument: function(d){		
+		this.document =d.detail.xhr.response;
+		this.data = JSON.parse(this.document[0].data);
+		this.error = '';
+	},	
+	handleError: function(e){
+		if(e.detail.request.xhr.status==404) {
+			this.error = "Er zijn geen documenten gevonden"
+		}
+	},
+	/*
+	makeUrl: function(item){
+		if(item.public) {
+			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			return url 
+		}
+		else {
+			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+		}
+	},
+	*/
+    ready: function() {
+		this.account = this.account || {};		
+		this.baseUrl = "https://services.geodan.nl";
+    }
+  });
+</script>
+
+
+
+</dom-module>

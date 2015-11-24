@@ -1,0 +1,145 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="gm-icm-textbox">
+<style>
+	#textview {
+		background: white;
+		color: black;
+		padding: 0px;
+		margin: 10px;
+		font-size: 10pt;
+	}
+    .smallicon {
+    	width: 16px;
+    	height: 16px;
+    	color: orange;
+    }
+	
+</style>
+<template>
+		<paper-item>
+			<paper-item-body two-line>{{subview.title}}
+			<template is="dom-if" if="[[itemtime]]">
+				<small secondary>Last edit at {{itemtime}} by: {{editor}}</small>
+			</template>
+			</paper-item-body>
+		</paper-item>
+		<template is="dom-if" if="[[editmode]]">
+			<paper-textarea value="{{text}}"></paper-textarea>
+			<paper-button class="custom" on-click="_cancel">
+				  <core-icon icon="clear"></core-icon>Cancel
+			</paper-button>
+			<paper-button class="colored custom" on-click="_save">
+				  <core-icon icon="check"></core-icon>Save
+			</paper-button>
+		</template>
+		<template is="dom-if" if="[[!editmode]]">
+			<div id="textview" on-click="_startEdit" inner-h-t-m-l="{{text}}"></div>
+		</template>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-icm-textbox',
+	properties: {
+		text: {
+			type: String,
+			value: ''
+		},
+		deltas: {
+			type: Array,
+			//observer: 'deltasChanged'
+		},
+		subview: {
+			type: Object
+		},
+		viewid: {
+			type: Number
+		},
+		editmode: {
+			type: Boolean,
+			value: false
+		},
+		project: {
+			type: String,
+			observer: '_projectChanged'
+		}
+	},
+	observers: [
+		'_subviewChanged(project,subview)'
+	],
+	_subviewChanged: function(){
+		var self = this;
+		var core = this.core;
+		this.item = this.subview.item;
+		if (this.item){
+			//this.item = items[0];
+			this.deltas = this.item.deltas();
+			this.recentlyChanged = true;
+			this.text = this.item.data('beeldcontent');
+			this.itemtime = new Date(this.item.updated()).toLocaleTimeString();
+			//TODO: there should always be a delta, or is the item not synced yet? find out why there can be no delta here
+			if (this.deltas.length > 0){
+				//TODO: make cleaner user check
+				var userid = this.deltas[this.deltas.length-1].userid;
+				if (userid){
+					//this.editor = core.users(userid).data('name');
+				}
+				else {
+					this.editor = '';
+				}
+			}
+		}
+		else {
+			this.item = null;
+			this.deltas = null;
+			this.recentlyChanged = null;
+			this.text = '';
+			this.itemtime = null;
+			this.editor = null;
+		}
+	},
+	domReady: function(){
+		var self = this;
+		this.deltas = [];
+		this.item = {};
+		
+	},
+	_startEdit: function(){
+		this.editmode = true;
+	},
+	_save: function(){
+		this.editmode = false;
+		if (!this.item){
+			this.item = this.project.items({})
+				.data('beeld',this.viewid)
+				.data('beeldonderdeel',this.subview.id);
+		}
+		this.item.data('beeldcontent',this.text).sync();//TODO: add sync
+	},
+	_cancel: function(){
+		this.editmode = false;
+		this.text = this.item?this.item.data('beeldcontent'):null;
+	},
+	_projectChanged: function(){
+		var self = this;
+		this.project.itemStore().on('datachange', function(){
+			self._subviewChanged();
+		});
+	}
+});
+</script>

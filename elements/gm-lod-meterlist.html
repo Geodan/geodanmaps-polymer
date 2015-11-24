@@ -3,12 +3,14 @@
 <link rel="import" href="./gm-lod-meter.html">
 
 <dom-module id="gm-lod-meterlist">
+
 <template>
 	<gm-lod-sparql id="sparql" url="{{url}}" query="{{query}}" jsonld="{{jsonld}}"></gm-lod-sparql>
 	<h2>Meterlist:</h2>
 	<span>{{title}}</span>
 	<span>{{timespan}}</span>
 	<template is="dom-repeat" items="{{records}}" filter="hasAddress">
+
 		<gm-lod-meter data="{{item}}"></gm-lod-record><br>
 	</template>
 </template>
@@ -28,6 +30,7 @@ Polymer({
     	},
     	records: {
     		type: Array,
+
     		value: [],
     		notify: true
     	}
@@ -35,6 +38,7 @@ Polymer({
     ready: function(){
     	this.url = 'http://lod.geodan.nl/sparql?query=';
     	this.query = queries.allMeters;
+
     },
     jsonldChanged: function(){
     	var context = {
@@ -46,6 +50,7 @@ Polymer({
     	};
     	var self = this;
     	var data = jsonld.compact(this.jsonld, context, function(err, compacted) {
+
 			var meters = compacted['@graph'].filter(function(d){return d['@type'].indexOf("ebif:GasMeter") > -1})
 			meters.forEach(function(d){
 				var adreslink = d['locn:#address'];

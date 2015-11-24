@@ -1,4 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
 
 <!--
 Connects to a LOD dataset and 
@@ -6,41 +8,67 @@ Connects to a LOD dataset and
 -->
 
 <dom-module id="gm-lod-connector">
- <style>
- </style>
  <template>
- <content>
- </content>
+ Conn: <span>{{output.length}}</span>
+ <iron-ajax
+ 	id="request"
+ 	verbose
+ 	handle-as="text"
+    url="{{uri}}"
+    headers='{"Accept": "application/ld+json"}'
+    on-error="error"
+    on-response="handleResponse"
+    debounce-duration="300"></iron-ajax>
  </template>
- 
 </dom-module>
 
 <script>
 Polymer({
     is: 'gm-lod-connector',
     properties: {
-    	url: {
-    		type: 'string',
-    		observer: 'urlChanged'
+    	uri: {
+    		type: String,
+    		observer: 'uriChanged'
     	},
     	output: {
-    		type: 'array',
+    		type: Array,
+    		value: function(){return [];},
     		notify: true //needed for notifying outside element
     	}
     },
-    urlChanged: function(){
+    uriChanged: function(){
+    	if (this.uri){
+    		this.$.request.generateRequest();
+    	}
+    },
+    handleResponse: function(d,e){
     	var self = this;
-    	function callback(e,data){
-    		if (e){
+    	var response = d.detail.response;
+    	var jsonldparser = jsonld.promises;
+    	var promise;
+    	try {
+    		var jsonresult = JSON.parse(response);
+    		promise = new Promise(function(resolve, reject){
+    			resolve(jsonresult);
+    		});
+    	}
+    	catch(e){
+    		try {
+    			promise = jsonldparser.fromRDF(response,{format: 'application/nquads'});
+    		}
+    		catch(e){
     			console.warn(e);
     		}
-    		var graph = data["@graph"][0]; //only take the first graph for now
-   			self.output = graph["http://www.w3.org/ns/dcat#dataset"];
-    		//console.log(self.output);
     	}
-    	d3.json(this.url)
-    		.header('Accept','application/ld+json')
-    		.get(callback);
+    	promise.then(function(result){
+			return jsonldparser.flatten(result);
+		})
+		.then(function(result){
+			self.output = result;
+		});
+    },
+    error: function(e){
+    	console.warn(e.detail.xhr.statustext);
     },
     ready: function(){
     	

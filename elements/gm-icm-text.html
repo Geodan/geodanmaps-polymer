@@ -1,0 +1,112 @@
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../elements/gm-icm-textbox.html">
+
+<dom-module id="gm-icm-text">
+<style>
+	.view {
+		background: white;
+		margin-bottom: 0px;
+		padding: 15px;
+		font-size: 16pt;
+		cursor: pointer;
+	}
+	.icon {
+		width: 24px;
+		height: 24px;
+		color: orange;
+	}
+	
+	
+</style>
+<template>
+<template is="dom-repeat" items="{{views}}" as="view">
+	<paper-material class='view' on-click="toggle" elevation="1">
+		{{view.title}}
+		<template is="dom-if" if="[[view.recentlyChanged]]">
+			<iron-icon icon="av:new-releases" class="icon"></iron-icon>
+		</template>
+	</paper-material>
+	<iron-collapse class='collapse-content' opened='[[view.opened]]' allowOverflow>
+		<template is="dom-repeat" items="{{view.subviews}}" as="subview">
+			<gm-icm-textbox subview="{{subview}}" viewid="[[view.id]]" project="{{project}}" on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
+		</template>
+	</iron-collapse>
+</template>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-icm-text',
+	properties: {
+		reftime: {
+			value: function(){return new Date().getTime();}
+		},
+		data: {
+			type: Object,
+			observer: '_dataChanged'
+		},
+		views: {
+			type: Array,
+			value: function(){return [];}
+		},
+		project: {
+			type: Object
+		}
+	},
+	observers: [
+	],
+	ready: function(){
+		
+	},
+	domReady: function(){
+		var self = this;
+		this.project = this.core.project();
+	},
+	toggle: function(e, b,c){
+		e.currentTarget.nextElementSibling.toggle();
+	},
+	updateme: function(a,b,c){
+		this.recentlyChanged = true;
+	},
+	_dataChanged: function(){
+		var self = this;
+		this.views=[];
+		this.data.content.forEach(function(d){
+			var subviews = [];
+			d.subview.forEach(function(s){
+				//Get items with text
+				var items = self.project.items().filter(function(x){
+					return x.data('beeld') != undefined
+						&& x.data('beeld') == d.view
+						&& x.data('beeldonderdeel') == s.id
+				});
+				subviews.push({
+					item: items?items[0]:null,
+					title: s.title,
+					id: s.id
+				});
+			});
+			var view = {
+				opened: false,
+				title: d.title,
+				id: d.view, 
+				subviews: subviews,
+				recentlyChanged: false
+			};
+			self.push('views',view);
+		});
+	}
+	
+});
+</script>
+
+</polymer-element>

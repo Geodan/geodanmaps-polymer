@@ -1,0 +1,309 @@
+<script src="../demos/queries.js"></script>
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<dom-module id="gm-lod-meterchart">
+  <template>
+   <style>
+    :host {
+       display: block;
+       float: left;
+    }
+   
+   	text {
+            font: 12px sans-serif;
+    }
+	svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+	#graph1 {
+		margin-right:0px;
+		padding: 0px;
+		height: 200px;
+		width: 100%;
+	}
+	#graph2 {
+		margin-right: 0px;
+		padding: 0px;
+		height: 200px;
+		width: 100%;
+	}
+	.nv-line { 
+		fill: none; /* some bug in nvd3 keeps filling the line */
+		stroke-width: 2px;
+	}
+	.nv-series-0,.nv-series-1 {
+		stroke-width: 0px;
+		fill-opacity: 0;
+	}
+   </style>
+ 	 <iron-ajax
+     	
+     	id="meter_request"
+     	params="[[meter_params]]"
+		url="http://lod.geodan.nl/sparql"
+		handle-as="text"
+		on-response="handleMeterResponse">
+	 </iron-ajax>
+	 <iron-ajax
+     	
+     	id="avg_request"
+     	params="[[avg_params]]"
+		url="http://lod.geodan.nl/sparql"
+		handle-as="text"
+		on-response="handleAvgResponse">
+	 </iron-ajax>
+	 <!--
+		<div class='address' layout horizontal>
+			<div flex>
+			<content></content>
+			<b>Tijdseenheid:</b>
+			<paper-dropdown-menu label="tijdseenheid">
+				<paper-dropdown class="dropdown">
+					<core-menu id='interval' class="menu" selected="1" on-core-select="{{selectAction}}">
+						<paper-item value='day'>Dag</paper-item>
+						<paper-item value='week'>Week</paper-item>
+						<paper-item value='month'>Maand</paper-item>
+					</core-menu>
+				</paper-dropdown>
+			</paper-dropdown-menu>
+			</div>
+		</div>
+	-->
+		
+	<div class='with-3d-shadow with-transitions' id="graph1">
+	<paper-spinner id="spinner" alt="Loading data" active></paper-spinner>
+	</div>
+	<!--
+	<div class='with-3d-shadow with-transitions' id="graph2">
+	</div>-->
+   </template>
+  <script>
+      var transpose = function(arr, type){
+    	var cf = crossfilter(arr);
+    	var dim, measure;
+    	
+    	switch (type){
+    	 case 'month':
+    	 	 dim = cf.dimension(function(d) { return d3.time.month(new Date(d.time)).getTime(); });
+ 	 		 return dim.group().reduceSum(function(d){return d.value / (24 * 30);}).all();
+ 	 		 break;
+    	 case 'week':
+    	 	 dim = cf.dimension(function(d) { return d3.time.week(new Date(d.time)).getTime(); });
+    	 	 return dim.group().reduceSum(function(d){return d.value / (24 * 7);}).all();
+    	 	 break;
+    	 case 'day':
+    	 	 dim = cf.dimension(function(d) { return d3.time.day(new Date(d.time)).getTime(); });
+    	 	 return dim.group().reduceSum(function(d){return d.value / 24;}).all();
+    	 	 break;
+    	 case 'hour':
+    	 	 dim = cf.dimension(function(d) { return d3.time.hour(new Date(d.time)).getTime();});
+    	 	 return dim.group().reduceSum(function(d){return d.value;}).all();
+    	 	 break;
+    	 default:
+    	 	 console.error('Wrong type: ',type);
+    	 	 break;
+    	}
+    }
+
+  Polymer({
+  	 is: 'gm-lod-meterchart',
+  	 properties: {
+  	 	  xlabel: String,
+  	 	  ylabel: String,
+  	 	  data: {
+  	 	  	  type: Array,
+  	 	  	  value: function(){
+  	 	  	  	  return []
+  	 	  	  },
+  	 	  	  observer: 'dataChanged'	
+  	 	  }
+  	 },
+  	 observers: [
+  	 	 //'dataChanged(data.*)'
+  	 ],
+  	 seriesChanged: function(){
+  	 },
+  	 created: function(){
+  	 },
+     ready: function(){
+     	var self = this;
+     	this.data = [];
+  	 	this.weatherdata = [];
+		this.rawmeterData= [];
+		this.rawavgData=[];
+		this.rawweatherData=[];
+      	this.selectedMeter= {};
+      	/*
+     	 //Get weather data
+		d3.csv('../demos/data/station_210_2013.csv', function(response){
+			var date = function(d){
+				//Trick to add zero padding to hour so it orders correctly
+				var string = d.YYYYMMDD;
+				var year = string.substr(0,4);
+				var month = string.substr(4,2) -1;//jscript month starts at 0
+				var day = string.substr(6,2);
+				var hour = parseInt(d.HH);
+				return new Date(year, month, day,hour);
+			}	
+			response.forEach(function(d){
+				self.rawweatherData.push({
+					time: date(d).getTime(),
+					value: d.T /10
+				});
+			});
+		});
+		*/
+		//Get the avg. usage values
+		//TODO: make avg based on location neighbourhood
+		
+		var params = {
+			"format":"text/csv",
+			"query": queries.getAvgGasUse()
+		};
+		this.avg_params = params;
+		
+     },
+     dataChanged: function(){
+      if (this.data.length > 0){
+     	 var self = this;
+     	 var data = eval(self.data);
+     	 var chart = nv.models.lineChart()
+     	 	.options({
+                transitionDuration: 300,
+                useInteractiveGuideline: true
+            })
+			.color(d3.scale.category10().range())
+			.tooltips(false);
+		var starttime = data[0].values[0].key;
+        var endtime = data[0].values[data[0].values.length -1].key;
+        chart.xAxis
+			.tickValues([starttime,endtime])
+			.tickFormat(function(d) {
+				return new Date(d).toLocaleDateString();
+			  });
+		
+		chart.yAxis 
+		      .axisLabel('Q')
+			  .tickFormat(d3.format(',.2f'));
+
+		//  chart.yAxis2
+		//      .axisLabel('Temp.')
+		//	  .tickFormat(d3.format(',.2f'));
+		d3.select(self.$.graph1).selectAll('svg').remove();
+        d3.select(self.$.graph1).append('svg')
+            .datum(self.data)
+            .transition().duration(500).call(chart);
+        window.setTimeout(function(){
+			//without timeout, chart takes wrong width/height
+			chart.update();
+        },100);
+        nv.utils.windowResize(chart.update);    
+        //return chart;
+      }
+      this.$.spinner.active = false;
+	 },
+	 weatherdataChanged: function(){
+	 	 var self = this;
+     	 var weatherdata = eval(self.weatherdata);
+     	 var chart2 = nv.models.lineChart()
+     	 	.options({
+                transitionDuration: 300,
+                useInteractiveGuideline: true
+            })
+			.color(d3.scale.category10().range())
+			.tooltips(false);
+		var starttime = weatherdata[0].values[0].key;
+        var endtime = weatherdata[0].values[weatherdata[0].values.length -1].key;
+        chart2.xAxis
+			.tickValues([starttime,endtime])
+			.tickFormat(function(d) {
+				return new Date(d).toLocaleDateString();
+			  });
+		
+		chart2.yAxis 
+		      .axisLabel('T (C)')
+			  .tickFormat(d3.format(',.2f'));
+
+		//  chart.yAxis2
+		//      .axisLabel('Temp.')
+		//	  .tickFormat(d3.format(',.2f'));
+		d3.select(self.$.graph2).selectAll('svg').remove();
+        d3.select(self.$.graph2).append('svg')
+            .datum(self.weatherdata)
+            .transition().duration(500).call(chart2);
+        window.setTimeout(function(){
+			//without timeout, chart takes wrong width/height
+			chart2.update();
+        },100);
+        nv.utils.windowResize(chart2.update); 
+     },
+     loadMeter: function(meter){
+     	 this.$.spinner.active = true;
+      	  var params = {
+      	  	"format":"text/csv",
+      	  	"query":queries.getMeterValues(meter)
+      	  };
+      	  this.meter_params = params;
+      	  this.$.meter_request.generateRequest();
+      },
+      handleAvgResponse: function(res){
+		this.rawavgData = d3.csv.parse(res.detail.response);
+		this.refresh();
+      },
+      handleMeterResponse: function(res){
+		this.rawmeterData = d3.csv.parse(res.detail.response);
+		this.refresh();
+      },
+      refresh: function(){
+      	var interval = 'week';//this.$.interval.selectedItem.getAttribute('value');
+      	var values = transpose(this.rawmeterData,interval);
+		values.forEach(function(d){
+				d.x = d.key;
+				d.y = d.value;
+		});
+		
+		var avgmeasure = transpose(this.rawavgData,interval);
+		avgmeasure.forEach(function(d){
+				d.x = d.key;
+				d.y = d.value;
+		});
+		var tempValues = transpose(this.rawweatherData,interval);
+		tempValues.forEach(function(d){
+			d.x = d.key;
+			d.y = d.value;
+		});
+		var data = [{
+     	  		  key: 'Eigen verbruik',
+     	  		  color: "#2ca02c",
+     	  		  type: 'line',
+     	  		  yAxis: 1,
+     	  		  values: values
+     	  }/*,{
+     	  		  key: 'Buurtgemiddelde',
+     	  		  color: "orange",
+     	  		  type: 'line',
+     	  		  yAxis: 1,
+     	  		  values: avgmeasure
+     	  }*/
+     	];
+     	var weatherdata = [
+     		{
+     	  		  key: 'Temperatuur',
+     	  		  color: "blue",
+     	  		  type: 'line',
+     	  		  yAxis: 2,
+     	  		  values: tempValues
+     	  }
+     	];
+		this.data = data;
+		this.weatherdata = weatherdata;  
+      },
+      selectAction: function(e, detail) {
+		  this.refresh();
+	  }
+  });
+  
+  </script>
+</polymer-element>

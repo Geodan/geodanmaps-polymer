@@ -38,6 +38,10 @@
 		border-bottom: solid 1px white;
 		background: white;
 	}
+	.marker {
+		width: 24px;
+		height: 24px;
+	}
  </style>
  <template>
  	<div class='container'>
@@ -48,7 +52,7 @@
  		<iron-collapse class='collapse-content'>
  			<iron-selector id="icons">
  				<template is="dom-repeat" items="{{iconset}}">
- 					<paper-icon-button mini alt="{{item.text}}" value="{{item.url}}" src="{{item.url}}" on-click="startPoint"></paper-icon-button>
+ 					<paper-icon-button class="marker" alt="{{item.text}}" value="{{item.url}}" src="{{item.url}}" on-click="startPoint"></paper-icon-button>
  				</template>
  			</iron-selector>
  		</iron-collapse>
@@ -89,6 +93,7 @@
 </dom-module>
 
 <script>
+
 Polymer({
 	is: 'gm-mappu-sketch',
 	properties: {
@@ -100,7 +105,11 @@ Polymer({
 		}
 	},
 	ready: function(){
-		
+	},
+	_stylesetChanged: function(){
+		this.iconset = this.styleset.iconset;
+		this.lineset = this.styleset.lineset;
+		this.polygonset = this.styleset.polygonset;
 	},
 	_stylesetChanged: function(){
 		this.iconset = this.styleset.iconset;
@@ -110,120 +119,14 @@ Polymer({
 	_layerChanged: function(){
 		var self = this;
 		this.map = this.layer.map;
-		this.sketch = new d3.mappu.Sketch('mysketch', {
-        	layer: this.layer
-        });
-        var events = [{
-			event:'click',
-			action: function(d){
-				d3.event.stopPropagation();
-				var textmenu = function(e){
-					d3.event.stopPropagation();
-					d3.select(self.map.mapdiv).selectAll('.menu').remove();
-					d3.select(self.map.mapdiv).append('core-overlay').classed('menu', true).classed('dialog', true)
-						.attr('opened','true')
-						.style('position', 'absolute')
-						.style('left', location[0] + 'px')
-						.style('top', location[1] + 'px')
-						.append('textarea')
-						.on('click', function(){
-								d3.event.stopPropagation();
-						})
-						.on('blur', function(){
-							d.properties.name = this.value;
-							//TODO: Okay, now it should be saved...
-							//self.fire('changeFeature', d);
-						})
-						.html(d.properties.name);
-					
-				}
-				var populator = function(e){
-					var populatorCallback = function(x){
-						var aantal = x.data.aantal_won;
-						d.properties.name = "aantal inwoners: " + aantal;
-						//self.fire('changeFeature', d);
-					}
-
-					d3.event.stopPropagation();
-					d3.select(self.map.mapdiv).selectAll('.menu').remove();
-					//Prepare geometry
-					var toproj = proj4.Proj('+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs ');
-					var geojson = JSON.parse(JSON.stringify(d)); //Clone object
-					Terraformer.Tools.applyConverter(geojson, function(coordinate){
-						return proj4(toproj,coordinate);
-					});
-					var geom = Terraformer.WKT.convert(geojson.geometry);
-					var url = '/sites/geofort/icm/data/populator.php';
-					d3.json(url+'?geom='+JSON.stringify(geojson.geometry),populatorCallback);
-				}
-				var offset = 30;
-				d3.select(self.map.mapdiv).selectAll('.menu').remove();
-				var location = [d3.event.offsetX -15, d3.event.offsetY -15];
-				//edit
-				d3.select(self.map.mapdiv).append('paper-fab')
-					.classed('menu', true)
-					.on('click', function(){
-						d3.select(self.map.mapdiv).selectAll('.menu').remove();
-						self.sketch.edit(d);
-					})
-					.attr('icon', 'create')
-					.attr('mini', 'true')
-					.style('position', 'absolute')
-					.style('left', location[0] + 'px')
-					.style('top', location[1] + 'px')
-					.style('background', 'orange')
-					.transition()
-					.style('left', location[0] + offset + 'px')
-					.style('top', location[1] + offset + 'px')
-				//Remove	
-				d3.select(self.map.mapdiv).append('paper-fab')
-					.classed('menu', true)
-					.on('click', function(){
-						self.layer.removeFeature(d);
-					})
-					.attr('icon', 'content-cut')
-					.attr('mini', 'true')
-					.style('position', 'absolute')
-					.style('left', location[0] + 'px')
-					.style('top', location[1] + 'px')
-					.style('background', 'red')
-					.transition()
-					.style('left', location[0] + offset + 'px')
-					.style('top', location[1] - offset + 'px');
-				//textedit
-				d3.select(self.map.mapdiv).append('paper-fab')
-					.classed('menu', true)
-					.on('click',textmenu)
-					.attr('icon', 'editor:format-size')
-					.attr('mini', 'true')
-					.style('position', 'absolute')
-					.style('left', location[0] + 'px')
-					.style('top', location[1] + 'px')
-					.style('background', 'green')
-					.transition()
-					.style('left', location[0] - offset + 'px')
-					.style('top', location[1] - offset + 'px');
-				//populator
-				if (d.geometry.type == 'Polygon'){
-				d3.select(self.map.mapdiv).append('paper-fab')
-					.classed('menu', true)
-					.on('click',populator)
-					.attr('icon', 'social:people')
-					.attr('mini', 'true')
-					.style('position', 'absolute')
-					.style('left', location[0] + 'px')
-					.style('top', location[1] + 'px')
-					.style('background', 'steelblue')
-					.transition()
-					.style('left', location[0] - offset + 'px')
-					.style('top', location[1] + offset + 'px');
-				}
-				d3.select(self.map.mapdiv).on('click', function(){
-					d3.select(self.map.mapdiv).selectAll('.menu').remove();
-				});
-			}
-  		}];
-        this.layer.events = events; 
+        if (!this.sketch){
+			this.sketch = new d3.mappu.Sketch('sketch1', {
+				layer: this.layer
+			});
+        }
+        else {
+        	this.sketch.layer = this.layer;
+        }
 	},
 	_getPolystyle: function(item){
 		return 'fill:'+item.fill+';fill-opacity:0.7;stroke:'+item.stroke+';stroke-width:1;';

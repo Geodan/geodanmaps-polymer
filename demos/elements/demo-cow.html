@@ -1,17 +1,32 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../../elements/gm-cow-core.html">
 <link rel="import" href="../../elements/gm-cow-status.html">
+
+<link rel="import" href="../../elements/gm-cow-peers.html">
 <link rel="import" href="../../elements/gm-cow-userlist.html">
 
 <dom-module id="demo-cow">
 <template>
-		<gm-cow-core id="cow_core" config="{{cowconfig}}" core="{{cowcore}}"></gm-cow-core>
-		<div id='cowpanel'>
-			<h3>COW</h3>
-			<gm-cow-status id="cow_status" core="{{cowcore}}"></gm-cow-status>
+
+	<gm-cow-core id="cow_core" config="{{cowconfig}}" core="{{cowcore}}"></gm-cow-core>
+	<paper-header-panel class="flex">
+    <paper-toolbar>
+      <gm-cow-status id="cow_status" core="{{cowcore}}"></gm-cow-status>
+      <gm-cow-peers id="cow_peers" core="{{cowcore}}"></gm-cow-peers>
+    </paper-toolbar>
+	<paper-drawer-panel>
+		<div drawer>
 			<gm-cow-userlist id="cow_userlist" core="{{cowcore}}"></gm-cow-userlist>
 		</div>
-
+		<div main> 
+			
+		</div>
+	</paper-drawer-panel>
+	</paper-header-panel>
 </template>
 </dom-module>
 
@@ -31,5 +46,6 @@ Polymer({
     	};
 
     }
+    
 });
 </script>

@@ -1,0 +1,121 @@
+{
+  "@graph" : [ {
+    "@id" : ":exent_world",
+    "@type" : "geosparql:Geometry",
+    "asWKT" : "POLYGON((-180 -90, -180 90, 180 90, 180 -90, -180 -90))"
+  }, {
+    "@id" : ":extent_netherlands",
+    "@type" : "geosparql:Geometry",
+    "asWKT" : "POLYGON((4.732 52.880,4.732 52.899,4.820 52.899,4.820 52.880,4.732 52.880))"
+  }, {
+    "@id" : ":extent_uk",
+    "@type" : "geosparql:Geometry",
+    "asWKT" : "POLYGON((-8.5 49,-8.5 61,2 61,2 49, -8.5 59))"
+  }, {
+    "@id" : ":linkedgeodata",
+    "@type" : "dcat:Dataset",
+    "description" : [ "Data van OpenStreetMap gepubliceerd als Linked Open Data", {
+      "@language" : "en",
+      "@value" : "OpenStreetMap data published as Linked Open Data"
+    } ],
+    "license" : "http://opendatacommons.org/licenses/odbl/1.0/",
+    "spatial" : ":exent_world",
+    "title" : [ {
+      "@language" : "nl",
+      "@value" : "LinkedGeodData"
+    }, {
+      "@language" : "en",
+      "@value" : "LinkedGeoData"
+    } ],
+    "homepage" : "http://linkedgeodata.org/"
+  }, {
+    "@id" : ":testcatalog",
+    "@type" : "dcat:Catalog",
+    "description" : [ {
+      "@language" : "nl",
+      "@value" : "This is een datacatalogus voor het testen van MetaLODUI, een module voor webapplicaties die is bedoeld voor interactie met metadata van datasets. Datasets in deze catalogus kunnen echt of verzonnen zijn. De metadata bedoeld om divers te zijn, maar wel gebaseerd op standaarden."
+    }, {
+      "@language" : "en",
+      "@value" : "This is a data catalog for testing MetaLODUI, a web application module for interacting with dataset metadata. Datasets in this catalog can be real or can be made up. Metadata are intended to be diverse, but based on standards"
+    } ],
+    "issued" : "2015-07-25",
+    "modified" : [ "2015-07-26", "2015-07-28", "2015-07-27" ],
+    "publisher" : "geodan:geodan",
+    "title" : [ {
+      "@language" : "nl",
+      "@value" : "Catalogus van datasets voor het testen van MetaLODUI"
+    }, {
+      "@language" : "en",
+      "@value" : "Catalog of datasets for testing MetaLODUI"
+    } ],
+    "dataset" : [ "http://cerise.tudelft.nl/dataset", "http://lod.geodan.nl/cerisesg/ebif/julianadorp/", ":ukbedrock", "http://lod.geodan.nl/basisreg/bag/", ":linkedgeodata" ],
+    "homepage" : "http://research.goedan.nl/services/metalodui/"
+  }, {
+    "@id" : ":ukbedrock",
+    "@type" : "dcat:Dataset",
+    "description" : [ {
+      "@language" : "nl",
+      "@value" : "Nog in te vullen"
+    }, {
+      "@language" : "en",
+      "@value" : "The 1:625k DiGMap data covering the whole of the United Kingdom is available in this OGC WFS service for all uses - including commercial use subject to the conditions in the Access Constraints section. It is being served as a contribution to the OneGeology initiative(www.onegeology.org). The data is returned in GeoSciML v3 format using IUGS-CGI dictionary values in most cases where applicable. For information about more of the British Geological Survey's maps that are available digitally please visit http://www.bgs.ac.uk/products/digitalmaps/digmapgb.html"
+    } ],
+    "spatial" : ":exent_uk",
+    "title" : [ {
+      "@language" : "nl",
+      "@value" : "Geologie vasteland Verenigd Koninkrijk"
+    }, {
+      "@language" : "en",
+      "@value" : "UK onshore bedrock geological data WFS"
+    } ]
+  } ],
+  "@context" : {
+    "dataset" : {
+      "@id" : "http://www.w3.org/ns/dcat#dataset",
+      "@type" : "@id"
+    },
+    "publisher" : {
+      "@id" : "http://purl.org/dc/terms/publisher",
+      "@type" : "@id"
+    },
+    "description" : "http://purl.org/dc/terms/description",
+    "modified" : {
+      "@id" : "http://purl.org/dc/terms/modified",
+      "@type" : "http://www.w3.org/2001/XMLSchema#date"
+    },
+    "title" : "http://purl.org/dc/terms/title",
+    "issued" : {
+      "@id" : "http://purl.org/dc/terms/issued",
+      "@type" : "http://www.w3.org/2001/XMLSchema#date"
+    },
+    "homepage" : {
+      "@id" : "http://xmlns.com/foaf/0.1/homepage",
+      "@type" : "@id"
+    },
+    "asWKT" : {
+      "@id" : "http://www.opengis.net/ont/geosparql#asWKT",
+      "@type" : "http://www.opengis.net/ont/geosparql#wktLiteral"
+    },
+    "spatial" : {
+      "@id" : "http://purl.org/dc/terms/spatial",
+      "@type" : "@id"
+    },
+    "license" : {
+      "@id" : "http://purl.org/dc/terms/license",
+      "@type" : "@id"
+    },
+    "" : "http://research.geodan.nl/services/metalodui/testcatalogus#",
+    "foaf" : "http://xmlns.com/foaf/0.1/",
+    "sd" : "http://www.w3.org/ns/sparql-service-description#",
+    "void" : "http://rdfs.org/ns/void#",
+    "geodan" : "http://lod.geodan.nl/org/",
+    "wv" : "http://vocab.org/waiver/terms/norms",
+    "schema" : "http://schema.org/",
+    "rdfs" : "http://www.w3.org/2000/01/rdf-schema#",
+    "geosparql" : "http://www.opengis.net/ont/geosparql#",
+    "dcat" : "http://www.w3.org/ns/dcat#",
+    "dct" : "http://purl.org/dc/terms/",
+    "xsd" : "http://www.w3.org/2001/XMLSchema#",
+    "rdf" : "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  }
+}

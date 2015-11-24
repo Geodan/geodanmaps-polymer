@@ -1,19 +1,27 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<!--
+Gives a button that shows the status of the current socket connection.
+Connected or disconnected;
 
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <dom-module id="gm-cow-status">
  <style>
+ .connected{
+ 	 background: green;
+ }
+ .disconnected{
+ 	 background: red;
+ }
  </style>
  <template>
- Connected:
- <div>{{connectionstatus}}</div>
- Current user:
- <div>{{username}}</div>
- Current project:
- <div>{{projectname}}</div>
- Peers:
- <div>{{numpeers}}</div>
+ <paper-fab mini on-click='toggle' icon='{{connIcon(connectionstatus)}}' class$='{{connClass(connectionstatus)}}'></paper-fab>
  </template>
- 
+
 </dom-module>
 
 <script>
@@ -25,18 +33,35 @@ Polymer({
 			observer: '_coreChanged'
 		}
 	},
+	connectionChanged: function(){
+		this.connectionstatus = this.core._websocket._connected;
+	},
+	connClass: function(d){
+		if (d)return 'connected';
+		return 'disconnected';
+	},
+	connIcon: function(d){
+		if (d)return 'notification:sync';
+		return 'notification:sync-disabled';
+	},
+	toggle: function(){
+		if (this.core._websocket._connected){
+			this.core.disconnect();
+		} else {
+			this.core.connect();
+		}
+	},
 	_coreChanged: function(){
 		var core = this.core;
 		var self = this;
-		Object.observe(core._websocket, function(){
+		core._websocket.on('closed', function(){
 			self.connectionstatus = core._websocket._connected;
 		});
-		Object.observe(core, function(){
-			self.username = core.user() ? core.user().data('name') : null;
-			self.projectname = core.project() ? core.project().data('name') : null;
+		core._websocket.on('error', function(){
+			self.connectionstatus = core._websocket._connected;
 		});
-		Object.observe(core._peerStore._records, function(){
-			self.numpeers = core.peers() ? core.peers().filter(function(d){return !d.deleted();}).length : 0;
+		core._websocket.on('connected', function(){
+			self.connectionstatus = core._websocket._connected;
 		});
 	}
 		

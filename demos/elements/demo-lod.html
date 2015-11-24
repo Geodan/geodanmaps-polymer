@@ -1,5 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
 <link rel="import" href="../../elements/gm-mappu-map.html">
 <link rel="import" href="../../elements/gm-lod-connector.html">
 <link rel="import" href="../../elements/gm-lod-meterlist.html">
@@ -7,9 +8,11 @@
 <link rel="import" href="../../elements/gm-lod-emparelist.html">
 <link rel="import" href="../../elements/gm-lod-datacatalog.html">
 
+
 <dom-module id="demo-lod">
 <style>
 html, body {
+
         margin: 0;
         height: 100%;
 }
@@ -36,6 +39,7 @@ leaflet-map {
 	<!--<gm-lod-emparelist id="emparelist"></gm-lod-emparelist>
 	
 	<!--<gm-lod-datacatalog id="catalog" input="{{datasets}}"></gm-lod-datacatalog>-->
+
 </template>
 </dom-module>
 
@@ -43,6 +47,7 @@ leaflet-map {
 Polymer({
     is: 'demo-lod',
     properties: {
+
     	datasets: {
     		value: [],
     		type: 'array'
@@ -61,6 +66,7 @@ Polymer({
     },
     ready: function(){
 		 var self = this;
+
 		 //MAP
     	this.map = this.$.mapelement.map;
     	var baselayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
@@ -95,5 +101,6 @@ Polymer({
 		 		self.meterlayer.refresh();
 		 });
     }
+
 });
 </script>

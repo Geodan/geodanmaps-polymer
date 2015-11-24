@@ -1,0 +1,93 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
+<dom-module id="gm-cow-peers">
+ <style>
+ .peers {
+ 	 background: white;
+ 	 color: orange;
+ 	 font-size: 16pt;
+ }
+ #peerlist {
+ 	 background: white;
+ 	 margin-left: 10px;
+ 	 margin-top: 50px;
+ }
+ </style>
+ <template>
+ <span class='peers'>
+ <span>{{numpeers}}</span>
+ <paper-icon-button on-click='toggle' class="dropdown-trigger" icon='social:group'></paper-icon-button>
+ 
+ <iron-dropdown id='peerlist' horizontal-align="left" vertical-align="top">
+	  <div class="dropdown-content">
+	  <paper-material elevation="1">
+	  <template is="dom-repeat" items="{{peers}}">
+		<paper-icon-item>
+		 <iron-icon icon="{{_getIcon(item)}}" item-icon></iron-icon>
+		 <paper-item-body two-line>
+			<div>{{_username(item)}}</div>
+			<div secondary>
+				family:<span>{{item._data.family}}</span>
+				super:<span>{{item._data.superpeer}}</span>
+			</div>
+		  </paper-item-body>
+		  
+		</paper-icon-item>
+	  </template>
+	  </paper-material>
+	  </div>
+ </iron-dropdown>
+ </span>
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+	is: 'gm-cow-peers',
+	properties: {
+		core: {
+			type: Object,
+			observer: '_coreChanged'
+		},
+		peers: {
+			type: Array,
+			value: function(){return [];}
+		}
+	},
+	toggle: function(){
+		this.$.peerlist.toggle();
+	},
+	_coreChanged: function(){
+		var core = this.core;
+		var self = this;
+		core.peerStore().on('datachange',function(){
+			self.peers = core.peers().filter(function(d){return !d.deleted();});
+			self.numpeers = self.peers.length;
+		});
+	},
+	_username: function(item){
+		return item.username() || 'Anonymous';
+	},
+	_meta: function(item){
+		return item.data('family');
+	},
+	_getIcon: function(item){
+		var alphaid = this.core.alphaPeer().id();
+		if (item.id() == alphaid){
+			return 'hardware:device-hub';
+		}
+		else {
+			return 'hardware:router';
+		}
+	}
+		
+});
+</script>
