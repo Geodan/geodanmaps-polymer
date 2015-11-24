@@ -13,9 +13,8 @@
 <style>
 	.view {
 		background: white;
-		margin-bottom: 10px;
-		padding: 20px;
-		
+		margin-bottom: 0px;
+		padding: 15px;
 		font-size: 16pt;
 		cursor: pointer;
 	}
@@ -28,16 +27,16 @@
 	
 </style>
 <template>
-<template is="dom-repeat" items="{{data.content}}" as="view">
-	<paper-material class='view' on-click="toggle" elevation="3">
+<template is="dom-repeat" items="{{views}}" as="view">
+	<paper-material class='view' on-click="toggle" elevation="1">
 		{{view.title}}
 		<template is="dom-if" if="[[view.recentlyChanged]]">
 			<iron-icon icon="av:new-releases" class="icon"></iron-icon>
 		</template>
 	</paper-material>
-	<iron-collapse class='collapse-content' allowOverflow>
-		<template is="dom-repeat" items="{{view.subview}}" as="subview">
-			<gm-icm-textbox subview="{{subview}}" viewid="{{view.view}}" core="{{core}}" on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
+	<iron-collapse class='collapse-content' opened='[[view.opened]]' allowOverflow>
+		<template is="dom-repeat" items="{{view.subviews}}" as="subview">
+			<gm-icm-textbox subview="{{subview}}" viewid="[[view.id]]" project="{{project}}" on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
 		</template>
 	</iron-collapse>
 </template>
@@ -51,11 +50,19 @@ Polymer({
 		reftime: {
 			value: function(){return new Date().getTime();}
 		},
-		//recentlyChanged: false,
-		//projectid: null
+		data: {
+			type: Object,
+			observer: '_dataChanged'
+		},
+		views: {
+			type: Array,
+			value: function(){return [];}
+		},
+		project: {
+			type: Object
+		}
 	},
 	observers: [
-		//'switchProject(core._projectid)'
 	],
 	ready: function(){
 		
@@ -63,36 +70,42 @@ Polymer({
 	domReady: function(){
 		var self = this;
 		this.project = this.core.project();
-		/*
-		var update = function(){
-			var self = this;
-			var reftime = self.core.project().reftime; //How to decide on reftime?
-			//Get the number of new items since last opening the screen
-			var items = this.core.project().items().filter(function(d){
-				return d.data('type') == 'text' 
-					&& d.data('team') == team.id 
-					&& d.updated() > reftime;
-			});
-			this.newitems = items.length;
-		}
-		this.project.itemStore().on('datachange', update);
-		*/
 	},
 	toggle: function(e, b,c){
 		e.currentTarget.nextElementSibling.toggle();
-		/*
-		this.core.project().reftime = new Date().getTime();
-		
-		//TODO: aaaarg.... make some nice code please
-		this.teams.forEach(function(d){
-			if (d.id == parseInt(val) + 1)
-				d.recentlyChanged = false;
-		});
-		*/
 	},
 	updateme: function(a,b,c){
-		c.view.recentlyChanged = true;
+		this.recentlyChanged = true;
+	},
+	_dataChanged: function(){
+		var self = this;
+		this.views=[];
+		this.data.content.forEach(function(d){
+			var subviews = [];
+			d.subview.forEach(function(s){
+				//Get items with text
+				var items = self.project.items().filter(function(x){
+					return x.data('beeld') != undefined
+						&& x.data('beeld') == d.view
+						&& x.data('beeldonderdeel') == s.id
+				});
+				subviews.push({
+					item: items?items[0]:null,
+					title: s.title,
+					id: s.id
+				});
+			});
+			var view = {
+				opened: false,
+				title: d.title,
+				id: d.view, 
+				subviews: subviews,
+				recentlyChanged: false
+			};
+			self.push('views',view);
+		});
 	}
+	
 });
 </script>
 

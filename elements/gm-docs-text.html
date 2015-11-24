@@ -23,7 +23,7 @@
 			type: Object,
 			
 		},
-		id: {
+		projectid: {
 			type: String,
 		},
 		data: {
@@ -32,7 +32,7 @@
 		}
 	},
 	observers: [
-		'_urlHandler(id, account)'
+		'_urlHandler(projectid, account)'
 	],
 	_urlHandler: function(id,acc){
 		if(acc.ID) {

@@ -9,6 +9,7 @@
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
 
 <link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
 
@@ -31,28 +32,35 @@
 	}
 	 .menu {
 		cursor: pointer;
+		background: white;
+	}
+	
+	.accounting {
+		background: #3f51b5;
+		color: white;
 	}
 	
 </style>
 <template>
 	<gm-cow-core id="cowcore" config="{{cowconfig}}" core="{{core}}"></gm-cow-core>
 	<paper-drawer-panel id='drawerpanel'>
-	 <paper-header-panel drawer>
-		<paper-toolbar class="tall">
-		<img src='../images/icon-eagle.png'/>
-		<paper-item class="middle">
-			<paper-item-body two-line>
-			<div>{{account.FirstName}} {{account.LastName}}</div>
-			<div secondary>{{account.ID}}</div>
-			</paper-item-body>
-    		<gm-cas-icon account="{{account}}"></gm-cas-icon>
-    	</paper-item>
-    	</paper-toolbar>
+	 <paper-header-panel mode="seamed" drawer>
+	 	<paper-toolbar>
+	 		<img src='../images/icon-eagle.png'/>
+	 	</paper-toolbar>
+	 	<div class='accounting'>
+			<gm-cas-icon  account="{{account}}"></gm-cas-icon>
+		</div>
     	<iron-selector attr-for-selected="name" selected="{{selected}}">
-    		<paper-item class='menu' name='users'>Users</paper-item>
-			<paper-item class='menu' name='projects'>Incidents</paper-item>
-			<paper-item class='menu' name='text'>Text</paper-item>
-			<paper-item class='menu' name='map'>Map</paper-item>
+    		<template is="dom-if" if="[[account.ID]]">
+				<paper-item class='menu' name='users'>Users</paper-item>
+				<paper-item class='menu' name='projects'>Incidents</paper-item>
+				<template is="dom-if" if="[[curproject]]">
+					<paper-item class='menu' name='text'>Text</paper-item>
+					<paper-item class='menu' name='map'>Map</paper-item>
+					<paper-item class='menu' name='chat'>Chat</paper-item>
+				</template>
+			</template>
     	</iron-selector>
     </paper-header-panel>
     <paper-scroll-header-panel main class="flex">
@@ -61,15 +69,19 @@
     		<div class='title'>{{curproject._data.name}}</div>
     	</paper-toolbar>
 		<iron-pages class='pages' attr-for-selected="name" selected="{{selected}}">
+			<div name='nouser'>U bent niet ingelogd</div>
 			<gm-cow-userlist name='users' core="{{core}}"></gm-cow-userlist>
 			<gm-cow-projectlist name='projects' core="{{core}}" 
 				project="{{curproject}}"></gm-cow-projectlist>
 			<div name="text">
-				<gm-docs-text account="{{account}}" id="{{curproject._id}}" data="{{textdata}}"></gm-docs-text>
-				<gm-icm-text data="{{textdata}}" core="{{core}}"></gm-icm-text>
+				<gm-docs-text account="{{account}}" projectid="{{curproject._id}}" data="{{textdata}}"></gm-docs-text>
+				<gm-icm-text data="{{textdata}}" core="{{core}}" project="{{curproject}}"></gm-icm-text>
 			</div>
 			<div name="map">
 				<gm-mappu-map id='mapelement'></gm-mappu-map>
+			</div>
+			<div name="chat">
+				Chat will be here...
 			</div>
 		</iron-pages>
     </paper-scroll-header-panel>
@@ -98,7 +110,9 @@ Polymer({
     		observer: '_projectChanged'
     	},
     	selected: {
-    		value: 'projects',
+    		value: function(){
+    			return this.account?'projects':'nouser';
+    		},
     		observer: '_selectedChanged'
     	}
     },
@@ -126,10 +140,19 @@ Polymer({
     accountChanged: function(){
     	var self = this;
     	this.core.userStore().loaded.then(function(){
-    		if (self.account.ID && !self.core.user(self.account.ID)){
-    			self.core.users({_id:self.account.ID})
-    				.data('name',self.account.FirstName + ' ' + self.account.LastName);
-    			self.core.user(self.account.ID);
+    		if (self.account.ID){
+    			var user = self.core.user(self.account.ID);
+    			if (!user)
+    			{
+					//if user is not know to cow yet, create it
+					self.core.users({_id:self.account.ID})
+						.data('name',self.account.FirstName + ' ' + self.account.LastName);
+						self.core.user(self.account.ID);
+				}
+				self.selected = 'projects';
+    		}
+    		else {
+    			self.selected = 'nouser';
     		}
     	});
     },

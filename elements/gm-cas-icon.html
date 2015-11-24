@@ -1,31 +1,73 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 
 
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="gm-cas.html">
+<link rel="import" href="gm-cas-core.html">
 <dom-module id="gm-cas-icon">
 <style>
-gm-cas {
+.header {
+	padding: 10px;
+	cursor: pointer;
 }
+#accountmenu {
+	background: white;
+	color: black;
+	margin: 0px;
+	cursor: pointer;
+}
+
+#accountmenu a {
+	text-decoration: none;
+}
+
 </style>
 <template>
-<paper-dialog id='cas'>
-	<gm-cas account="{{account}}" loggedin="{{loggedin}}"></gm-cas>
-</paper-dialog>
-<template is="dom-if" if="[[!loggedin]]">
-	<paper-icon-button 
-		icon="social:person-outline" 
-		on-click="toggleLogin"></paper-icon-button>
-</template>
-<template is="dom-if" if="[[loggedin]]">
-	<paper-icon-button 
-		icon="icons:account-circle" 
-		on-click="toggleLogin"></paper-icon-button>
-</template>
+<gm-cas-core id='cascore' account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-core>
+<paper-item class='header' on-click='toggleLogin'>
+
+	<template is="dom-if" if="[[!loggedin]]">
+		<paper-item-body two-line>
+			<div>Login</div>
+			<div secondary>U bent niet ingelogd</div>
+		</paper-item-body>
+		<iron-icon icon="social:person-outline" ></iron-icon>
+	</template>
+	
+	<template is="dom-if" if="[[loggedin]]">
+		<paper-item-body two-line>
+			<div>{{account.FirstName}} {{account.LastName}}</div>
+			<div secondary>{{account.ID}}</div>
+		</paper-item-body>
+		<iron-icon icon="icons:account-circle"></iron-icon>
+	</template>
+	
+</paper-item>
+<iron-collapse id="accountmenu" class='collapse-content'>
+	<iron-selector attr-for-selected="name" selected="{{selected}}">
+	
+		<template is="dom-if" if="{{!loggedin}}">
+			<paper-item class='menu' name='login' on-click='login'>
+				<a href="https://services.geodan.nl/cas/login?service={{host}}">Inloggen</a>
+			</paper-item>
+		</template>
+		
+		<template is="dom-if" if="{{loggedin}}">
+			<paper-item class='menu' name='logout' on-click='logout'>
+				Uitloggen
+				<!--
+				U bent ingelogd als lid van <strong>{{account.Organisation}}</strong>
+				<a href="https://services.geodan.nl/geocas/cas-logout.jsp?forwardURL={{host}}">Uitloggen</a>
+				-->
+			</paper-item>
+		</template>
+	
+	</iron-selector>
+</iron-collapse>
 </template>
 <script>
 
@@ -40,7 +82,13 @@ Polymer({
 	ready: function() {
 	},
 	toggleLogin: function(){
-		this.$.cas.toggle();
+		this.$.accountmenu.toggle();
+	},
+	login: function(){
+		this.$.cascore.login();
+	},
+	logout: function(){
+		this.$.cascore.logout();
 	}
 });
 </script>
