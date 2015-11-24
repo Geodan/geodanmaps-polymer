@@ -1,0 +1,118 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="../bower_components/underscore/underscore.js"></script>
+
+<dom-module id="gm-cow-connector">
+ <template>
+ </template>
+</dom-module>
+
+<script>
+
+Polymer({
+    is: 'gm-cow-connector',
+    properties: {
+    	core: {
+    		type: Object
+    	},
+    	account: {
+    		type: Object
+    	},
+    	selectedproject: {
+    		type: String,
+    		observer: '_selectedprojectChanged'
+    	},
+    	project: {
+    		type: Object,
+    		notify: true,
+    		observer: '_projectChanged'
+    	},
+    	activeuser: {
+    		type: Object,
+    		notify: true
+    	},
+    	users: {
+    		type: Array,
+    		notify: true
+    	},
+    	projects: {
+    		type: Array,
+    		notify: true
+    	},
+    	items: {
+    		type: Array,
+    		notify: true
+    	},
+    	itemstore: {
+    		type: Object,
+    		notify: true
+    	},
+    	textitems: {
+    		type: Array,
+    		notify: true
+    	},
+    	featureitems: {
+    		type: Array,
+    		notify: true
+    	}
+    },
+    observers: [
+    	'accountChanged(core,account.ID)'
+    ],
+    ready: function(){
+    	var self = this;
+    	
+    },
+    _projectChanged: function(){
+    	var self = this;
+    	this.itemstore = this.project.itemstore;
+    	this.project.itemStore().loaded.then(function(){
+    		self.textitems = self.project.items().filter(function(d){
+    				return !d.deleted() && d.data('beeld');
+    		});
+    	});
+    	this.project.itemStore().on('datachange', function(){
+    		self.textitems = self.project.items().filter(function(d){
+    				return !d.deleted() && d.data('beeld');
+    		});
+    	});
+    },
+    accountChanged: function(){
+    	var self = this;
+    	this.core.userStore().on('datachange', function(){
+    		self.users = self.core.users().filter(function(d){
+    			return !d.deleted();
+    		})
+    	});
+    	this.core.projectStore().loaded.then(function(d){
+    		self.projects = self.core.projects().filter(function(d){
+    			return !d.deleted();
+    		})
+    	});
+    	this.core.projectStore().on('datachange', function(d){
+    		self.projects = self.core.projects().filter(function(d){
+    			return !d.deleted();
+    		})
+    	});
+    	this.core.userStore().loaded.then(function(){
+    		if (self.account.ID){
+    			var user = self.core.user(self.account.ID);
+    			if (!user)
+    			{
+					//if user is not know to cow yet, create it
+					self.core.users({_id:self.account.ID})
+						.data('name',self.account.FirstName + ' ' + self.account.LastName);
+						self.core.user(self.account.ID);
+				}
+				self.activeuser = self.core.user();
+    		}
+    		else {
+    			self.activeuser = null;
+    		}
+    	});
+    },
+    _selectedprojectChanged: function(){
+    	this.core.project(this.selectedproject.toString());
+		this.project = this.core.project();
+    }
+});
+</script>

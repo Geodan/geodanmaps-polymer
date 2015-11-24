@@ -1,0 +1,99 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-stylesets.html">
+<link rel="import" href="../../elements/gm-mappu-sketch.html">
+
+<link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-projectlist.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
+
+
+<dom-module id="demo-eaglemap">
+<style>
+	#geosearch {
+		position: absolute;
+		top: 50;
+		right: 10;
+		width: auto;
+		z-index: 100;
+	}
+	#layermanager {
+    	position: absolute;
+    	left: 10px;
+    	top: 70px;
+    	min-width: 200px;
+    }
+    #zoombuttons {
+    	position: absolute;
+    	right: 10px;
+    	bottom: 100px;
+    	min-width: 200px;
+    }
+    #sketch {
+    	position: absolute;
+    	left: 10px;
+    	bottom: 70px;
+    	min-width: 200px;
+    }
+	
+</style>
+<template>
+	<gm-mappu-map id='mapelement' map="[[map]]"></gm-mappu-map>
+	<gm-mappu-geosearch id="geosearch" map="{{map}}"></gm-mappu-geosearch>
+	<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+	<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+	<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
+	<gm-mappu-sketch id="sketch" layer="{{cowlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-eaglemap',
+    properties: {
+    	map: Object,
+    },
+    observers: [
+    	
+    ],
+    ready: function(){
+    	this.map = this.$.mapelement.map;
+    	var testlayer = new d3.mappu.RasterLayer('Mapbox baselayer',  {
+            ogc_type: 'tms',
+            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q',
+            //url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 this.cowlayer = new d3.mappu.VectorLayer('cow',{
+    		reproject: true,
+    		style: {
+    			'fill-opacity': 0.5
+    		},
+			labelfield: 'label'
+		 })
+		 .addTo(this.map);
+    },
+    activate: function(){
+    	if (this.curproject){
+			var center = this.curproject.data('incidentLocation');
+			this.map.center = [center.lng,center.lat];
+			this.map.zoom = center.zoom;
+			this.map.resize();
+			var data = this.curproject.items().filter(function(d){
+					return !d.deleted() && d.data('type') == 'feature';
+			}).map(function(d){
+				var feat = d.data('feature');
+				feat.style = feat.properties;
+				return feat;
+			});
+			this.cowlayer.data = data;
+		}
+    }
+});
+</script>

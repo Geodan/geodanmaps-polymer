@@ -29,37 +29,14 @@
 Polymer({
 	is: 'gm-cow-projectlist',
 	properties: {
-		core: {
-			type: Object,
-			observer: '_coreChanged'
-		},
 		selectedproject: {
 			type: String,
-			notify: true,
-			observer: '_projectChanged'
-		},
-		project: {
-			type: Object,
 			notify: true
 		}
 	},
-	_coreChanged: function(){
-		var core = this.core;
-		var self = this;
-		core.projectStore().loaded.then(function(){
-			self.projects = core.projects().filter(d=>!d.deleted());
-		});
-		core.projectStore().on('datachange', function(){
-			self.projects = core.projects().filter(d=>!d.deleted());
-		});
-	},
 	updated: function(d){
 		return new Date(parseInt(d.updated())).toLocaleString();
-	},
-	_projectChanged: function(p){
-		this.core.project(p.toString());
-		this.project = this.core.project();
 	}
-		
+
 });
 </script>

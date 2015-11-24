@@ -36,7 +36,11 @@
 	</paper-material>
 	<iron-collapse class='collapse-content' opened='[[view.opened]]' allowOverflow>
 		<template is="dom-repeat" items="{{view.subviews}}" as="subview">
-			<gm-icm-textbox subview="{{subview}}" viewid="[[view.id]]" project="{{project}}" on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
+			<gm-icm-textbox 
+				subview="{{subview}}" 
+				viewid="[[view.id]]" 
+				store="{{store}}" 
+				on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
 		</template>
 	</iron-collapse>
 </template>
@@ -60,6 +64,9 @@ Polymer({
 		},
 		project: {
 			type: Object
+		},
+		items: {
+			type: Array
 		}
 	},
 	observers: [
@@ -68,8 +75,6 @@ Polymer({
 		
 	},
 	domReady: function(){
-		var self = this;
-		this.project = this.core.project();
 	},
 	toggle: function(e, b,c){
 		e.currentTarget.nextElementSibling.toggle();
@@ -84,7 +89,7 @@ Polymer({
 			var subviews = [];
 			d.subview.forEach(function(s){
 				//Get items with text
-				var items = self.project.items().filter(function(x){
+				var items = self.items.filter(function(x){
 					return x.data('beeld') != undefined
 						&& x.data('beeld') == d.view
 						&& x.data('beeldonderdeel') == s.id

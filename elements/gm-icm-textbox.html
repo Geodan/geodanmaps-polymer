@@ -1,5 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
@@ -15,40 +16,75 @@
 
 <dom-module id="gm-icm-textbox">
 <style>
+	.header {
+		padding: 10px;
+		
+	}
 	#textview {
 		background: white;
-		color: black;
-		padding: 0px;
-		margin: 10px;
+		padding-left: 10px;
+		padding-right: 10px;
+		margin-left: 10px;
+		max-width: 800px;
+		min-height: 20px;
 		font-size: 10pt;
+		color: grey;
 	}
+	#textedit {
+		margin-left: 20px;
+		max-width: 800px;
+	}
+	
     .smallicon {
     	width: 16px;
     	height: 16px;
     	color: orange;
     }
+    #textview .location {
+    	cursor: pointer;
+    	text-decoration: underline;
+    	color: orange;
+    }
+    paper-button {
+		font-size: 8pt;
+	}
+	paper-button.colored {
+      color: #4285f4;
+    }
+
+    paper-button[raised].colored {
+      background: #4285f4;
+      color: #fff;
+    }
+
+    paper-button.custom > core-icon {
+      margin-right: 4px;
+    }
 	
 </style>
 <template>
-		<paper-item>
-			<paper-item-body two-line>{{subview.title}}
-			<template is="dom-if" if="[[itemtime]]">
-				<small secondary>Last edit at {{itemtime}} by: {{editor}}</small>
+			<div class='header'>
+				{{subview.title}}
+				<template is="dom-if" if="[[itemtime]]">
+					<small>Last edit at {{itemtime}} by: {{editor}}</small>
+				</template>
+			</div>
+			<template is="dom-if" if="[[editmode]]">
+				<div id="textedit">
+					<paper-textarea value="{{text}}"></paper-textarea>
+					<paper-button class="custom" on-click="_cancel">
+						  <iron-icon icon="clear"></iron-icon>Cancel
+					</paper-button>
+					<paper-button class="colored custom" on-click="_save">
+						  <iron-icon icon="check"></iron-icon>Save
+					</paper-button>
+				</div>
 			</template>
-			</paper-item-body>
-		</paper-item>
-		<template is="dom-if" if="[[editmode]]">
-			<paper-textarea value="{{text}}"></paper-textarea>
-			<paper-button class="custom" on-click="_cancel">
-				  <core-icon icon="clear"></core-icon>Cancel
-			</paper-button>
-			<paper-button class="colored custom" on-click="_save">
-				  <core-icon icon="check"></core-icon>Save
-			</paper-button>
-		</template>
-		<template is="dom-if" if="[[!editmode]]">
-			<div id="textview" on-click="_startEdit" inner-h-t-m-l="{{text}}"></div>
-		</template>
+			<template is="dom-if" if="[[!editmode]]">
+				<!--<div id="textview" on-click="_startEdit" inner-h-t-m-lx="{{_decorate(text)}}"></div>-->
+			</template>
+			<div id="textview" style$="display:{{_display(editmode)}}" on-click="_startEdit"></div>
+		</paper-header-panel>
 </template>
 </dom-module>
 
@@ -65,7 +101,8 @@ Polymer({
 			//observer: 'deltasChanged'
 		},
 		subview: {
-			type: Object
+			type: Object,
+			observer: '_subviewChanged'
 		},
 		viewid: {
 			type: Number
@@ -80,11 +117,9 @@ Polymer({
 		}
 	},
 	observers: [
-		'_subviewChanged(project,subview)'
 	],
 	_subviewChanged: function(){
 		var self = this;
-		var core = this.core;
 		this.item = this.subview.item;
 		if (this.item){
 			//this.item = items[0];
@@ -112,6 +147,21 @@ Polymer({
 			this.itemtime = null;
 			this.editor = null;
 		}
+		/*
+			Difficult way of inserting HTML
+			Example from: http://jsbin.com/caxelo/edit?html,output
+		*/
+		var domBind = document.createElement('template', 'dom-bind');
+		var doc = domBind.content.ownerDocument;
+		var elem = doc.createElement('div');
+		elem.innerHTML = this._decorate(this.text);
+		domBind._goto = this._goto;
+		domBind.content.appendChild(elem);
+		while (this.$.textview.firstChild) {
+			this.$.textview.removeChild(this.$.textview.firstChild);
+		}
+		this.$.textview.appendChild(domBind);
+		/* End of inserting HTML */
 	},
 	domReady: function(){
 		var self = this;
@@ -119,13 +169,16 @@ Polymer({
 		this.item = {};
 		
 	},
+	_display: function(editmode){
+		return editmode?'none':'block';
+	},
 	_startEdit: function(){
 		this.editmode = true;
 	},
 	_save: function(){
 		this.editmode = false;
 		if (!this.item){
-			this.item = this.project.items({})
+			this.item = this.store.records({})
 				.data('beeld',this.viewid)
 				.data('beeldonderdeel',this.subview.id);
 		}
@@ -137,9 +190,42 @@ Polymer({
 	},
 	_projectChanged: function(){
 		var self = this;
-		this.project.itemStore().on('datachange', function(){
+		/*
+		this.project.sttore().on('datachange', function(){
 			self._subviewChanged();
 		});
+		*/
+	},
+	_decorate: function(text){
+		if (text){
+			return text.replace(/(?:\r\n|\r|\n)/g, '<br>') //newlines
+				.replace(/(^#|#)([a-z0-9]+)/gi,'#<span class="location" style="color:orange" on-click="_goto" value="$2">$2</span>') //goto locations
+				.replace(/(^@|@)([a-z0-9]+)/gi,'@<span class="mention" style="color:blue" on-click="_talkTo value="$2">$2</span>'); //mentions
+		}
+		else {
+			return "Add your text here...";
+		}
+	},
+	_goto: function(event,y,z){
+		event.stopPropagation();
+		//TODO: weak link to parent
+		var parent = this.parentElement.parentElement;
+		var items = parent.project.items().filter(function(d){
+			return !d.deleted()
+				&& d.data('type') == 'feature' 
+				&& d.data('feature').properties 
+				&& d.data('feature').properties.name
+				&& d.data('feature').properties.name == event.target.textContent //TODO: not nice way to get text value 
+		});
+		if (items[0]){
+			var coords = items[0].data('feature').geometry.coordinates;
+			parent.fire('goto-location',{msg: coords});
+		}
+		else {
+			console.log('no location found');
+			//this.$.toast.show();
+		}
+		
 	}
 });
 </script>

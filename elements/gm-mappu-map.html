@@ -21,7 +21,10 @@ var map = null; //For debug
 Polymer({
     is: 'gm-mappu-map',
     properties: {
-    	map: Object,
+    	map: {
+    		notify: true,
+    		type: Object
+    	},
     	center: {
     		type: Array,
     		value: [5,52]
@@ -33,11 +36,6 @@ Polymer({
          });
     },
     created: function(){
-		 var self = this;
-		 window.setTimeout(function(){ //TT: WHY!?
-				 self.map.resize();
-		 },1000);
-		 map = this.map; //for debug
     },
     resize: function(){
     	this.map.resize();
