@@ -46,7 +46,9 @@
 		projects="{{projects}}"
 		activeuser="{{activeuser}}"
 		textitems="{{textitems}}"
+		featureitems="{{featureitems}}"
 		itemstore="{{itemstore}}"
+		startlocation="{{startlocation}}"
 		></gm-cow-connector>
 	<paper-drawer-panel id='drawerpanel'>
 	 <paper-header-panel mode="seamed" drawer>
@@ -83,11 +85,20 @@
 				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
 				
 			<div name="text">
-				<demo-eagletext id='eagletext' items="{{textitems}}" store="{{itemstore}}" account="{{account}}" curproject="{{curproject}}"></demo-eagletext>
+				<demo-eagletext id='eagletext' 
+					items="{{textitems}}" 
+					store="{{itemstore}}" 
+					account="{{account}}" 
+					curproject="{{curproject}}">
+				</demo-eagletext>
 			</div>
 			
 			<div name="map">
-				<demo-eaglemap id='eaglemap' features="{{featureitems}}"></demo-eaglemap>
+				<demo-eaglemap id='eaglemap'
+					startlocation="{{startlocation}}"
+					features="{{featureitems}}" 
+					store="{{itemstore}}">
+				</demo-eaglemap>
 			</div>
 			
 			<div name="chat">
@@ -150,7 +161,9 @@ Polymer({
     },
     _selectedChanged: function(s){
     	this.$.drawerpanel.closeDrawer();
-    	this.$.eaglemap.activate();
+    	if (this.selected == 'map'){
+    		this.$.eaglemap.activate();
+    	}
     }
 });
 </script>

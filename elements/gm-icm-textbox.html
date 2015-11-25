@@ -111,9 +111,9 @@ Polymer({
 			type: Boolean,
 			value: false
 		},
-		project: {
-			type: String,
-			observer: '_projectChanged'
+		store: {
+			type: Object,
+			observer: '_storeChanged'
 		}
 	},
 	observers: [
@@ -188,13 +188,12 @@ Polymer({
 		this.editmode = false;
 		this.text = this.item?this.item.data('beeldcontent'):null;
 	},
-	_projectChanged: function(){
+	_storeChanged: function(){
 		var self = this;
-		/*
-		this.project.sttore().on('datachange', function(){
+		this.store.on('datachange', function(){
 			self._subviewChanged();
 		});
-		*/
+		
 	},
 	_decorate: function(text){
 		if (text){

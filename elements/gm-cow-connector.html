@@ -53,6 +53,10 @@ Polymer({
     	featureitems: {
     		type: Array,
     		notify: true
+    	},
+    	startlocation: {
+    		tyoe: Object,
+    		notify: true
     	}
     },
     observers: [
@@ -64,17 +68,28 @@ Polymer({
     },
     _projectChanged: function(){
     	var self = this;
-    	this.itemstore = this.project.itemstore;
-    	this.project.itemStore().loaded.then(function(){
-    		self.textitems = self.project.items().filter(function(d){
+    	this.itemstore = this.project.itemStore();
+    	function load(){
+    		self.textitems = self.project.items()
+    			.filter(function(d){
     				return !d.deleted() && d.data('beeld');
-    		});
-    	});
-    	this.project.itemStore().on('datachange', function(){
-    		self.textitems = self.project.items().filter(function(d){
-    				return !d.deleted() && d.data('beeld');
-    		});
-    	});
+    			});
+    		self.featureitems = self.project.items()
+    			.filter(function(d){
+    				return !d.deleted() && d.data('type') == 'feature';
+    			}).map(function(d){
+					//copy stype from properties to be in line with EagleWater
+					var feat = d.data('feature');
+					feat.style = feat.properties;
+					return feat;
+				});
+    	}
+    	
+    	this.project.itemStore().loaded.then(load);
+    	this.project.itemStore().on('datachange',load);
+    	
+    	this.startlocation = this.project.data('incidentLocation') || {lng:0,lat:0,zoom:18};
+    	
     },
     accountChanged: function(){
     	var self = this;

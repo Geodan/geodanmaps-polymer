@@ -57,6 +57,11 @@ Polymer({
     is: 'demo-eaglemap',
     properties: {
     	map: Object,
+    	features: {
+    		type: Array,
+    		//value: function(){return [];},
+    		observer: '_reload'
+    	}
     },
     observers: [
     	
@@ -80,20 +85,14 @@ Polymer({
 		 .addTo(this.map);
     },
     activate: function(){
-    	if (this.curproject){
-			var center = this.curproject.data('incidentLocation');
-			this.map.center = [center.lng,center.lat];
-			this.map.zoom = center.zoom;
-			this.map.resize();
-			var data = this.curproject.items().filter(function(d){
-					return !d.deleted() && d.data('type') == 'feature';
-			}).map(function(d){
-				var feat = d.data('feature');
-				feat.style = feat.properties;
-				return feat;
-			});
-			this.cowlayer.data = data;
-		}
-    }
+		var center = this.startlocation;
+		this.map.center = [center.lng,center.lat];
+		this.map.zoom = center.zoom;
+		this.map.resize();
+		this._reload();
+	},
+	_reload: function(){
+		this.cowlayer.data = this.features;
+	}
 });
 </script>
