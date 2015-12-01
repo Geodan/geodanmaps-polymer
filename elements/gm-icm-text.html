@@ -39,8 +39,9 @@
 			<gm-icm-textbox 
 				subview="{{subview}}" 
 				viewid="[[view.id]]" 
-				store="{{store}}" 
-				on-goto-location="gotolocation" on-said-hello="updateme"></gm-icm-textbox> 
+				store="{{store}}"
+				activeuser="{{activeuser}}"
+				on-said-hello="updateme"></gm-icm-textbox> 
 		</template>
 	</iron-collapse>
 </template>
@@ -85,7 +86,7 @@ Polymer({
 	_dataChanged: function(){
 		var self = this;
 		this.views=[];
-		this.data.content.forEach(function(d){
+		this.data.forEach(function(d){
 			var subviews = [];
 			d.subview.forEach(function(s){
 				//Get items with text
@@ -110,7 +111,6 @@ Polymer({
 			self.push('views',view);
 		});
 	}
-	
 });
 </script>
 

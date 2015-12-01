@@ -1,0 +1,99 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+
+<dom-module id="gm-geosearch">
+<style>
+paper-item {
+	cursor: pointer;
+}
+</style>
+	<template>
+		<iron-ajax
+		auto
+		url="{{listUrl}}"
+		id="getList"		
+		verbose="true"
+		handle-as="json"
+		with-credentials="true"
+		on-response="handleList"
+		on-error="handleError"
+		></iron-ajax>
+		
+		<iron-ajax
+		auto
+		url="{{searchUrl}}"
+		id="getLocation"		
+		verbose="true"
+		handle-as="json"
+		with-credentials="true"
+		on-response="handleLocation"
+		on-error="handleError"
+		></iron-ajax>
+		
+		<paper-input label="search!" type="search" value="{{key::input}}"
+			placeholder="search for locations" autosave="test" results="5">
+		</paper-input>
+		
+		<iron-selector selected="{{selectedconfig}}">
+			<template is="dom-repeat" items="{{suggestions}}">
+				<paper-item on-click='_getlocation'>
+					<div>{{item.displayname}}</div>
+				</paper-item>
+			</template>
+		</iron-selector>
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-geosearch",
+	properties: {
+		key: {
+			type: String,
+			observer: '_keyChanged'
+		},
+		suggestions: {
+			type: Array
+		}
+	},
+	_getlocation: function(e){
+		var item = e.model.item;
+		this.searchUrl = this.baseUrl + "/geosearch/lookup?q="+item.id;
+	},
+    // add a callback to the element's prototype
+	handleList: function(d){		
+		var documents =d.detail.xhr.response;
+		this.error = '';
+		this.suggestions = documents.response.docs;
+	},
+	handleLocation: function(d){		
+		var documents =d.detail.xhr.response;
+		this.error = '';
+		var l = documents.response.docs[0];
+		var center = l.centroid[0].replace('POINT(','').replace(')','').split(' ');
+		this.fire('goto-coords',[parseFloat(center[0]),parseFloat(center[1])]);
+		//this.location = this.documents.response.docs;
+	},
+	handleError: function(e){
+		if(e.detail.request.xhr.status==404) {
+			this.error = "Er zijn geen documenten gevonden"
+		}
+	},
+    ready: function() {
+		this.baseUrl = "https://services.geodan.nl";
+    },
+    _keyChanged: function(k){
+    	var keystring = k.replace(' ','+');
+    	this.listUrl = this.baseUrl + '/geosearch/suggest?q=' + keystring;
+    }
+  });
+</script>
+
+
+
+</dom-module>

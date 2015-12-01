@@ -68,6 +68,7 @@ Polymer({
     },
     _projectChanged: function(){
     	var self = this;
+    	this.startlocation = this.project.data('incidentLocation') || {lng:0,lat:0,zoom:18};
     	this.itemstore = this.project.itemStore();
     	function load(){
     		self.textitems = self.project.items()
@@ -77,18 +78,11 @@ Polymer({
     		self.featureitems = self.project.items()
     			.filter(function(d){
     				return !d.deleted() && d.data('type') == 'feature';
-    			}).map(function(d){
-					//copy stype from properties to be in line with EagleWater
-					var feat = d.data('feature');
-					feat.style = feat.properties;
-					return feat;
-				});
+    			});
     	}
     	
     	this.project.itemStore().loaded.then(load);
     	this.project.itemStore().on('datachange',load);
-    	
-    	this.startlocation = this.project.data('incidentLocation') || {lng:0,lat:0,zoom:18};
     	
     },
     accountChanged: function(){
@@ -98,17 +92,15 @@ Polymer({
     			return !d.deleted();
     		})
     	});
-    	this.core.projectStore().loaded.then(function(d){
+    	function loadprojects(){
     		self.projects = self.core.projects().filter(function(d){
-    			return !d.deleted();
+    			return !d.deleted() &&d.data('incidentLocation');
     		})
-    	});
-    	this.core.projectStore().on('datachange', function(d){
-    		self.projects = self.core.projects().filter(function(d){
-    			return !d.deleted();
-    		})
-    	});
-    	this.core.userStore().loaded.then(function(){
+    	}
+    	this.core.projectStore().loaded.then(loadprojects);
+    	this.core.projectStore().on('datachange',loadprojects);
+    	
+    	function loadusers(){
     		if (self.account.ID){
     			var user = self.core.user(self.account.ID);
     			if (!user)
@@ -123,7 +115,9 @@ Polymer({
     		else {
     			self.activeuser = null;
     		}
-    	});
+    	}
+    	this.core.userStore().loaded.then(loadusers);
+    	this.core.userStore().on('datachange', loadusers);
     },
     _selectedprojectChanged: function(){
     	this.core.project(this.selectedproject.toString());

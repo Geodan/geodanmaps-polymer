@@ -3,7 +3,6 @@
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="gm-docs-connector">
-
 	<template>
 		<iron-ajax
 		auto
@@ -15,6 +14,7 @@
 		on-response="handleList"
 		on-error="handleError"></iron-ajax>
 	</template>
+</dom-module>
 <script>
   // register a new element called proto-element
   Polymer({
@@ -23,17 +23,24 @@
 		account: {
 			type: Object,
 			observer: '_accountHandler'
+		},
+		configs: {
+			type: Array,
+			notify: true
 		}
 	},
 	_accountHandler: function(acc){
 		if(acc.ID) {
-			this.listUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/";
+			this.listUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/config/";
 		}
 	},
     // add a callback to the element's prototype
 	handleList: function(d){		
 		this.documents =d.detail.xhr.response;
 		this.error = '';
+		this.configs = this.documents.filter(function(d){
+			return d.service == 'config';
+		});
 	},	
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
@@ -51,7 +58,8 @@
 	},
     ready: function() {
 		this.account = this.account || {};		
-		this.baseUrl = "https://services.geodan.nl";
+		//this.baseUrl = "https://services.geodan.nl";
+		this.baseUrl = "https://ontw.geodan.nl";
     }
   });
 </script>

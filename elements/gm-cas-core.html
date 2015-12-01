@@ -1,25 +1,24 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <dom-module id="gm-cas-core">
 
 <template>
 <iron-ajax method="get" id="ajaxRequest"
    auto
-   url="https://services.geodan.nl/geocas/whoami.jsp"  
+   url="https://ontw.geodan.nl/geocas/whoami.jsp"  
    verbose="true"
    with-credentials="true"
    on-response="_handleResponse"></iron-ajax>
 <!-- Login doesn't work like that
 <iron-ajax method="get" id="login"
-   url="https://services.geodan.nl/cas/login"
+   url="https://ontw.geodan.nl/cas/login"
    verbose="true"
    with-credentials="true"
    on-response="_handleLoginResponse"></iron-ajax>
    -->
 <iron-ajax method="get" id="logout"
-   url="https://services.geodan.nl/geocas/cas-logout.jsp"
+   url="https://ontw.geodan.nl/geocas/cas-logout.jsp"
    verbose="true"
    with-credentials="true"
    on-response="_handleLogoutResponse"></iron-ajax>
@@ -53,7 +52,7 @@ Polymer({
 	},
 	ready: function() {
 		this.host = window.location.href.split('?')[0];
-		console.log(this.host)
+		//console.log(this.host)
   },
   login: function(){
   	  //login doesn't work like that
@@ -71,7 +70,7 @@ Polymer({
   },
   _handleLoginResponse: function(d,e) {
   	  if(d.detail&&d.detail.xhr&&d.detail.xhr.response) {
-    	console.log(d.detail.xhr.response);
+    	//console.log(d.detail.xhr.response);
       }
   },
   _handleLogoutResponse: function(d,e) {

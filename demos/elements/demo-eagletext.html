@@ -5,11 +5,15 @@
 
 <dom-module id="demo-eagletext">
 <style>
-	
 </style>
 <template>
 	<gm-docs-text account="{{account}}" projectid="{{curproject._id}}" data="{{textdata}}"></gm-docs-text>
-	<gm-icm-text data="{{textdata}}" items="{{items}}" store="{{store}}"></gm-icm-text>
+	<gm-icm-text 
+		data="{{textdata}}" 
+		items="{{items}}" 
+		store="{{store}}" 
+		activeuser="{{activeuser}}">
+	</gm-icm-text>
 </template>
 </dom-module>
 

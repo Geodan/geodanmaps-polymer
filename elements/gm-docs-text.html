@@ -37,13 +37,13 @@
 	_urlHandler: function(id,acc){
 		if(acc.ID) {
 			//https://services.geodan.nl/document/api/data/GEOF7646XXXX/text/1433231122171
-			this.documentUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/text/" + id;
+			this.documentUrl = this.baseUrl + "/document/api/data/"+ acc.OrganisationCode + "/text/" + id;
 		}
 	},
     // add a callback to the element's prototype
 	handleDocument: function(d){		
 		this.document =d.detail.xhr.response;
-		this.data = JSON.parse(this.document[0].data);
+		this.data = this.document.content;
 		this.error = '';
 	},	
 	handleError: function(e){
@@ -64,7 +64,8 @@
 	*/
     ready: function() {
 		this.account = this.account || {};		
-		this.baseUrl = "https://services.geodan.nl";
+		//this.baseUrl = "https://services.geodan.nl";
+		this.baseUrl = "https://ontw.geodan.nl";
     }
   });
 </script>

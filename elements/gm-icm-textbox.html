@@ -60,6 +60,12 @@
     paper-button.custom > core-icon {
       margin-right: 4px;
     }
+    
+    .smallicon {
+    	width: 16px;
+    	height: 16px;
+    	color: orange;
+    }
 	
 </style>
 <template>
@@ -67,6 +73,9 @@
 				{{subview.title}}
 				<template is="dom-if" if="[[itemtime]]">
 					<small>Last edit at {{itemtime}} by: {{editor}}</small>
+				</template>
+				<template is="dom-if" if="[[recentlyChanged]]">
+					<iron-icon icon="av:new-releases" class="smallicon"></iron-icon>
 				</template>
 			</div>
 			<template is="dom-if" if="[[editmode]]">
@@ -96,13 +105,9 @@ Polymer({
 			type: String,
 			value: ''
 		},
-		deltas: {
-			type: Array,
-			//observer: 'deltasChanged'
-		},
 		subview: {
 			type: Object,
-			observer: '_subviewChanged'
+			//observer: '_subviewChanged'
 		},
 		viewid: {
 			type: Number
@@ -117,31 +122,23 @@ Polymer({
 		}
 	},
 	observers: [
+		'_subviewChanged(activeuser, subview)'
 	],
 	_subviewChanged: function(){
 		var self = this;
 		this.item = this.subview.item;
 		if (this.item){
-			//this.item = items[0];
-			this.deltas = this.item.deltas();
-			this.recentlyChanged = true;
 			this.text = this.item.data('beeldcontent');
 			this.itemtime = new Date(this.item.updated()).toLocaleTimeString();
-			//TODO: there should always be a delta, or is the item not synced yet? find out why there can be no delta here
-			if (this.deltas.length > 0){
-				//TODO: make cleaner user check
-				var userid = this.deltas[this.deltas.length-1].userid;
-				if (userid){
-					//this.editor = core.users(userid).data('name');
-				}
-				else {
-					this.editor = '';
-				}
+			var updater = this.item.updater();
+			this.editor = updater?updater.data('name'):'unknown';
+			//TODO: check for activeuser should not be needed
+			if (updater && this.activeuser && updater.id() != this.activeuser.id()){
+				this.recentlyChanged = true;
 			}
 		}
 		else {
 			this.item = null;
-			this.deltas = null;
 			this.recentlyChanged = null;
 			this.text = '';
 			this.itemtime = null;
@@ -165,7 +162,6 @@ Polymer({
 	},
 	domReady: function(){
 		var self = this;
-		this.deltas = [];
 		this.item = {};
 		
 	},
@@ -208,23 +204,7 @@ Polymer({
 	_goto: function(event,y,z){
 		event.stopPropagation();
 		//TODO: weak link to parent
-		var parent = this.parentElement.parentElement;
-		var items = parent.project.items().filter(function(d){
-			return !d.deleted()
-				&& d.data('type') == 'feature' 
-				&& d.data('feature').properties 
-				&& d.data('feature').properties.name
-				&& d.data('feature').properties.name == event.target.textContent //TODO: not nice way to get text value 
-		});
-		if (items[0]){
-			var coords = items[0].data('feature').geometry.coordinates;
-			parent.fire('goto-location',{msg: coords});
-		}
-		else {
-			console.log('no location found');
-			//this.$.toast.show();
-		}
-		
+		this.fire('goto-location',{text:event.target.textContent});
 	}
 });
 </script>
