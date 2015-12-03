@@ -91,7 +91,7 @@
 				</div>
 				
 				<div id='sketchbox'>
-					<gm-mappu-sketch id="sketch" layer="{{cowlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
+					<gm-mappu-sketch id="sketch" layer="{{sketchlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
 					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
 				</div>
 			</iron-pages>
@@ -175,6 +175,8 @@ Polymer({
 			labelfield: 'label'
 		 })
 		 .addTo(this.map);
+		 this.sketchlayer = this.cowlayer;
+		 
 		 //TODO: Would like to automise this
 		 this.$.layermanager.layers = this.map.layers;
 		 
@@ -192,9 +194,15 @@ Polymer({
 		 });
 		 this.$.sketch.addEventListener('featureCreated', function(d){
 		 	var feature = d.detail;
-		 	//Make feature ready for EagleWater
-		 	for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
-		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
+		 	if (self.$.sketch.layer.name=='cow'){
+		 		//Make feature ready for EagleWater
+		 		for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
+		 		self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
+		 	}
+		 	else {
+		 		self.$.sketch.layer.addFeature(feature);
+		 	}
+		 	
 		 });
 		 this.addEventListener('configselected', function(c){
     		var layers = c.detail.layers;

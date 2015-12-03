@@ -6,22 +6,31 @@
 <link rel="import" href="../bower_components/iron-icons/maps-icons.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
-
-<link rel="import" href="../bower_components/google-youtube/google-youtube.html">
+<script src="http://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
 
 <dom-module id="gm-plugins-tracker">
 <style>
-	collapse-content {
-		padding: 20px;
+	paper-icon-item {
+		cursor: pointer;
 	}
 	text {
             font: 12px sans-serif;
 	}
+	.intersecting {
+		background: red;
+	}
 	
 </style>
 	<template>
+		<iron-ajax
+			url="http://sms.geodan.nl/sendsms"
+			params='{"recipient":"31640737859","message":"hoi","originator":"Tom"}'
+			id="sendSms"
+			verbose=true
+		></iron-ajax>
 		<iron-ajax
 			url="{{routeUrl}}"
 			id="getRoute"		
@@ -35,25 +44,16 @@
 				<div class="title">Track &amp; Trace</div>
 				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
 			</paper-toolbar>
-			
-			<template is="dom-repeat" items="[[routes]]">
-			<paper-icon-item on-click='toggle' >
-				<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-				<paper-item-body>Vehicle {{item.id}}</paper-item-body>
+			<paper-button on-click="drawFence">Draw fence</paper-button>
+			<paper-button on-click="clearFences">Clear fences</paper-button>
+			SMS alert <paper-toggle-button on-change="smsalert" ></paper-toggle-button>
+			<paper-input id='telnr' type='number' label="tel. nr."></paper-input>
+			<template id='list' is="dom-repeat" items="[[routes]]">
+			<paper-icon-item on-click='gotoLocation' class$="{{intersects(item.intersects)}}">
+				<iron-icon icon="maps:directions-car" item-icon></iron-icon>
+					<paper-item-body>Vehicle {{item.id}} {{intersects(item.intersects)}}<br>
+				</paper-item-body>
 			</paper-icon-item>
-			<iron-collapse class='collapse-content'>
-				<div style="padding:10px">
-					<iron-icon icon="icons:search"></iron-icon>
-					<google-youtube
-					  video-id="Af028D6VT_U"
-					  height="270px"
-					  width="480px"
-					  rel="0"
-					  start="5"
-					  autoplay="1">
-					</google-youtube>
-				</div>
-			</iron-collapse>
 		  </template>
 	</template>
 </dom-module>
@@ -68,16 +68,14 @@
 		},
 		numVehicles: {
 			type: Number,
-			value: 1
+			value: 10
 		}
 	},
 	
     ready: function() {
 	
     },
-    toggle: function(e) {
-		//TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
-		e.currentTarget.nextElementSibling.toggle();
+    gotoLocation: function(e) {
         var location = e.model.item.curlocation;
 		this.fire('goto-coords',location);
     },
@@ -99,11 +97,41 @@
 		}
 		
 	},
+	intersects: function(intersects){
+		return intersects?'intersecting':'outside';
+	},
+	drawFence: function(){
+		var style = {
+			stroke: "red",
+			fill: "none",
+			"stroke-width":"2px"
+		};
+		var self = this;
+		var sketch = this.map.sketch;
+		var prevlayer = sketch.layer;
+		sketch.layer = this.fencelayer;
+		var featureReady = function(e){
+			self.map.mapdiv.style.cursor = 'auto';
+			self.map.mapdiv.removeEventListener('featureCreated', featureReady);
+			var feature = e.detail;
+			feature.style = style;
+			self.fencelayer.addFeature(feature);
+			sketch.layer = prevlayer;
+		};
+		sketch.finish();
+		sketch.draw('Polygon');
+		this.map.mapdiv.style.cursor = 'crosshair';
+		this.map.mapdiv.addEventListener('featureCreated', featureReady);
+	},
+	clearFences: function(){
+		this.fencelayer.data = [];
+	},
 	handleRoute: function(d){
 		var data = d.detail.xhr.response;
 		if (!data.exception){
 			var feat = data.features[0];
-			feat.id = this.counter; 
+			feat.id = this.counter;
+			feat.intersects = false;
 			this.map.svg.select('#'+this.tracklayer.id)
 				//.append("circle")
 				.append("image")
@@ -115,7 +143,7 @@
 				//.style('stroke','none')
 				.attr("transform", "translate(0 0) rotate(45, 15, 15)")
 				.attr("xlink:href", '../demos/assets/arrow-up.png');
-			
+				
 			this.routelayer.addFeature(feat);
 			this.push('routes',feat);
 			this.transition();
@@ -126,6 +154,39 @@
 	transition: function(){
 		var self = this;
 		var map = this.map;
+		function checkIntersect(item){
+			var location = item.curlocation;
+			var pt = {"type": "Feature",
+				  "geometry": {
+					"type": "Point",
+					"coordinates": [location[0], location[1]]
+			}};
+			var intersects = false;
+			self.fencelayer.data.forEach(function(poly){
+				var isInside1 = turf.inside(pt, poly);
+				if (isInside1){
+					intersects = true;
+				}
+			});
+			if (item.intersects != intersects){
+				item.intersects = intersects;
+				if (intersects){
+					//self.$.sendSms.params.message = 'Vehicle entered zone';
+					/*DANGER ZONE*/
+					//self.$.sendSms.generateRequest();
+					console.warn('Vehicle entered zone');
+				}
+				if (!intersects){
+					//self.$.sendSms.params.message = 'Vehicle left zone';
+					/*DANGER ZONE*/
+					//self.$.sendSms.generateRequest();
+					console.warn('Vehicle left zone');
+				}
+			}
+			self.set('routes.'+item.id+'.intersects',intersects);
+
+		}
+		
 		// Returns an attrTween for translating along the specified path element.
 		function translateAlong(path) {
 		  var item = d3.select(path).data()[0];
@@ -143,35 +204,19 @@
 			    var p = path.getPointAtLength(t * l);
 			    var location = self.map.projection.invert([p.x,p.y]);
 			    self.set('item.curlocation',location);
-			    item.curlocation = location
+			    item.curlocation = location;
+			    checkIntersect(item);
 			    return "translate(" + (p.x -15) + "," + (p.y -15) + ") rotate("+rot+", 15, 15)";
 			};
 		  };
 		}
-		/*
-			//Update vehicle list
-			var rows = d3.select(self.$.vehiclelist).selectAll('.row').data(self.routelayer.data, function(d){return d.id;});	
-			rows.enter().append('div').classed('row', true).on('click', function(d){
-					d3.select(self.$.vehiclelist).selectAll('.row').classed('selected', false);
-					d3.select(this).classed('selected',true);
-					var circle = map.svg.select('#'+self.tracklayer.id).select('#id'+d.id);
-					var center = circle.attr('transform').replace('translate(','').replace(')','').split(',');
-					console.log(center);
-					self.map.center = center;
-			});
-			rows.html(function(d){
-					return '<core-icon style="color:blue" icon="trending-up"></core-icon>'+d.id+' / Vehicle ' + d.id + ' <br>';
-			});
-				
-			rows.exit().remove();
-		*/
 			
 		  if (this.running == 0 || self.routelayer.data.length < this.numVehicles){
 			  map.svg.selectAll('.route').each(function(d){
 				this.running++;
 				var path = d3.select(this);
-				var circle = map.svg.select('#'+self.tracklayer.id).select('#id'+d.id);
-				circle.transition()
+				var object = map.svg.select('#'+self.tracklayer.id).select('#id'+d.id);
+				object.transition()
 				  .duration(function(x){
 						return self.routelayer.data[d.id].properties.duration * 60 * 1000;
 				  })
@@ -198,6 +243,7 @@
 					fill: 'none',
 					opacity: 0.5
 				}
+				
 		}).addTo(map);
 		
 		this.tracklayer = new d3.mappu.VectorLayer('trackee', {
@@ -205,8 +251,18 @@
 				style: {
 					stroke: 'red',
 					fill: 'red'
+				},
+				labelfield: 'label'
+		}).addTo(map);
+		
+		this.fencelayer = new d3.mappu.VectorLayer('fences', {
+				reproject: true,
+				style: {
+					stroke: 'red',
+					fill: 'none'
 				}
 		}).addTo(map);
+		
 		/*
 		var circle = map.svg.select('#'+this.tracklayer.id)
 			//.append("circle")
