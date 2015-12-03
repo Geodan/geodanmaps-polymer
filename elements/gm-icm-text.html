@@ -56,8 +56,7 @@ Polymer({
 			value: function(){return new Date().getTime();}
 		},
 		data: {
-			type: Object,
-			observer: '_dataChanged'
+			type: Object
 		},
 		views: {
 			type: Array,
@@ -71,6 +70,7 @@ Polymer({
 		}
 	},
 	observers: [
+		'_dataChanged(data,items)'
 	],
 	ready: function(){
 		

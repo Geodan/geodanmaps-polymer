@@ -2,6 +2,7 @@
       href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 
@@ -22,8 +23,9 @@ paper-item {
 		on-response="handleLayers"
 		on-error="handleError"
 		></iron-ajax>
-		Lijst: 
-		Selected: {{selectedconfig}}
+		<paper-toolbar>
+			<div class="title">Configuraties:</div>
+		</paper-toolbar>
 		<iron-selector selected="{{selectedconfig}}">
 			<template is="dom-repeat" items="{{configs}}">
 				<paper-item on-click='_getlayers'>

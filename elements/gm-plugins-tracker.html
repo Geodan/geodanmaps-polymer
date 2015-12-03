@@ -1,0 +1,249 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+
+<link rel="import" href="../bower_components/google-youtube/google-youtube.html">
+
+<dom-module id="gm-plugins-tracker">
+<style>
+	collapse-content {
+		padding: 20px;
+	}
+	text {
+            font: 12px sans-serif;
+	}
+	
+</style>
+	<template>
+		<iron-ajax
+			url="{{routeUrl}}"
+			id="getRoute"		
+			verbose="true"
+			handle-as="json"
+			with-credentials="true"
+			on-response="handleRoute"
+			on-error="handleError"
+		></iron-ajax>
+			<paper-toolbar>
+				<div class="title">Track &amp; Trace</div>
+				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
+			</paper-toolbar>
+			
+			<template is="dom-repeat" items="[[routes]]">
+			<paper-icon-item on-click='toggle' >
+				<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
+				<paper-item-body>Vehicle {{item.id}}</paper-item-body>
+			</paper-icon-item>
+			<iron-collapse class='collapse-content'>
+				<div style="padding:10px">
+					<iron-icon icon="icons:search"></iron-icon>
+					<google-youtube
+					  video-id="Af028D6VT_U"
+					  height="270px"
+					  width="480px"
+					  rel="0"
+					  start="5"
+					  autoplay="1">
+					</google-youtube>
+				</div>
+			</iron-collapse>
+		  </template>
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-plugins-tracker",
+	properties: {
+		routes: {
+			type:Array,
+			value: function(){return [];}
+		},
+		numVehicles: {
+			type: Number,
+			value: 1
+		}
+	},
+	
+    ready: function() {
+	
+    },
+    toggle: function(e) {
+		//TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
+		e.currentTarget.nextElementSibling.toggle();
+        var location = e.model.item.curlocation;
+		this.fire('goto-coords',location);
+    },
+	onoff: function(e){
+	    if (e.srcElement.checked){ //ON
+			this.enable();
+		}
+		else { //OFF
+			this.routes = [];
+			this.map.removeLayer(this.routelayer);
+			this.map.removeLayer(this.tracklayer);
+	
+		}
+	},
+	selectionChanged: function(){
+		if (this.selection){
+			this.map.center = this.selection.geometry.coordinates;
+			//this.map.map.zoom = 24; //can't zoom while still centering (bug in mappu)
+		}
+		
+	},
+	handleRoute: function(d){
+		var data = d.detail.xhr.response;
+		if (!data.exception){
+			var feat = data.features[0];
+			feat.id = this.counter; 
+			this.map.svg.select('#'+this.tracklayer.id)
+				//.append("circle")
+				.append("image")
+				.attr("width", 30)
+				.attr("height", 30)
+				.attr('id','id'+this.counter)
+				//.attr("r", 5)
+				//.style('fill', 'orange')
+				//.style('stroke','none')
+				.attr("transform", "translate(0 0) rotate(45, 15, 15)")
+				.attr("xlink:href", '../demos/assets/arrow-up.png');
+			
+			this.routelayer.addFeature(feat);
+			this.push('routes',feat);
+			this.transition();
+			this.counter++;
+		}
+		
+	},
+	transition: function(){
+		var self = this;
+		var map = this.map;
+		// Returns an attrTween for translating along the specified path element.
+		function translateAlong(path) {
+		  var item = d3.select(path).data()[0];
+		  
+		  return function(d, i, a) {
+			return function(t) {
+				var l = path.getTotalLength();
+				var s = path.getPathSegAtLength(t*l);
+				var s0 = path.pathSegList[s-1];
+				var s1 = path.pathSegList[s];
+				var dX = s1.x - s0.x;
+				var dY = s1.y - s0.y;
+				var dir = Math.atan2(dY,dX) / Math.PI * 180;
+				var rot = dir + 90;
+			    var p = path.getPointAtLength(t * l);
+			    var location = self.map.projection.invert([p.x,p.y]);
+			    self.set('item.curlocation',location);
+			    item.curlocation = location
+			    return "translate(" + (p.x -15) + "," + (p.y -15) + ") rotate("+rot+", 15, 15)";
+			};
+		  };
+		}
+		/*
+			//Update vehicle list
+			var rows = d3.select(self.$.vehiclelist).selectAll('.row').data(self.routelayer.data, function(d){return d.id;});	
+			rows.enter().append('div').classed('row', true).on('click', function(d){
+					d3.select(self.$.vehiclelist).selectAll('.row').classed('selected', false);
+					d3.select(this).classed('selected',true);
+					var circle = map.svg.select('#'+self.tracklayer.id).select('#id'+d.id);
+					var center = circle.attr('transform').replace('translate(','').replace(')','').split(',');
+					console.log(center);
+					self.map.center = center;
+			});
+			rows.html(function(d){
+					return '<core-icon style="color:blue" icon="trending-up"></core-icon>'+d.id+' / Vehicle ' + d.id + ' <br>';
+			});
+				
+			rows.exit().remove();
+		*/
+			
+		  if (this.running == 0 || self.routelayer.data.length < this.numVehicles){
+			  map.svg.selectAll('.route').each(function(d){
+				this.running++;
+				var path = d3.select(this);
+				var circle = map.svg.select('#'+self.tracklayer.id).select('#id'+d.id);
+				circle.transition()
+				  .duration(function(x){
+						return self.routelayer.data[d.id].properties.duration * 60 * 1000;
+				  })
+				  .ease('linear')
+				  .attrTween("transform", translateAlong(path.node()))
+				  .each("end", function(){
+				  		  this.running--;
+				  		  self.transition();
+				  });
+			  });
+		  }
+		
+	},
+	enable: function(){
+		var self = this;
+		var map = this.map;
+		this.running = 0;
+		
+
+		this.routelayer = new d3.mappu.VectorLayer('route', {
+				reproject: true,
+				style: {
+					stroke: 'orange',
+					fill: 'none',
+					opacity: 0.5
+				}
+		}).addTo(map);
+		
+		this.tracklayer = new d3.mappu.VectorLayer('trackee', {
+				reproject: true,
+				style: {
+					stroke: 'red',
+					fill: 'red'
+				}
+		}).addTo(map);
+		/*
+		var circle = map.svg.select('#'+this.tracklayer.id)
+			//.append("circle")
+			.append("image")
+			.attr("width", 32)
+			.attr("height", 37)
+			//.attr("r", 5)
+			//.style('fill', 'red')
+			//.style('stroke','none')
+			.attr("transform", "translate(0 0) rotate(45, 15, 15)")
+			.attr("xlink:href", './assets/icons/Hoge waterstand16x16.png');
+		*/
+		//var from = [4.534,51.664];
+		var to = [4.869,51.691];
+		map.center = to;
+		window.setTimeout(function(){ //TODO: we can't zoom and center at the same time
+				map.zoom = 21;
+		},500);
+		var froms = [];
+		for (var i=0;i<this.numVehicles;i++){
+			froms.push([
+				to[0] + ((0.5 - Math.random())/10),
+				to[1] + ((0.5 - Math.random())/10)
+			]);
+		}
+		
+		this.counter = 0;
+		var N=0;
+		froms.forEach(function(from){
+			window.setTimeout(function(){
+				var routeUrl = "https://ontw.geodan.nl/routing/route?Request=getroute&fromcoordx="+from[0]+"&fromcoordy="+from[1]+"&tocoordx="+to[0]+"&tocoordy="+to[1]+"&returntype=coords&srs=epsg:4326&routetype=fastest&calcMode=time&format=min-km&outputformat=geojson";
+				self.routeUrl = routeUrl;
+				self.$.getRoute.generateRequest();
+				
+			},500 * N++);
+		});
+	}
+  });
+</script>
+</dom-module>

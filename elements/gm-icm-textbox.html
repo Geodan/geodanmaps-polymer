@@ -203,7 +203,6 @@ Polymer({
 	},
 	_goto: function(event,y,z){
 		event.stopPropagation();
-		//TODO: weak link to parent
 		this.fire('goto-location',{text:event.target.textContent});
 	}
 });

@@ -1,0 +1,222 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="stylesheet" href="../bower_components/nvd3/build/nv.d3.min.css">
+<script src="../bower_components/nvd3/build/nv.d3.min.js"></script>
+
+<dom-module id="gm-plugins-rws">
+<style>
+	collapse-content {
+		padding: 20px;
+	}
+	text {
+            font: 12px sans-serif;
+	}
+	svg {
+		display: block;
+	}
+	html, body, chart, svg {
+		margin: 0px;
+		padding: 0px;
+		height: 100%;
+		width: 100%;
+	}
+	.chart path {
+		fill: none;
+	}
+	.nv-point {
+		stroke: none;
+	}
+	.dashed {
+		stroke-dasharray: 5,5;
+	}
+	
+</style>
+	<template>
+		<iron-ajax 
+			id="request"
+			url="http://research.geodan.nl/service/rwsnl/?mode=features&projecttype=waterstanden&loadprojects=0"
+			handle-as="json"
+			on-response="handleResponse"
+			></iron-ajax>
+			<paper-toolbar>
+				<div class="title">Waterstanden</div>
+				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
+			</paper-toolbar>
+			
+			<template is="dom-repeat" items="[[data]]">
+			<paper-icon-item on-click='toggle' >
+				<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
+				<paper-item-body>{{item.locatienaam}}</paper-item-body>
+			</paper-icon-item>
+			<iron-collapse class='collapse-content'>
+				<div>{{item.parameternaam}}: {{item.waarde}} {{item.eenheid}}</div>
+				<div>Meettijd: {{parseTime(item.meettijd)}}</div>
+				Link: <a href="{{item.link_wn}}">Open PDF</a>
+			</iron-collapse>
+		  </template>
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-plugins-rws",
+	properties: {
+		freq: 		60000 * 30, //half uur
+		duration: 	60000 * 30, //half uur
+		interval: 	60000 * 30, //half uur
+		url: "http://research.geodan.nl/service/rwsnl/?mode=features&projecttype=waterstanden&loadprojects=0"
+	},
+	
+    ready: function() {
+	
+    },
+    toggle: function(e) {
+		//TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
+		e.currentTarget.nextElementSibling.toggle();
+       
+		var firstProjection = '+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs';
+		var secondProjection = proj4.defs('EPSG:4326');
+		var locationRD = [e.model.item.location.lon,e.model.item.location.lat];
+		var locationWGS84 = proj4(firstProjection,secondProjection,locationRD);
+		this.fire('goto-coords',locationWGS84);
+    },
+	onoff: function(e){
+	    if (e.srcElement.checked){ //ON
+			this.enable();
+		}
+		else { //OFF
+			this.data = [];
+			clearInterval(this.waterstandeninterval);
+			this.map.removeLayer(this.layer);
+		}
+	},
+	selectionChanged: function(){
+		if (this.selection){
+			this.map.center = this.selection.geometry.coordinates;
+			//this.map.map.zoom = 24; //can't zoom while still centering (bug in mappu)
+		}
+		
+	},
+	locationsChanged: function(){
+		var self = this;
+	},
+	parseTime: function(t){
+		return new Date(t * 1000).toLocaleString();
+	},
+	handleResponse: function(d){
+		this.data = d.detail.xhr.response.features;
+
+		var ramp=d3.scale.linear().domain([-200,200,4000]).range(["green", "blue","red"]);
+		var collection = {"type":"FeatureCollection","features":[]};
+		this.data.forEach(function(d){
+			var color = "blue";
+			var firstProjection = '+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs';
+			var secondProjection = proj4.defs('EPSG:4326');
+			var locationRD = [d.location.lon,d.location.lat];
+			var locationWGS84 = proj4(firstProjection,secondProjection,locationRD);
+			var newlocation = {
+				type: "Feature",
+				style: {
+					fill: ramp(d.waarde),
+					stroke: ramp(d.waarde)
+				},
+				id: d.locatienaam,
+				properties: {
+					id: d.locatienaam, 
+					waarde: d.waarde,
+					eenheid: d.eenheid,
+					category: d.categoryDescription,
+					loc: d.loc,
+					tijdstip: new Date(parseInt(d.meettijd.toString()+'000')).toLocaleTimeString()
+				},
+				geometry: {
+						type: "Point",
+						coordinates: locationWGS84
+				}
+
+			};
+			collection.features.push(newlocation);
+		});
+		this.layer.data = collection.features;
+	},
+	enable: function(){
+		var self = this;
+		var map = this.map;
+		this.layer = new d3.mappu.VectorLayer('waterstanden', {
+			reproject: true,
+			style: {
+				stroke: 'blue',
+				fill: 'red'
+			},
+			labelStyle: {
+				'font-size': '8pt',
+				fill: 'steelBlue',
+				stroke: 'none',
+			},
+			labelfield: 'waarde',
+			events: [{
+			 event: 'mouseover',
+			 action: function(d){
+				var event = d3.mouse(map.mapdiv);
+				d3.select(map.mapdiv).selectAll('.menu').remove();
+				d3.select(map.mapdiv).append('core-overlay').classed('menu', true).classed('dialog', true)
+					.attr('opened','true')
+					.style('position', 'absolute')
+					.style('left', event[0] + 'px')
+					.style('top', (event[1]-20) + 'px')
+					.append('div')
+					.html(d.properties.id);
+				
+			 }
+			},{
+			 event: 'mouseout',
+			 action: function(d){
+				d3.select(map.mapdiv).selectAll('.menu').remove();
+			 }
+			}]
+		}).addTo(map);
+		
+		/* Voorbeelddata:
+		{	"locatienaam":"Aadorp",
+			"parameternaam":"Waterhoogte",
+			"par":"H10",
+			"loc":"AADP",
+			"net":"LMW",
+			"waarde":"993",
+			"eenheid":"cm NAP",
+			"category":1,
+			"iconnr":1,
+			"popupsize":"600",
+			"graphsize":"550",
+			"waardeh10a":null,
+			"waardeh10v":null,
+			"waardeq10v":null,
+			"iconsubscript":"09:30 uur",
+			"meettijd":"1429695000",
+			"link_wn":null,
+			"ids":["AADPLMWH10"],
+			"location":{"lat":"487916","lon":"239843"},
+			"categoryDescription":"Gemeten waterhoogte","icon":{}
+		}
+		*/
+		
+		function getwaterstanden(){
+			self.$.request.generateRequest(); 
+		}
+		clearInterval(this.waterstandeninterval);
+		getwaterstanden();
+		this.waterstandeninterval = setInterval(function(){
+				getwaterstanden();
+		},30000);
+		 
+			
+	}
+  });
+</script>
+</dom-module>

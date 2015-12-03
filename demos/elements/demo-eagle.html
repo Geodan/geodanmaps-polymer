@@ -23,8 +23,9 @@
 <link rel="import" href="../../elements/gm-cow-connector.html">
 <link rel="import" href="../../elements/gm-cow-projectlist.html">
 <link rel="import" href="../../elements/gm-cow-userlist.html">
+<link rel="import" href="../../elements/gm-docs-text.html">
+<link rel="import" href="../../elements/gm-icm-text.html">
 
-<link rel="import" href="./demo-eagletext.html">
 <link rel="import" href="./demo-eaglemap.html">
 
 <dom-module id="demo-eagle">
@@ -64,6 +65,11 @@
 		account="{{account}}" 
 		configs="{{configs}}"
 		></gm-docs-connector>
+	<gm-docs-text 
+		account="{{account}}" 
+		projectid="{{curproject._id}}" 
+		data="{{textdata}}"
+		></gm-docs-text>
 	
 		
 	<gm-cow-core id="cowcore" 
@@ -98,7 +104,6 @@
 				<paper-item class='menu' name='users'>Users</paper-item>
 				<paper-item class='menu' name='projects'>Incidents</paper-item>
 				<template is="dom-if" if="[[curproject]]">
-					<paper-item class='menu' name='textmap'>Text &amp; Map</paper-item>
 					<paper-item class='menu' name='text'>Text</paper-item>
 					<paper-item class='menu' name='map'>Map</paper-item>
 					<paper-item class='menu' name='chat'>Chat</paper-item>
@@ -126,15 +131,8 @@
 			<gm-cow-projectlist name='projects' projects="{{projects}}" 
 				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
 			
-			<div name="textmap" >
-				<div class='layout horizontal'> 
-					<demo-eaglemap id='textmap' class='flex'
-						startlocation="{{startlocation}}"
-						features="{{featureitems}}" 
-						store="{{itemstore}}"
-						account="{{account}}"
-						configs="{{configs}}">
-					</demo-eaglemap>
+			
+					<!--OBS
 					<demo-eagletext id="eagletext"  
 						items="{{textitems}}" 
 						store="{{itemstore}}" 
@@ -143,18 +141,16 @@
 						activeuser="{{activeuser}}"
 						on-goto-location="gotolocation">
 					</demo-eagletext>
-				</div>
-			</div>
+					-->
 			
 			<div name="text">
-				<demo-eagletext  
+				<gm-icm-text id="eagletext" 
+					data="{{textdata}}" 
 					items="{{textitems}}" 
 					store="{{itemstore}}" 
-					account="{{account}}" 
-					curproject="{{curproject}}"
 					activeuser="{{activeuser}}"
 					on-goto-location="gotolocation">
-				</demo-eagletext>
+				</gm-icm-text>
 			</div>
 			
 			<div name="map">
@@ -163,7 +159,11 @@
 					features="{{featureitems}}" 
 					store="{{itemstore}}"
 					account="{{account}}"
-					configs="{{configs}}">
+					configs="{{configs}}"
+					textdata="{{textdata}}"
+					textitems="{{textitems}}"
+					activeuser="{{activeuser}}"
+					>
 				</demo-eaglemap>
 			</div>
 			
@@ -209,8 +209,13 @@ Polymer({
     	}
     },
     ready: function(){
+    	var self = this;
     	this.addEventListener('logout',function(){
-    		this.$.cascore.logout();
+    		self.$.cascore.logout();
+    		self.selected = 'nouser';
+    	});
+    	this.addEventListener('gotolocation',function(d){
+    		self.gotolocation(d);
     	});
     },
     _accountChanged: function(acc){
@@ -236,7 +241,7 @@ Polymer({
     	}
     },
     _projectChanged: function(){
-    	this.selected = 'textmap';
+    	this.selected = 'map';
     },
     _activeuserChanged: function(){
     	if (this.activeuser){
@@ -250,9 +255,6 @@ Polymer({
     	this.$.drawerpanel.closeDrawer();
     	if (this.selected == 'map'){
     		this.$.map.activate();
-    	}
-    	if (this.selected == 'textmap'){
-    		this.$.textmap.activate();
     	}
     },
     login: function(){
