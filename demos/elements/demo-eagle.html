@@ -1,117 +1,180 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
-<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
-<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
-<link rel="import" href="../../bower_components/paper-menu/paper-menu.html">
-<link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
 
-<link rel="import" href="../../elements/gm-routing.html">
-<link rel="import" href="../../elements/gm-cas.html">
 
+<link rel="import" href="../../elements/gm-cas-core.html">
+<link rel="import" href="../../elements/gm-cas-icon.html">
+<link rel="import" href="../../elements/gm-docs-connector.html">
 <link rel="import" href="../../elements/gm-cow-core.html">
-<link rel="import" href="../../elements/gm-cow-status.html">
-<link rel="import" href="../../elements/gm-icm-natuurbrand.html">
+<link rel="import" href="../../elements/gm-cow-connector.html">
+<link rel="import" href="../../elements/gm-cow-projectlist.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
+<link rel="import" href="../../elements/gm-docs-text.html">
+<link rel="import" href="../../elements/gm-icm-text.html">
 
-<link rel="import" href="./eagle-map.html">
+<link rel="import" href="./demo-eaglemap.html">
 
 <dom-module id="demo-eagle">
 <style>
-	.toolbar-tools > ::content .title {
-		  @apply(--paper-font-title);
-		  @apply(--layout-flex);
+	paper-header-panel {
+	  height: 100%;
+	  background: white;
 	}
-    gm-cas {
-    	position: absolute;
-    	right: 10px;
-    	bottom: 10px;
-    	z-index: 100;
-    }
-    eagle-map {
-    	height: 100%;
-    }
-    
-    #cloudDialog {
-    	position: fixed;
-    	right: 6px;
-    	top: 64px;
-    	bottom: 10px;
-    }
-    
-    #layerDialog {
-    	position: fixed;
-    	right: 6px;
-    	top: 64px;
-    	bottom: 10px;
-    }
-    
-    #plugin-menu .paper-menu{
-    	position: fixed:
-    	right: 6px;
-    	background: red;
-    }
+	 .menu {
+		cursor: pointer;
+		background: white;
+	}
+	.accounting {
+		background: #3f51b5;
+		color: white;
+	}
 	
+	#eagletext {
+		width:600px;
+		overflow: auto;
+		z-index: 100;
+	}
+	
+	#toast {
+		z-index: 1000;
+	}
+
 </style>
 <template>
-	<!--outside layout-->
-	<gm-cas></gm-cas>
-	<gm-routing></gm-routing>
-
-	<!--starting dialogs-->
-	<paper-dialog id="cloudDialog">
-		<h2>Geodan maps</h2>
-		<paper-dialog-scrollable>
-			Cloud content....
-		</paper-dialog-scrollable>
-	</paper-dialog>
-	<paper-dialog id="layerDialog">
-		<h2>Layers</h2>
-		<paper-dialog-scrollable>
-			
-		</paper-dialog-scrollable>
-	</paper-dialog>
-	<paper-dialog id="NBPlugin" autoCloseDisabled>
-		<h2>Natuurbrandmodel</h2>
-		<paper-dialog-scrollable>
-  			<gm-icm-natuurbrand map="{{map}}"></icm-plugin-natuurbrand>
-  		</paper-dialog-scrollable>
-  		<div class="buttons">
-  			<paper-button dialog-dismiss>Sluit</paper-button>
-  		</div>
-  	</paper-dialog>
+	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
+	<gm-cas-core id='cascore' 
+		account="{{account}}" 
+		loggedin="{{loggedin}}" 
+		host="{{host}}"
+		></gm-cas-core>
+	<gm-docs-connector id='docsconnector' 
+		account="{{account}}" 
+		configs="{{configs}}"
+		></gm-docs-connector>
+	<gm-docs-text 
+		account="{{account}}" 
+		projectid="{{curproject._id}}" 
+		data="{{textdata}}"
+		></gm-docs-text>
 	
-	
-	<!--starting main layout-->
-	<paper-header-panel>
-		<paper-toolbar>
-			<div class='title'>Eagle Research</div>
-			<!--<gm-mappu-geosearch id="geosearch" map="{{map}}"></gm-mappu-geosearch>-->
-			<paper-icon-button icon="cloud" on-click="toggleCloud"></paper-icon-button>
-			<paper-icon-button icon="maps:layers" on-click="toggleLayerDialog"></paper-icon-button>
-			<paper-icon-button icon="cloud" on-click="toggleNatuurbrand"></paper-icon-button>
-			<paper-menu-button id="plugin-menu">
-			  <paper-icon-button icon="extension" class="dropdown-trigger"></paper-icon-button>
-			  <paper-menu class="dropdown-content">
-			  	<paper-item>Natuurbrand</paper-item>
-			    <paper-item>P2000</paper-item>
-				<paper-item>NS treinen</paper-item>
-				<paper-item>COW</paper-item>
-				<paper-item>Waterstanden</paper-item>
-			  </paper-menu>
-			</paper-menu-button>
-			<paper-icon-button icon="help"></paper-icon-button>
-		</paper-toolbar>
-		<div>
-			<eagle-map id="eaglemap" map="{{map}}"></eagle-map>
-		</div>
 		
-	</paper-header-panel>
+	<gm-cow-core id="cowcore" 
+		config="{{cowconfig}}" 
+		core="{{core}}"
+		></gm-cow-core>
+	<gm-cow-connector id="cowconnector" 
+		account="{{account}}" 
+		core="{{core}}" 
+		selectedproject="{{selectedproject}}"
+		project="{{curproject}}"
+		users="{{users}}"
+		projects="{{projects}}"
+		activeuser="{{activeuser}}"
+		textitems="{{textitems}}"
+		featureitems="{{featureitems}}"
+		itemstore="{{itemstore}}"
+		startlocation="{{startlocation}}"
+		></gm-cow-connector>
+		
+	<paper-drawer-panel id='drawerpanel'>
+	 <!-- MENU -->
+	 <paper-header-panel mode="seamed" drawer>
+	 	<paper-toolbar>
+	 		<img src='../images/icon-eagle.png'/>
+	 	</paper-toolbar>
+	 	<div class='accounting'>
+			<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
+		</div>
+    	<iron-selector attr-for-selected="name" selected="{{selected}}">
+    		<template is="dom-if" if="[[account.ID]]">
+				<paper-item class='menu' name='users'>Users</paper-item>
+				<paper-item class='menu' name='projects'>Incidents</paper-item>
+				<template is="dom-if" if="[[curproject]]">
+					<paper-item class='menu' name='text'>Text</paper-item>
+					<paper-item class='menu' name='map'>Map</paper-item>
+					<paper-item class='menu' name='chat'>Chat</paper-item>
+				</template>
+			</template>
+    	</iron-selector>
+    </paper-header-panel>
+    <!--MAIN SCREEN-->
+    <paper-header-panel main>
+    	<paper-toolbar>
+    		<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+    		<div class='title'>{{curproject._data.name}}</div>
+    	</paper-toolbar>
+		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
+			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+		
+			<div name='nouser'>
+				<div class="horizontal center center-justified layout">
+					<gm-cas-icon account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-icon>
+				</div>
+			</div>
+			
+			<gm-cow-userlist name='users' users="{{users}}"></gm-cow-userlist>
+			
+			<gm-cow-projectlist name='projects' projects="{{projects}}" 
+				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
+			
+			
+					<!--OBS
+					<demo-eagletext id="eagletext"  
+						items="{{textitems}}" 
+						store="{{itemstore}}" 
+						account="{{account}}" 
+						curproject="{{curproject}}"
+						activeuser="{{activeuser}}"
+						on-goto-location="gotolocation">
+					</demo-eagletext>
+					-->
+			
+			<div name="text">
+				<gm-icm-text id="eagletext" 
+					data="{{textdata}}" 
+					items="{{textitems}}" 
+					store="{{itemstore}}" 
+					activeuser="{{activeuser}}"
+					on-goto-location="gotolocation">
+				</gm-icm-text>
+			</div>
+			
+			<div name="map">
+				<demo-eaglemap class='fit' id='map' 
+					startlocation="{{startlocation}}"
+					features="{{featureitems}}" 
+					store="{{itemstore}}"
+					account="{{account}}"
+					configs="{{configs}}"
+					textdata="{{textdata}}"
+					textitems="{{textitems}}"
+					activeuser="{{activeuser}}"
+					>
+				</demo-eaglemap>
+			</div>
+			
+			
+			<div name="chat">
+				Chat will be here...
+			</div>
+			
+		</iron-pages>
+    </paper-header-panel>
+</paper-drawer-panel>
 </template>
 </dom-module>
 
@@ -119,21 +182,100 @@
 Polymer({
     is: 'demo-eagle',
     properties: {
-    	map: {
+    	map: Object,
+    	cowconfig: {
+    		type: Object
+    	},
+    	account: {
     		type: Object,
-    		notify:true
+    		observer: '_accountChanged'
+    	},
+    	activeuser: {
+    		type: Object,
+    		observer: '_activeuserChanged'
+    	},
+    	curproject: {
+    		type: Object,
+    		observer: '_projectChanged'
+    	},
+    	selected: {
+    		value: function(){
+    			return this.account?'projects':'nouser';
+    		},
+    		observer: '_selectedChanged'
+    	},
+    	selectedproject: {
+    		type: String
     	}
     },
     ready: function(){
+    	var self = this;
+    	this.addEventListener('logout',function(){
+    		self.$.cascore.logout();
+    		self.selected = 'nouser';
+    	});
+    	this.addEventListener('gotolocation',function(d){
+    		self.gotolocation(d);
+    	});
     },
-    toggleCloud: function(){
-    	this.$.cloudDialog.toggle();
+    _accountChanged: function(acc){
+    	switch (acc.OrganisationCode){
+    	case 'GEOF7646XXXX':
+    		this.cowconfig = {
+    			protocol: 'wss',
+    			url: 'sslgw.geodan.nl/eaglewater/',
+    			port: 8081,
+    			dir: 'geofort',
+    			key: 'geofort'
+    		};
+    		break;
+    	default:
+    		this.cowconfig = {
+    			protocol: 'ws',
+    			url: 'eaglewater-ontw.geodan.nl',
+    			port: 8081,
+    			dir: 'ontw',
+    			key: 'ontw'
+    		};
+    		break;
+    	}
     },
-    toggleLayerDialog: function(){
-    	this.$.eaglemap.toggleLayers();
+    _projectChanged: function(){
+    	this.selected = 'map';
     },
-    toggleNatuurbrand: function(){
-    	this.$.NBPlugin.toggle();
+    _activeuserChanged: function(){
+    	if (this.activeuser){
+    		this.selected = 'projects';
+    	}
+    	else {
+    		this.selected = 'nouser';
+    	}
+    },
+    _selectedChanged: function(s){
+    	this.$.drawerpanel.closeDrawer();
+    	if (this.selected == 'map'){
+    		this.$.map.activate();
+    	}
+    },
+    login: function(){
+    	this.$.cas.login();
+    },
+    gotolocation: function(d){
+    	var text = d.detail.text;
+    	var items = this.featureitems.filter(function(d){
+			return d.data('feature').properties 
+				&& d.data('feature').properties.label
+				&& d.data('feature').properties.label == text; 
+		});
+		if (items[0]){
+			var feature = items[0].data('feature');
+			this.$.textmap.cowlayer.zoomToFeature(feature);
+		}
+		else {
+			console.log('no location found');
+			this.toasttext = 'No such location found';
+			this.$.toast.show();
+		}
     }
 });
 </script>

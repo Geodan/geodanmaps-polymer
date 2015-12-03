@@ -24,22 +24,6 @@
 <script>
 Polymer({
 	is: 'gm-cow-userlist',
-	properties: {
-		core: {
-			type: Object,
-			observer: '_coreChanged'
-		}
-	},
-	_coreChanged: function(){
-		var core = this.core;
-		var self = this;
-		core.userStore().loaded.then(function(){
-			self.users = core.users().filter(d=>!d.deleted());
-		});
-		core.userStore().on('datachange', function(){
-			self.users = core.users().filter(d=>!d.deleted());
-		});
-	},
 	updated: function(d){
 		return new Date(parseInt(d.updated())).toLocaleString();
 	}

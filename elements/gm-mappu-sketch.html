@@ -4,6 +4,7 @@
 <link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 <dom-module id="gm-mappu-sketch">
  <style>
  	.container {
@@ -31,7 +32,7 @@
 		cursor: pointer;
 	}
  	.collapse-content {
- 		max-width: 200px;
+ 		/*max-width: 400px;*/
  	}
  	.layer {
 		border-top: solid 1px rgb(200,200,200);
@@ -39,8 +40,8 @@
 		background: white;
 	}
 	.marker {
-		width: 24px;
-		height: 24px;
+		width: 40px;
+		height: 40px;
 	}
  </style>
  <template>
@@ -105,6 +106,7 @@ Polymer({
 		}
 	},
 	ready: function(){
+		
 	},
 	_stylesetChanged: function(){
 		this.iconset = this.styleset.iconset;
@@ -127,6 +129,83 @@ Polymer({
         else {
         	this.sketch.layer = this.layer;
         }
+        this.sketch.layer.events = [{
+			event:'click',
+			action: function(d){
+				d3.event.stopPropagation();
+				var textmenu = function(e){
+					d3.event.stopPropagation();
+					d3.select(self.map.mapdiv).selectAll('.menu').remove();
+					d3.select(self.map.mapdiv).append('core-overlay').classed('menu', true).classed('dialog', true)
+						.attr('opened','true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.append('textarea')
+						.on('click', function(){
+								d3.event.stopPropagation();
+						})
+						.on('blur', function(){
+							d.properties.label = this.value;
+							//TODO: Okay, now it should be saved...
+							self.fire('featureChanged', d);
+						})
+						.html(d.properties.label);
+					
+				}
+				var offset = 30;
+				d3.select(self.map.mapdiv).selectAll('.menu').remove();
+				var location = [d3.event.offsetX , d3.event.offsetY];
+				//edit
+				d3.select(self.map.mapdiv).append('paper-fab')
+					.classed('menu', true)
+					.on('click', function(){
+						d3.select(self.map.mapdiv).selectAll('.menu').remove();
+						self.sketch.edit(d);
+					})
+					.attr('icon', 'create')
+					.attr('mini', 'true')
+					.style('position', 'absolute')
+					.style('left', location[0] + 'px')
+					.style('top', location[1] + 'px')
+					.style('background', 'orange')
+					.transition()
+					.style('left', location[0] + offset + 'px')
+					.style('top', location[1] + offset + 'px')
+				//Remove	
+				d3.select(self.map.mapdiv).append('paper-fab')
+					.classed('menu', true)
+					.on('click', function(){
+						self.fire('featureRemoved', d);
+						self.sketch.remove(d);
+					})
+					.attr('icon', 'content-cut')
+					.attr('mini', 'true')
+					.style('position', 'absolute')
+					.style('left', location[0] + 'px')
+					.style('top', location[1] + 'px')
+					.style('background', 'red')
+					.transition()
+					.style('left', location[0] + offset + 'px')
+					.style('top', location[1] - offset + 'px');
+				//textedit
+				d3.select(self.map.mapdiv).append('paper-fab')
+					.classed('menu', true)
+					.on('click',textmenu)
+					.attr('icon', 'editor:format-size')
+					.attr('mini', 'true')
+					.style('position', 'absolute')
+					.style('left', location[0] + 'px')
+					.style('top', location[1] + 'px')
+					.style('background', 'green')
+					.transition()
+					.style('left', location[0] - offset + 'px')
+					.style('top', location[1] - offset + 'px');
+				d3.select(self.map.mapdiv).on('click', function(){
+					d3.select(self.map.mapdiv).selectAll('.menu').remove();
+				});
+			}
+  		}];
 	},
 	_getPolystyle: function(item){
 		return 'fill:'+item.fill+';fill-opacity:0.7;stroke:'+item.stroke+';stroke-width:1;';
@@ -142,6 +221,7 @@ Polymer({
 			self.map.mapdiv.removeEventListener('featureCreated', featureReady);
 			var feature = e.detail;
 			feature.style = style;
+			self.fire('featureCreated',feature);
 		};
 		this.sketch.finish();
 		this.sketch.draw('Point');
@@ -156,6 +236,7 @@ Polymer({
 			self.map.mapdiv.removeEventListener('featureCreated', featureReady);
 			var feature = e.detail;
 			feature.style = style;
+			self.fire('featureCreated',feature);
 		};
 		this.sketch.finish();
 		this.sketch.draw('LineString');
@@ -170,6 +251,7 @@ Polymer({
 			self.map.mapdiv.removeEventListener('featureCreated', featureReady);
 			var feature = e.detail;
 			feature.style = style;
+			self.fire('featureCreated',feature);
 		};
 		this.sketch.finish();
 		this.sketch.draw('Polygon');

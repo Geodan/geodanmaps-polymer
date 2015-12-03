@@ -6,8 +6,6 @@
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 
-
-<link rel="import" href="gm-cas-core.html">
 <dom-module id="gm-cas-icon">
 <style>
 .header {
@@ -27,9 +25,7 @@
 
 </style>
 <template>
-<gm-cas-core id='cascore' account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-core>
 <paper-item class='header' on-click='toggleLogin'>
-
 	<template is="dom-if" if="[[!loggedin]]">
 		<paper-item-body two-line>
 			<div>Login</div>
@@ -47,12 +43,12 @@
 	</template>
 	
 </paper-item>
-<iron-collapse id="accountmenu" class='collapse-content'>
+<iron-collapse id="accountmenu" class='collapse-content' opened="{{!loggedin}}">
 	<iron-selector attr-for-selected="name" selected="{{selected}}">
 	
 		<template is="dom-if" if="{{!loggedin}}">
 			<paper-item class='menu' name='login' on-click='login'>
-				<a href="https://services.geodan.nl/cas/login?service={{host}}">Inloggen</a>
+				<a href="https://ontw.geodan.nl/cas/login?service={{host}}">Inloggen</a>
 			</paper-item>
 		</template>
 		
@@ -77,6 +73,13 @@ Polymer({
 		account: {
 			type: Object,
 			notify: true
+		},
+		loggedin: {
+			type: Boolean,
+			value: false
+		},
+		host: {
+			type: String
 		}
 	},
 	ready: function() {
@@ -85,10 +88,11 @@ Polymer({
 		this.$.accountmenu.toggle();
 	},
 	login: function(){
-		this.$.cascore.login();
+		//this.$.cascore.login();
 	},
 	logout: function(){
-		this.$.cascore.logout();
+		this.fire('logout');
+		//this.$.cascore.logout();
 	}
 });
 </script>

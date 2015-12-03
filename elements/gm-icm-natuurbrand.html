@@ -252,13 +252,16 @@ Polymer({
 	toggle: function(e){
 		if (e.srcElement.checked){ //ON
 			//Save previous sketch layer (if any)
-			var em = document.querySelector('#eaglemap');
-			this.prevlayer = em.layer;
-			em.sketchlayer = this.layer;
+			//var em = document.querySelector('#eaglemap');
+			//this.prevlayer = em.layer;
+			this.prevlayer = this.map.sketch.layer;
+			this.map.sketch.layer = this.layer;
 		}
 		else { //OFF, back to previous sketch layer
-			var em = document.querySelector('#eaglemap');
-			em.sketchlayer = this.prevlayer;
+			//var em = document.querySelector('#eaglemap');
+			//em.sketchlayer = this.prevlayer;
+			this.map.sketch.layer = this.prevlayer;
+			
 		}
 	},
 	startBatch: function(){

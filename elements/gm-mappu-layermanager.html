@@ -46,7 +46,7 @@
 }
  </style>
  <template>
- 	<div class='container'>
+  	<div class='container' style=$'display:{{display}}'>
  	 <template id="layerlist" is="dom-repeat" items="{{reverselayers}}">
  	 	<div class="layer">
 			<paper-icon-item class='layer' on-click='toggle' >
@@ -67,8 +67,7 @@
 		</div>
     </template>
  	</div>
- </template>
- 
+</template>
 </dom-module>
 
 <script>
@@ -80,6 +79,14 @@ Polymer({
     	map: {
     		type: Object,
     		observer: 'mapChanged'
+    	},
+    	display: {
+    		type: String,
+    		value: 'none'
+    	},
+    	layers: {
+    		type: Array,
+    		observer: 'mapChanged'
     	}
     },
     observers: [
@@ -90,17 +97,14 @@ Polymer({
     	this.$.layerlist.render(); //somehow it's not autorefreshing
     },
     mapChanged: function(){
-    	this.reverselayers = this.map.layers.slice(0).reverse();
     	var self = this;
-    	this.layers = this.map.layers;
-    	//Only way to observe since layers is not a polymer object
-    	//This only works in Chrome 
-    	//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe#Browser_compatibility
-    	Object.observe(this.map.layers, function(){
+    	function rerender(){
+    		self.layers = self.map.layers;
     		self.reverselayers = self.map.layers.slice(0).reverse();
     		self.$.layerlist.render(); //somehow it's not autorefreshing
-    	});
-    	
+    	}
+    	this.map.mapdiv.addEventListener('layeradded',rerender);	
+    	this.map.mapdiv.addEventListener('layerremoved',rerender);
     },
     ready: function(){
     	
