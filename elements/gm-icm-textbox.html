@@ -119,16 +119,19 @@ Polymer({
 		store: {
 			type: Object,
 			observer: '_storeChanged'
+		},
+		itemconfig: {
+			type: Object
 		}
 	},
 	observers: [
-		'_subviewChanged(activeuser, subview)'
+		'_subviewChanged(activeuser, subview,itemconfig)'
 	],
 	_subviewChanged: function(){
 		var self = this;
 		this.item = this.subview.item;
 		if (this.item){
-			this.text = this.item.data('beeldcontent');
+			this.text = this.item.data(this.itemconfig.content);
 			this.itemtime = new Date(this.item.updated()).toLocaleTimeString();
 			var updater = this.item.updater();
 			this.editor = updater?updater.data('name'):'unknown';
@@ -175,14 +178,15 @@ Polymer({
 		this.editmode = false;
 		if (!this.item){
 			this.item = this.store.records({})
-				.data('beeld',this.viewid)
-				.data('beeldonderdeel',this.subview.id);
+				.data('type','text')
+				.data(this.itemconfig.view,this.viewid)
+				.data(this.itemconfig.subview,this.subview.id);
 		}
-		this.item.data('beeldcontent',this.text).sync();//TODO: add sync
+		this.item.data(this.itemconfig.content,this.text).sync();//TODO: add sync
 	},
 	_cancel: function(){
 		this.editmode = false;
-		this.text = this.item?this.item.data('beeldcontent'):null;
+		this.text = this.item?this.item.data(this.itemconfig.content):null;
 	},
 	_storeChanged: function(){
 		var self = this;

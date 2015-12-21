@@ -1,5 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -7,9 +8,17 @@
 <script src="../bower_components/proj4/dist/proj4.js"></script>
 <dom-module id="gm-icm-natuurbrand">
 <style>
+#main {
+	padding: 20px;
+}
 </style>
 <template>
-	<paper-toggle-button on-change="toggle"></paper-toggle-button>
+	<paper-toolbar>
+		<div class="title">Natuurbrand</div>
+		<paper-toggle-button on-change="toggle"></paper-toggle-button>
+	</paper-toolbar>
+
+
 	<div id="main" disabled>
 		<b>Status:</b>
 		<div>Cropping terrain: <span>{{makeSubsetStatus}}</span></div>
@@ -20,42 +29,50 @@
 		<paper-progress value="{{fireProgress}}"></paper-progress>
 		<br>
 		<div layout vertical>
-			<b>Inputs:</b>
-			Current area: 
-			<div><span>{{area}}</span> km&sup2; <span style="color: red; display:{{area>100?'inline':'none'}}"><small> (max 100!)</small></span></div>
-			
-			<paper-input 
-				id="windspeed" 
-				pattern="^[0-9]." 
-				value="4" 
-				type="number" 
-				label="Windspeed" 
-				floatingLabel 
-				error-message="Value must be a number!">
-				<!--isInvalid="{{!$.windspeed.validity.valid}}">-->
-			</paper-input>
-			<paper-input 
-				id="winddir" 
-				type="number" 
-				value="225" 
-				label="Winddir" 
-				floatingLabel 
-				error-message="Value must be a number!"> 
-				<!--isInvalid="{{!$.winddir.validity.valid}}">-->
-			</paper-input>
-			
-			<paper-input id="date" type="date" value="{{date}}" label="Date" floatingLabel>
-			</paper-input>
-			<paper-input id="time" type="time" value="{{time}}" label="Time" floatingLabel>
-			</paper-input>
-			<paper-input id="name" value="Testrun" label="Name" floatingLabel>
-			</paper-input><br>
+			<paper-button on-click="draw" style="color: green;">
+					Draw
+			</paper-button>
+			<paper-button on-click="clearAll" style="color: orange;">
+					Clear
+			</paper-button>
+			<div class='inputs'>
+				<b>Inputs:</b>
+				Current area: 
+				<div><span>{{area}}</span> km&sup2; <span style="color: red; display:{{area>100?'inline':'none'}}"><small> (max 100!)</small></span></div>
+				
+				<paper-input 
+					id="windspeed" 
+					pattern="^[0-9]." 
+					value="4" 
+					type="number" 
+					label="Windspeed" 
+					floatingLabel 
+					error-message="Value must be a number!">
+					<!--isInvalid="{{!$.windspeed.validity.valid}}">-->
+				</paper-input>
+				<paper-input 
+					id="winddir" 
+					type="number" 
+					value="225" 
+					label="Winddir" 
+					floatingLabel 
+					error-message="Value must be a number!"> 
+					<!--isInvalid="{{!$.winddir.validity.valid}}">-->
+				</paper-input>
+				
+				<paper-input id="date" type="date" value="{{date}}" label="Date" floatingLabel>
+				</paper-input>
+				<paper-input id="time" type="time" value="{{time}}" label="Time" floatingLabel>
+				</paper-input>
+				<paper-input id="name" value="Testrun" label="Name" floatingLabel>
+				</paper-input><br>
+			</div>
 		</div>
 		<iron-ajax id="wps_call"
 			url="/service/geoserver/ows?"
 			params='{}'
-			handle-as="xml"
-			on-response="{{handleStatus}}"></iron-ajax>
+			handle-as="json"
+			on-response="handleStatus"></iron-ajax>
 		<paper-button on-click="startBatch">Start</paper-button>
 	</div>
 </template>
@@ -264,6 +281,15 @@ Polymer({
 			
 		}
 	},
+	draw: function(){
+		var self = this;
+		this.map.sketch.draw('LineString').then(function(feature){
+			self.layer.addFeature(feature);
+		});
+	},
+	clearAll: function(){
+		this.layer.data = [];
+	},
 	startBatch: function(){
 		this.startSubset();
 	},
@@ -283,16 +309,16 @@ Polymer({
 		extent[1] = proj4(mercator,extent[1]);
 		var params = Natuurbrand_utils.makesubset(extent);
 		this.$.wps_call.params = params; 
-		this.$.wps_call.go(); 
-		console.log(params);
+		this.$.wps_call.generateRequest(); 
+		//console.log(params);
 	},
 	startMakeLcp: function(terreinid){
 		/** 2. Make terrain **/
 		var map = this.map;
 		var params = Natuurbrand_utils.makelcp(terreinid);
 		this.$.wps_call.params = params; 
-		this.$.wps_call.go();
-		console.log(params);
+		this.$.wps_call.generateRequest();
+		//console.log(params);
 	},
 	startFire: function(landscapeid){
 		/** 3. Start fire **/
@@ -381,12 +407,12 @@ Polymer({
 			mimeType: 'application/json'
 		}; 
 		this.$.wps_call.params = run_params;
-		console.log(run_params);
-		this.$.wps_call.go();
+		//console.log(run_params);
+		this.$.wps_call.generateRequest();
 	},
 	handleStatus: function(res){
 		var self = this;
-		var result = JSON.parse(res.detail.xhr.response);
+		var result = res.detail.xhr.response;
 		switch(result.modelname) {
 		case 'makeSubset':
 			this.makeSubsetStatus = result.status;
@@ -407,15 +433,12 @@ Polymer({
 			switch(result.modelname) {
 				case 'makeSubset':
 					self.startMakeLcp(runid);
-					//TODO: add correct URL
 					var map = self.map
-					d3.json(url, function(res){
-					 	var layer =  new d3.mappu.RasterLayer('terrain'+runid,{
-					 		ogc_type: 'wms',
-					 		url: "/service/geoserver/model_wildfire/ows?",
-					 		layers: 'model_wildfire:terrein_'+runid
-					 	}).addTo(map);       
-					});
+					var layer =  new d3.mappu.RasterLayer('terrain'+runid,{
+						ogc_type: 'wms',
+						url: "/service/geoserver/model_wildfire/ows?",
+						layers: 'model_wildfire:terrein_'+runid
+					}).addTo(map);       
 					break;
 				case 'makeLcp':
 					self.startFire(runid);
@@ -459,7 +482,7 @@ Polymer({
 		};
 		this.$.wps_call.params = run_params;
 		window.setTimeout(function(){
-			self.$.wps_call.go();
+			self.$.wps_call.generateRequest();
 		},2000);
 	}
 });

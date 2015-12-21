@@ -16,6 +16,8 @@
 <link rel="import" href="../../elements/gm-mappu-geosearch.html">
 <link rel="import" href="../../elements/gm-mappu-catalog.html">
 <link rel="import" href="../../elements/gm-mappu-stylesets.html">
+<link rel="import" href="../../elements/gm-mappu-cowlayer.html">
+
 <link rel="import" href="../../elements/gm-mappu-sketch.html">
 
 <link rel="import" href="../../elements/gm-cow-core.html">
@@ -26,6 +28,7 @@
 <link rel="import" href="../../elements/gm-icm-natuurbrand.html">
 <link rel="import" href="../../elements/gm-plugins-rws.html">
 <link rel="import" href="../../elements/gm-plugins-tracker.html">
+<link rel="import" href="../../elements/gm-plugins-nstwitter.html">
 
 <dom-module id="demo-eaglemap">
 <style>
@@ -44,16 +47,16 @@
 		  <paper-icon-button name="natuurbrandbox" toggles icon="social:whatshot"></paper-icon-button>
 		  <paper-icon-button name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
 		  <paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>
-		  <paper-icon-button name="trackerbox" toggles icon="icons:trending-up"></paper-icon-button>
+		  <paper-icon-button name="trackerbox" toggles icon="icons:settings-input-antenna"></paper-icon-button>
 		  <paper-icon-button name="rwsbox" toggles icon="icons:trending-up"></paper-icon-button>
-		  
+		  <paper-icon-button name="nstwitterbox" toggles icon="maps:directions-railway"></paper-icon-button>
 		  <paper-icon-button name="textbox" toggles icon="editor:format-size"></paper-icon-button>
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
 		
 		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
-			<div drawer>
+			<paper-header-panel drawer>
 			<iron-pages attr-for-selected="id" selected="{{selected}}">
 				<div id='natuurbrandbox'>
 					<gm-icm-natuurbrand map="{{map}}"></gm-icm-natuurbrand>
@@ -76,6 +79,10 @@
 					<gm-plugins-rws id="rwsplugin" map="{{map}}"></gm-plugins-rws>
 				</div>
 				
+				<div id='nstwitterbox'>
+					<gm-plugins-nstwitter id="nstwitterplugin" map="{{map}}"></gm-plugins-nstwitter>
+				</div>
+				
 				<div id='trackerbox'>
 					<gm-plugins-tracker id="tracker" map="{{map}}"></gm-plugins-tracker>
 				</div>
@@ -91,15 +98,26 @@
 				</div>
 				
 				<div id='sketchbox'>
-					<gm-mappu-sketch id="sketch" layer="{{sketchlayer}}" styleset="{{styleset}}"></gm-mappu-sketch>
+					<gm-mappu-sketch id="sketch" 
+						layer="{{cowlayer}}" 
+						styleset="{{styleset}}"
+						store="{{store}}"
+						></gm-mappu-sketch>
 					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
 				</div>
 			</iron-pages>
-			</div>
+			</paper-header-panel>
 			<div main>
 				<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
 					<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
 				</gm-mappu-map>
+				<gm-mappu-cowlayer 
+					id="cowlayer"
+					map="{{map}}" 
+					features="{{features}}" 
+					store="{{store}}" 
+					layer="{{cowlayer}}">
+				</gm-mappu-cowlayer>
 			</div>
 		</paper-drawer-panel>
 	</div>
@@ -116,11 +134,6 @@ Polymer({
     	selected: {
     		observer: '_selectedChanged' 
     	},
-    	features: {
-    		type: Array,
-    		//value: function(){return [];},
-    		observer: '_reload'
-    	},
     	startlocation: {
     		observer: 'activate'
     	}
@@ -132,97 +145,30 @@ Polymer({
     	var self = this;
     	this.$.drawer.closeDrawer();
     	this.map = this.$.mapelement.map;
-    	new d3.mappu.RasterLayer('Topografie',  {
-            ogc_type: 'tms',
-            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q',
-            //url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
-            visible: true
-		 })
-		 .addTo(this.map);
-		 /*
-		 new d3.mappu.RasterLayer('GRB-basiskaart (Vlaanderen)',  {
-            ogc_type: 'wms',
-            url: 'http://geoservices.informatievlaanderen.be/raadpleegdiensten/GRB-basiskaart/wms?',
-            layers: ['GRB_BSK'],
-            visible: true
-		 })
-		 .addTo(this.map);
-		  
-		 new d3.mappu.RasterLayer('Watertoets - Hellingenkaart',  {
-            ogc_type: 'wms',
-            url: 'http://geo.agiv.be/ogc/wms/product/VMMWatertoets?',
-            layers: ['Helling'],
-            visible: true,
-            opacity: 0
-		 })
-		 .addTo(this.map);
-		 new d3.mappu.RasterLayer('Watertoets - Overstromingsgevoelige gebieden 2014',  {
-            ogc_type: 'wms',
-            url: 'http://geo.agiv.be/ogc/wms/product/VMMWatertoets?',
-            layers: ['Ovstrgev2014'],
-            visible: true,
-            opacity: 0
-		 })
-		 .addTo(this.map);
-		*/
-		 
-		 
-		 this.cowlayer = new d3.mappu.VectorLayer('cow',{
-    		reproject: true,
-    		style: {
-    			'fill-opacity': 0.5
-    		},
-			labelfield: 'label'
-		 })
-		 .addTo(this.map);
-		 this.sketchlayer = this.cowlayer;
-		 
-		 //TODO: Would like to automise this
-		 this.$.layermanager.layers = this.map.layers;
-		 
-		 this.$.sketch.addEventListener('featureRemoved', function(d){
-			 var feature = d.detail;
-			 self.store.records(feature.id.toString()).deleted(true).sync();
-		 });
-		 this.map.mapdiv.addEventListener('featureChanged', function(d){
-		 	var feature = d.detail;
-		 	self.store.records(feature.id.toString()).data('feature',feature).sync();
-		 });
-		 this.$.sketch.addEventListener('featureChanged', function(d){
-		 	var feature = d.detail;
-		 	//self.store.records(feature.id.toString()).data('feature',feature).sync();
-		 });
-		 this.$.sketch.addEventListener('featureCreated', function(d){
-		 	var feature = d.detail;
-		 	if (self.$.sketch.layer.name=='cow'){
-		 		//Make feature ready for EagleWater
-		 		for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
-		 		self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
-		 	}
-		 	else {
-		 		self.$.sketch.layer.addFeature(feature);
-		 	}
-		 	
-		 });
-		 this.addEventListener('configselected', function(c){
-    		var layers = c.detail.layers;
-    		layers.filter(function(l){
-    			return l.source.type.toLowerCase() == 'ogc_wms';
-    		}).forEach(function(l){
-    			new d3.mappu.RasterLayer(l.title,  {
+
+		//TODO: Would like to automise this
+		this.$.layermanager.layers = this.map.layers;
+		
+		//Add all layers from selected config
+		this.addEventListener('configselected', function(c){
+			var layers = c.detail.layers;
+			layers.filter(function(l){
+				return l.source.type.toLowerCase() == 'ogc_wms';
+			}).forEach(function(l){
+				new d3.mappu.RasterLayer(l.title,  {
 					ogc_type: 'wms',
 					url: l.source.url,
 					layers: [l.source.featureName],
 					visible: true || l.options.visible
 				 })
 				 .addTo(self.map);
-    		});
-    		//TODO: Would like to automise this
-    		self.$.layermanager.layers = self.map.layers;
+			});
+			//TODO: Would like to automise this
+			self.$.layermanager.layers = self.map.layers;
     	});
-    	 this.addEventListener('goto-coords',function(c){
-    	 	self.map.center = c.detail;
-    	 });
+		this.addEventListener('goto-coords',function(c){
+			self.map.center = c.detail;
+		});
     },
     activate: function(){
     	if (this.startlocation){//TODO
@@ -232,18 +178,6 @@ Polymer({
 			var self = this;
 			window.setTimeout(function(){
 				self.map.resize();
-			});
-			this._reload();
-		}
-	},
-	_reload: function(){
-		if (this.features){//TODO
-			this.cowlayer.data = this.features.map(function(d){
-				//copy stype from properties to be in line with EagleWater
-				var feat = d.data('feature');
-				feat.id = d.id();
-				feat.style = feat.properties;
-				return feat;
 			});
 		}
 	},
@@ -257,7 +191,6 @@ Polymer({
 		window.setTimeout(function(){
 			self.map.resize();
 		},1000);
-		
     }
 });
 </script>

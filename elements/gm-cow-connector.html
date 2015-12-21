@@ -60,7 +60,7 @@ Polymer({
     	}
     },
     observers: [
-    	'accountChanged(core,account.ID)'
+    	'accountChanged(core,account)'
     ],
     ready: function(){
     	var self = this;
@@ -73,7 +73,7 @@ Polymer({
     	function load(){
     		self.textitems = self.project.items()
     			.filter(function(d){
-    				return !d.deleted() && d.data('beeld');
+    				return !d.deleted() && (d.data('beeld') || d.data('type') == 'text');
     			});
     		self.featureitems = self.project.items()
     			.filter(function(d){
@@ -85,6 +85,7 @@ Polymer({
     	this.project.itemStore().on('datachange',load);
     	
     },
+    //TODO: this is depending on a CAS account. Make it independant of CAS
     accountChanged: function(){
     	var self = this;
     	this.core.userStore().on('datachange', function(){
@@ -94,7 +95,8 @@ Polymer({
     	});
     	function loadprojects(){
     		self.projects = self.core.projects().filter(function(d){
-    			return !d.deleted() &&d.data('incidentLocation');
+    			//TODO: make this less dependent on location availability
+    			return !d.deleted() &&(d.data('incidentLocation') || d.data('location'));
     		})
     	}
     	this.core.projectStore().loaded.then(loadprojects);

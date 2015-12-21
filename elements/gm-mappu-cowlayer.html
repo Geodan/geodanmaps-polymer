@@ -1,0 +1,143 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+<dom-module id="gm-mappu-cowlayer">
+<style>
+	
+</style>
+	<template>
+
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-mappu-cowlayer",
+	properties: {
+		features: {
+			type: Array,
+			//value: function(){return [];},
+			observer: '_reload'
+		},
+		map: {
+			type: Object,
+			observer: '_mapChanged'
+		},
+		layer: {
+			type: Object,
+			notify: true
+		}
+	},
+	
+    _mapChanged: function() {
+		var self = this;
+		var map = this.map;
+		this.layer = new d3.mappu.VectorLayer('cow',{
+    		reproject: true,
+    		style: {
+    			'fill-opacity': 0.5
+    		},
+			labelfield: 'label',
+			events: [{
+				event:'click',
+				action: function(d){
+					d3.event.stopPropagation();
+					var textmenu = function(e){
+						d3.event.stopPropagation();
+						d3.select(self.map.mapdiv).selectAll('.menu').remove();
+						d3.select(self.map.mapdiv).append('core-overlay').classed('menu', true).classed('dialog', true)
+							.attr('opened','true')
+							.style('position', 'absolute')
+							.style('left', location[0] + 'px')
+							.style('top', location[1] + 'px')
+							.append('textarea')
+							.on('click', function(){
+									d3.event.stopPropagation();
+							})
+							.on('blur', function(){
+								d.properties.label = this.value;
+								//TODO: Okay, now it should be saved...
+								self.fire('featureChanged', d);
+							})
+							.html(d.properties.label);
+						
+					}
+					var offset = 30;
+					d3.select(self.map.mapdiv).selectAll('.menu').remove();
+					var location = [d3.event.offsetX , d3.event.offsetY];
+					//edit
+					d3.select(self.map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click', function(){
+							d3.select(self.map.mapdiv).selectAll('.menu').remove();
+							//TODO: now how to tell the sketcher that we want to edit this?
+							self.map.sketch.edit(d)
+								.then(function(feature){
+										self.store.records(feature.id.toString()).data('feature',feature).sync();;
+								});
+						})
+						.attr('icon', 'create')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'orange')
+						.transition()
+						.style('left', location[0] + offset + 'px')
+						.style('top', location[1] + offset + 'px')
+					//Remove	
+					d3.select(self.map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click', function(){
+							self.map.sketch.remove(d)
+								.then(function(feature){
+									self.store.records(feature.id.toString()).deleted(true).sync();
+								});
+						})
+						.attr('icon', 'content-cut')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'red')
+						.transition()
+						.style('left', location[0] + offset + 'px')
+						.style('top', location[1] - offset + 'px');
+					//textedit
+					d3.select(self.map.mapdiv).append('paper-fab')
+						.classed('menu', true)
+						.on('click',textmenu)
+						.attr('icon', 'editor:format-size')
+						.attr('mini', 'true')
+						.style('position', 'absolute')
+						.style('left', location[0] + 'px')
+						.style('top', location[1] + 'px')
+						.style('background', 'green')
+						.transition()
+						.style('left', location[0] - offset + 'px')
+						.style('top', location[1] - offset + 'px');
+					d3.select(self.map.mapdiv).on('click', function(){
+						d3.select(self.map.mapdiv).selectAll('.menu').remove();
+					});
+				}
+			}]
+		 })
+		 .addTo(this.map);
+		 
+		 
+		 
+		 
+	},
+	_reload: function(){
+		if (this.features){//TODO
+			this.layer.data = this.features.map(function(d){
+				//copy stype from properties to be in line with EagleWater
+				var feat = d.data('feature');
+				feat.id = d.id();
+				feat.style = feat.properties;
+				return feat;
+			});
+		}
+	},
+  });
+</script>
+</dom-module>

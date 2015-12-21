@@ -37,6 +37,7 @@
 	<iron-collapse class='collapse-content' opened='[[view.opened]]' allowOverflow>
 		<template is="dom-repeat" items="{{view.subviews}}" as="subview">
 			<gm-icm-textbox 
+				itemconfig="{{itemconfig}}"
 				subview="{{subview}}" 
 				viewid="[[view.id]]" 
 				store="{{store}}"
@@ -67,6 +68,12 @@ Polymer({
 		},
 		store: {
 			type: Object
+		},
+		itemconfig: {
+			type: Object,
+			value: function(){
+				return {view: 'beeld',subview:'beeldonderdeel',content: 'beeldcontent'}
+			}
 		}
 	},
 	observers: [
@@ -91,9 +98,9 @@ Polymer({
 			d.subview.forEach(function(s){
 				//Get items with text
 				var items = self.items.filter(function(x){
-					return x.data('beeld') != undefined
-						&& x.data('beeld') == d.view
-						&& x.data('beeldonderdeel') == s.id
+					return x.data(self.itemconfig.view) != undefined
+						&& x.data(self.itemconfig.view) == d.view
+						&& x.data(self.itemconfig.subview) == s.id
 				});
 				subviews.push({
 					item: items?items[0]:null,
