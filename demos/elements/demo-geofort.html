@@ -1,0 +1,266 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
+
+<link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-connector.html">
+<link rel="import" href="../../elements/gm-cow-projectlist.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
+<link rel="import" href="../../elements/gm-cow-text.html">
+<link rel="import" href="../../elements/gm-icm-text.html">
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-cowlayer.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-drawbuttons.html">
+<link rel="import" href="../../elements/gm-mappu-stylesets.html">
+
+<dom-module id="demo-geofort">
+<style>
+	paper-header-panel {
+	  height: 100%;
+	  background: white;
+	}
+	 .menu {
+		cursor: pointer;
+		background: white;
+	}
+	.accounting {
+		background: #3f51b5;
+		color: white;
+	}
+	
+	#eagletext {
+		width:600px;
+		overflow: auto;
+		z-index: 100;
+	}
+	
+	#toast {
+		z-index: 1000;
+	}
+	
+	paper-card {
+		width: 400px;
+	}
+
+</style>
+<template>
+	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
+		
+	<gm-cow-core id="cowcore" 
+		config="{{cowconfig}}" 
+		core="{{core}}"
+		></gm-cow-core>
+	<gm-cow-connector id="cowconnector"
+		itemconfig = "{{itemconfig}}"
+		account="{{account}}" 
+		core="{{core}}" 
+		selectedproject="{{selectedproject}}"
+		project="{{curproject}}"
+		users="{{users}}"
+		projects="{{projects}}"
+		activeuser="{{activeuser}}"
+		textitems="{{textitems}}"
+		featureitems="{{featureitems}}"
+		itemstore="{{itemstore}}"
+		startlocation="{{startlocation}}"
+		></gm-cow-connector>
+	<gm-cow-text 
+		core="{{core}}"
+		projectid="{{curproject._id}}"
+		data="{{textdata}}"
+		></gm-cow-text>
+		
+	<paper-drawer-panel id='drawerpanel'>
+	 <!-- MENU -->
+	 <paper-header-panel mode="seamed" drawer>
+	 	<paper-toolbar>
+	 		<img src='../images/icon-eagle.png'/>
+	 	</paper-toolbar>
+	 	<div class='accounting'>
+		</div>
+    	<iron-selector attr-for-selected="name" selected="{{selected}}">
+			<paper-item class='menu' name='users'>Team</paper-item>
+			<template is="dom-if" if="[[account]]">
+				<paper-item class='menu' name='projects'>Incident</paper-item>
+				<template is="dom-if" if="[[curproject]]">
+					<paper-item class='menu' name='map'>Kaart</paper-item>
+				</template>
+			</template>
+    	</iron-selector>
+    </paper-header-panel>
+    <!--MAIN SCREEN-->
+    <paper-header-panel main>
+    	<paper-toolbar>
+    		<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+    		<div class='title'>Team: {{selectedteam}} {{curproject._data.name}}</div>
+    	</paper-toolbar>
+		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
+			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+			
+			<div name='users'>
+			 <iron-selector selected="{{selectedteam}}">
+				<template is='dom-repeat' items='[[teams]]'>
+					<paper-card heading="{{item.id}}">
+					<div class="card-content">{{item.text}}</div>
+					</paper-card>
+				</template>
+				</iron-selector>
+			</div>
+			
+			<gm-cow-projectlist name='projects' projects="{{projects}}" 
+				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
+		
+			<div name="map" class='layout horizontal'>
+				<gm-icm-text id="eagletext"
+					itemconfig="{{itemconfig}}"
+					data="{{textdata}}" 
+					items="{{textitems}}" 
+					store="{{itemstore}}" 
+					activeuser="{{activeuser}}"
+					on-goto-location="gotolocation">
+				</gm-icm-text>
+				<gm-mappu-map class='flex' id='mapelement' map="[[map]]">
+					<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+					<gm-mappu-drawbuttons id="drawbuttons"
+						layer="{{cowlayer}}"
+						store="{{itemstore}}"
+						styleset="{{styleset}}"
+					></gm-mappu-drawbuttons>
+					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
+				</gm-mappu-map>
+				<gm-mappu-cowlayer 
+					id="cowlayer"
+					map="{{map}}" 
+					features="{{featureitems}}" 
+					store="{{itemstore}}" 
+					layer="{{cowlayer}}">
+				</gm-mappu-cowlayer>
+				
+			</div>
+			
+			<div name="chat">
+				Chat will be here...
+			</div>
+			
+		</iron-pages>
+    </paper-header-panel>
+</paper-drawer-panel>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-geofort',
+    properties: {
+    	map: Object,
+    	cowconfig: {
+    		type: Object
+    	},
+    	activeuser: {
+    		type: Object,
+    		observer: '_activeuserChanged'
+    	},
+    	curproject: {
+    		type: Object,
+    		observer: '_projectChanged'
+    	},
+    	selected: {
+    		value: 'users',
+    		observer: '_selectedChanged'
+    	},
+    	selectedproject: {
+    		type: String
+    	},
+    	selectedteam: {
+    		observer: '_teamChanged'
+    	},
+    	itemconfig: {
+    		value: function(){return {view: 'team',subview:'box',content: 'text'};}
+    	}
+    },
+    ready: function(){
+    	var self = this;
+    	this.map = this.$.mapelement.map;
+    	this.cowconfig = {
+    			protocol: 'wss',
+    			url: 'websocket.geodan.nl',
+    			port: 443,
+    			dir: 'geofort',
+    			key: 'geofort'
+    		};
+    	this.addEventListener('gotolocation',function(d){
+    		self.gotolocation(d);
+    	});
+    	this.teams = [{
+    		id: 'Populatie',
+    		text: 'U gaat zich bezig houden met het in kaart brengen van de hoeveelheid mensen die in het rampgebied wonen en werken.'
+    	},{
+    		id: 'Evacuatie',
+    		text: 'U gaat zich bezig houden met het in kaart brengen van vluchtroutes voor mensen uit het rampgebied naar buiten het gebied.'
+    	},{
+    		id: 'Opvang',
+    		text: 'U gaat zich bezig houden met de locaties zoeken waar de evacuees kunnen worden opgevangen.'
+    	},{
+    		id: 'Communicatie',
+    		text: 'U gaat zorgen dat alle teams met elkaar blijven comminiceren en uiteindelijk geeft u een samenvatting aan de burgemeester.'
+    	}];
+    },
+    _projectChanged: function(){
+    	this.selected = 'map';
+    },
+    _teamChanged: function(team){
+    	//Spoofin an account for cow-connector
+    	this.account = {
+    		ID: this.teams[team].id,
+    		FirstName: this.teams[team].id,
+    		LastName: ''
+    	};
+    	this.selected = 'projects';
+    },
+    _activeuserChanged: function(){
+    	if (this.activeuser){
+    		this.selected = 'projects';
+    	}
+    	else {
+    		this.selected = 'users';
+    	}
+    },
+    _selectedChanged: function(s){
+    	this.$.drawerpanel.closeDrawer();
+    	if (this.selected == 'map'){
+    		this.map.resize();
+    	}
+    },
+    gotolocation: function(d){
+    	var text = d.detail.text;
+    	var items = this.featureitems.filter(function(d){
+			return d.data('feature').properties 
+				&& d.data('feature').properties.label
+				&& d.data('feature').properties.label == text; 
+		});
+		if (items[0]){
+			var feature = items[0].data('feature');
+			this.$.textmap.cowlayer.zoomToFeature(feature);
+		}
+		else {
+			console.log('no location found');
+			this.toasttext = 'No such location found';
+			this.$.toast.show();
+		}
+    }
+});
+</script>

@@ -1,0 +1,48 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-cow-text">
+	<template>
+		
+	</template>
+<script>
+  // register a new element called proto-element
+  Polymer({
+    is: "gm-cow-text",
+	properties: {
+		core: {
+			type: Object
+		},
+		projectid: {
+			type: String,
+		},
+		data: {
+			type: Object,
+			notify: true
+		}
+	},
+	observers: [
+		'_get(projectid, core)'
+	],
+	_get: function(){
+		var project = this.core.projects(this.projectid);
+    	var teams = project.data('teams');
+    	this.data = teams.map(function(d){
+    		return {
+    			view: d.id, //id of view
+    			title: d.name,
+    			subview: d.boxes.map(function(s){
+    					return {
+    						title: s.name,
+    						id: s.id
+    					};
+    			})
+    		}
+    	});
+	},
+    ready: function() {
+    	
+    }
+  });
+</script>
+</dom-module>

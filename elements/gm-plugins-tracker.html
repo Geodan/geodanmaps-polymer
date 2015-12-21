@@ -2,11 +2,20 @@
       href="../bower_components/polymer/polymer.html">
 
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-input-container.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <script src="http://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
@@ -22,6 +31,13 @@
 	.intersecting {
 		background: red;
 	}
+	#dashboard {
+		padding: 20px;
+	}
+	paper-card {
+      width: 100%;
+      margin-bottom: 16px;
+    }
 	
 </style>
 	<template>
@@ -44,10 +60,33 @@
 				<div class="title">Track &amp; Trace</div>
 				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
 			</paper-toolbar>
-			<paper-button on-click="drawFence">Draw fence</paper-button>
-			<paper-button on-click="clearFences">Clear fences</paper-button>
-			SMS alert <paper-toggle-button on-change="smsalert" ></paper-toggle-button>
-			<paper-input id='telnr' type='number' label="tel. nr."></paper-input>
+			<div id='dashboard'>
+				<paper-card heading="Fences">
+					<div class="card-content">
+						Draw geofences. 
+					</div>
+					<div class="card-actions">
+						<paper-button on-click="drawFence" style="color: green;">
+							Draw
+						</paper-button>
+						<paper-button on-click="clearFences" style="color: red;">
+							Remove
+						</paper-button>
+					</div>
+				</paper-card>
+				<paper-card heading="Alerting">
+					<div class="card-content">
+						Enter a phone number, including intl. code, that will receive an SMS when a vehicle enters a geofence.
+						<paper-input
+							id='telnr' type='number' label="tel. nr." value="{{telnr}}">
+						</paper-input>
+					</div>
+					<div class="card-actions">
+						<paper-toggle-button 
+							checked="{{smsalert}}">Enable</paper-toggle-button>
+					</div>
+				</paper-card>
+			</div>
 			<template id='list' is="dom-repeat" items="[[routes]]">
 			<paper-icon-item on-click='gotoLocation' class$="{{intersects(item.intersects)}}">
 				<iron-icon icon="maps:directions-car" item-icon></iron-icon>
@@ -69,6 +108,10 @@
 		numVehicles: {
 			type: Number,
 			value: 10
+		},
+		telnr: {
+			type: Number,
+			value: 31640737859
 		}
 	},
 	
@@ -97,6 +140,9 @@
 		}
 		
 	},
+	dropdownToggle: function(e){
+		e.currentTarget.nextElementSibling.toggle();
+	},
 	intersects: function(intersects){
 		return intersects?'intersecting':'outside';
 	},
@@ -108,20 +154,14 @@
 		};
 		var self = this;
 		var sketch = this.map.sketch;
-		var prevlayer = sketch.layer;
-		sketch.layer = this.fencelayer;
-		var featureReady = function(e){
+		var featureReady = function(feature){
 			self.map.mapdiv.style.cursor = 'auto';
-			self.map.mapdiv.removeEventListener('featureCreated', featureReady);
-			var feature = e.detail;
 			feature.style = style;
 			self.fencelayer.addFeature(feature);
-			sketch.layer = prevlayer;
 		};
 		sketch.finish();
-		sketch.draw('Polygon');
+		sketch.draw('Polygon').then(featureReady);
 		this.map.mapdiv.style.cursor = 'crosshair';
-		this.map.mapdiv.addEventListener('featureCreated', featureReady);
 	},
 	clearFences: function(){
 		this.fencelayer.data = [];
@@ -161,26 +201,29 @@
 					"type": "Point",
 					"coordinates": [location[0], location[1]]
 			}};
-			var intersects = false;
+			var intersects = null;
 			self.fencelayer.data.forEach(function(poly){
 				var isInside1 = turf.inside(pt, poly);
 				if (isInside1){
-					intersects = true;
+					intersects = poly.id;
 				}
 			});
 			if (item.intersects != intersects){
-				item.intersects = intersects;
-				if (intersects){
-					//self.$.sendSms.params.message = 'Vehicle entered zone';
+			if (self.smsalert && !intersects){
+					self.$.sendSms.params.message = 'Vehicle '+item.id+' left zone ' + item.intersects;
+					self.$.sendSms.params.recipient = self.telnr;
 					/*DANGER ZONE*/
-					//self.$.sendSms.generateRequest();
-					console.warn('Vehicle entered zone');
+					self.$.sendSms.generateRequest();
+					console.warn(self.$.sendSms.params.message,self.telnr);
 				}
-				if (!intersects){
-					//self.$.sendSms.params.message = 'Vehicle left zone';
+				//only change intersection status after exit message
+				item.intersects = intersects;
+				if (self.smsalert && intersects){
+					self.$.sendSms.params.message = 'Vehicle '+item.id+' entered zone ' + item.intersects;
+					self.$.sendSms.params.recipient = self.telnr;
 					/*DANGER ZONE*/
-					//self.$.sendSms.generateRequest();
-					console.warn('Vehicle left zone');
+					self.$.sendSms.generateRequest();
+					console.warn(self.$.sendSms.params.message,self.telnr);
 				}
 			}
 			self.set('routes.'+item.id+'.intersects',intersects);
@@ -224,7 +267,7 @@
 				  .attrTween("transform", translateAlong(path.node()))
 				  .each("end", function(){
 				  		  this.running--;
-				  		  self.transition();
+				  		  //self.transition();//restart
 				  });
 			  });
 		  }
@@ -276,7 +319,8 @@
 			.attr("xlink:href", './assets/icons/Hoge waterstand16x16.png');
 		*/
 		//var from = [4.534,51.664];
-		var to = [4.869,51.691];
+		//var to = [4.869,51.691];
+		var to = [5.846063,52.108643];
 		map.center = to;
 		window.setTimeout(function(){ //TODO: we can't zoom and center at the same time
 				map.zoom = 21;
@@ -284,8 +328,8 @@
 		var froms = [];
 		for (var i=0;i<this.numVehicles;i++){
 			froms.push([
-				to[0] + ((0.5 - Math.random())/10),
-				to[1] + ((0.5 - Math.random())/10)
+				to[0] + ((0.5 - Math.random())/5),
+				to[1] + ((0.5 - Math.random())/5)
 			]);
 		}
 		

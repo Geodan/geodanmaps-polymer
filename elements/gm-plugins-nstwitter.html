@@ -1,0 +1,229 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+
+<dom-module id="gm-plugins-nstwitter">
+<style>
+	collapse-content {
+		padding: 20px;
+	}
+	text {
+            font: 12px sans-serif;
+	}
+	svg {
+		display: block;
+	}
+	html, body, chart, svg {
+		margin: 0px;
+		padding: 0px;
+		height: 100%;
+		width: 100%;
+	}
+	.chart path {
+		fill: none;
+	}
+	.nv-point {
+		stroke: none;
+	}
+	.dashed {
+		stroke-dasharray: 5,5;
+	}
+	
+	paper-item {
+		--paper-item-body:{
+		  white-space: nowrap;
+		};
+  }
+	
+</style>
+	<template>
+		<iron-ajax 
+			id="treinenrequest"
+			url = "http://research.geodan.nl/service/trein/location/api/positions"
+			params = '{"username":"ns","timestamp":0}'
+			handle-as="json"
+			on-response="handleTreinResponse"
+			></iron-ajax>
+		<iron-ajax 
+			id="twitterrequest"
+			url = "http://research.geodan.nl/service/osgis_geoserver/tweets/ows"
+			params = '{"service":"WFS","version":"1.0.0","request":"GetFeature","typeName":"tweets:recent_tweets_within","maxFeatures":50,"outputFormat":"json","viewparams":"timestmp:0;interval:0;x:0;y:0"}';
+			handle-as="json"
+			on-response="handleTwitterResponse"
+			></iron-ajax>
+			<paper-toolbar>
+				<div class="title">NS &amp; Twitter</div>
+				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
+			</paper-toolbar>
+			
+		<template id='tweetlist' is="dom-repeat" items="{{twitterdata}}">
+			<paper-item on-click='toggle'>
+				<paper-item-body two-line>
+					<div>{{item.properties.title}}</div>
+					<div secondary>
+						<div>{{item.properties.authorname}}</div>
+						<div>{{item.properties.created_at}}</div>
+					</div>
+				</paper-item-body>
+				<iron-icon icon="warning"></iron-icon>
+			</paper-item>
+		</template>
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-plugins-nstwitter",
+	properties: {
+	},
+	
+    ready: function() {
+	
+    },
+    toggle: function(e) {
+		this.fire('goto-coords',e.model.item.geometry.coordinates);
+    },
+	onoff: function(e){
+	    if (e.srcElement.checked){ //ON
+			this.enable();
+		}
+		else { //OFF
+			this.tweets = [];
+			this.treinen = [];
+			clearInterval(this.treineninterval);
+			clearInterval(this.twitterinterval);
+			this.map.removeLayer(this.treinenlayer);
+			this.map.removeLayer(this.twitterlayer);
+		}
+	},
+	selectionChanged: function(){
+		//TODO
+		if (this.selection){
+			this.map.center = this.selection.geometry.coordinates;
+			//this.map.map.zoom = 24; //can't zoom while still centering (bug in mappu)
+		}
+		
+	},
+	locationsChanged: function(){
+		var self = this;
+	},
+	parseTime: function(t){
+		return new Date(t * 1000).toLocaleString();
+	},
+	handleTreinResponse: function(d){
+		this.data = d.detail.xhr.response;
+		var collection = {"type":"FeatureCollection","features":[]};
+		this.data.forEach(function(d){
+			if (d.Trackee.match(/OBIS/g) || d.Trackee >= 4011)
+				var color =  "#000099";
+			else if (d.Trackee.match(/OBU/g) || d.Trackee < 4011)
+				var color = "#ffff00";
+			else
+				var color = "#cccccc";
+			var newlocation = {
+				type: "Feature",
+				
+				id: d.Trackee,
+				properties: {
+					id: d.Trackee, 
+					organisation: d.Organisation, 
+					speed: d.Speed, 
+					track: d.Track, 
+					bps: d.Bps,
+					dop: d.Dop
+				},
+				style: { 
+					fill: color
+				},
+				geometry: {
+						type: "Point",
+						coordinates: [
+							d.Longitude,
+							d.Latitude
+							]
+				},
+				crs: {
+					type: "name",
+					properties: {
+						name: "urn:ogc:def:crs:OGC:1.3:CRS84"
+					}
+				}
+					
+			};
+			collection.features.push(newlocation);
+		});
+		this.treinenlayer.data = collection.features;
+	},
+	handleTwitterResponse: function(d){
+		var collection = d.detail.xhr.response;
+		collection.features.forEach(function(d){
+			d.id = d.properties.id;
+		});
+		this.twitterlayer.data = collection.features;
+		//Have to do this double for template-repeat
+		this.twitterdata = collection.features;
+	},
+	enable: function(){
+		var self = this;
+		var map = this.map;
+		this.treinenlayer = new d3.mappu.VectorLayer('Treinen', {
+			reproject: true,
+			duration: 10000,
+			style: {
+				'fill-opacity': 0.7
+			},
+			labelfield: 'id',
+			events: [{
+			 event: 'mouseover',
+			 action: function(d){
+				var event = d3.mouse(map.mapdiv);
+			 }
+			}]
+		}).addTo(map);
+		
+		this.twitterlayer = new d3.mappu.VectorLayer('Tweets', {
+			reproject: true,
+			style: {
+				stroke: 'green',
+				fill: 'green'
+			},
+			labelfield: 'title',
+			events: [{
+			 event: 'mouseover',
+			 action: function(d){
+				var event = d3.mouse(map.mapdiv);
+			 }
+			}]
+		}).addTo(map);
+		
+		function gettreinen(t){
+			self.$.treinenrequest.params.timestamp = t.toISOString();
+			self.$.treinenrequest.generateRequest(); 
+		}
+		clearInterval(this.treineninterval);
+		gettreinen(new Date());
+		this.treineninterval = setInterval(function(){
+				gettreinen(new Date());
+		},10000);
+		
+		function gettweets(t){
+			var timestmp = parseInt(t.getTime()/1000);
+			self.$.twitterrequest.params.viewparams = "timestmp:"+timestmp + ";interval:15;x:0;y:0";
+			self.$.twitterrequest.generateRequest(); 
+		}
+		clearInterval(this.twitterinterval);
+		gettweets(new Date());
+		this.twitterinterval = setInterval(function(){
+				gettweets(new Date());
+		},10000);
+		 
+			
+	}
+  });
+</script>
+</dom-module>

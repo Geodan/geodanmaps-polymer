@@ -5,25 +5,21 @@
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-fab/paper-fab.html">
-<dom-module id="gm-mappu-sketch">
+<dom-module id="gm-mappu-drawbuttons">
  <style>
- 	.container {
-		-webkit-box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		-moz-box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		box-shadow:  0px 2px 5px 0px rgba(161,161,161,0.62);
-		background: white;
+ 	#drawbuttons {
+		position: absolute;
+		right: 10px;
+		top: 10px;
+		z-index: 100;
+	}
+	paper-fab {
+		background: gray;
+		margin: 5px; 
 	}
 	.iron-selected {
       background: orange;
     }
-	iron-collapse {
-		background: rgba(225,225,230,0.4);
-		-webkit-box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		-moz-box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		box-shadow: inset 0px 2px 5px 0px rgba(161,161,161,0.62);
-		margin-left: 1px;
-		margin-right: 1px;
-	}
 	paper-icon-item {
 		cursor: pointer;
 		min-height: 20px;
@@ -32,7 +28,7 @@
 		cursor: pointer;
 	}
  	.collapse-content {
- 		/*max-width: 400px;*/
+ 		max-width: 400px;
  	}
  	.layer {
 		border-top: solid 1px rgb(200,200,200);
@@ -45,23 +41,17 @@
 	}
  </style>
  <template>
- 	<div class='container'>
- 		<paper-icon-item class='layer' on-click='toggle' >
- 			<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-			<paper-item-body>Points</paper-item-body>
-		</paper-icon-item>
- 		<iron-collapse class='collapse-content'>
+ 	<div id='drawbuttons'>
+ 		
+ 		<iron-collapse class='collapse-content' id='collapse1'>
  			<iron-selector id="icons">
  				<template is="dom-repeat" items="{{iconset}}">
  					<paper-icon-button class="marker" alt="{{item.text}}" value="{{item.url}}" src="{{item.url}}" on-click="startPoint"></paper-icon-button>
  				</template>
  			</iron-selector>
  		</iron-collapse>
- 		<paper-icon-item class='layer' on-click='toggle' >
- 			<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-			<paper-item-body>Lines</paper-item-body>
-		</paper-icon-item>
- 		<iron-collapse class='collapse-content'>
+ 		
+ 		<iron-collapse class='collapse-content' id='collapse2'>
  			<iron-selector id="lines">
  				<template is="dom-repeat" items="{{lineset}}">
  					<svg width="29" height="29" on-click="startLine">
@@ -71,11 +61,8 @@
  				</template>
  			</iron-selector>
  		</iron-collapse>
- 		<paper-icon-item class='layer' on-click='toggle' >
- 			<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-			<paper-item-body>Polygons</paper-item-body>
-		</paper-icon-item>
- 		<iron-collapse class='collapse-content'>
+ 		
+ 		<iron-collapse class='collapse-content' id='collapse3'>
  			<iron-selector id="polygons">
  				<template is="dom-repeat" items="{{polygonset}}">
  					<svg width="29" height="29" on-click="startPolygon">
@@ -85,18 +72,26 @@
  				</template>
  			</iron-selector>
  		</iron-collapse>
+ 		
+ 		<iron-selector id="drawbuttons" class="list" selected="-1">
+			 <paper-fab mini id="pointfab" style$="color:{{selectedPointColor}}" icon="room" on-click="togglePoints"></paper-fab>
+			 <paper-fab mini id="linefab" style$="color:{{selectedLineColor}}" icon="gesture" on-click="toggleLines"></paper-fab>
+			 <paper-fab mini id="polygonfab" style$="color:{{selectedPolyColor}}" icon="bookmark" on-click="togglePolygons"></paper-fab>
+			 <br>
+			 <paper-fab mini id="editfab" icon="create" on-click="startEdit"></paper-fab>
+			 <paper-fab mini id="deletefab" icon="content-cut" on-click="startRemove"></paper-fab>
+			 <paper-fab mini id="cancelfab" icon="remove-circle-outline" on-click="finish"></paper-fab>
+		 </iron-selector>
+ 		
  	</div>
  </template>
- 
- 
- 
  
 </dom-module>
 
 <script>
 
 Polymer({
-	is: 'gm-mappu-sketch',
+	is: 'gm-mappu-drawbuttons',
 	properties: {
 		styleset: {
 			observer: '_stylesetChanged'
@@ -129,12 +124,24 @@ Polymer({
 	toggle: function(e){
 		e.currentTarget.nextElementSibling.toggle();
 	},
+	togglePoints: function(){
+		this.$.collapse1.toggle();
+	},
+	toggleLines: function(){
+		this.$.collapse2.toggle();
+	},
+	togglePolygons: function(){
+		this.$.collapse3.toggle();
+	},
 	startPoint: function(e){
-		var style = {'marker-url':e.model.item.url};
 		var self = this;
 		var featureReady = function(feature){
 			self.map.mapdiv.style.cursor = 'auto';
-			feature.style = style;
+			feature.style = {
+				fill: 'none',
+				'marker-url': e.model.item.url,
+				stroke: 'none'
+			};
 			for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
 		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
 		};
@@ -146,11 +153,13 @@ Polymer({
 		this.map.mapdiv.style.cursor = 'url('+style['marker-url']+') 18 20,auto';
 	},
 	startLine: function(e){
-		var style = e.model.item;
 		var self = this;
 		var featureReady = function(feature){
 			self.map.mapdiv.style.cursor = 'auto';
-			feature.style = style;
+			feature.style = {
+				fill: 'none',
+				stroke: e.model.item.stroke
+			};
 			for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
 		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
 		};
@@ -162,11 +171,13 @@ Polymer({
 		this.map.mapdiv.style.cursor = 'crosshair';
 	},
 	startPolygon: function(e){
-		var style = e.model.item;
 		var self = this;
 		var featureReady = function(feature){
 			self.map.mapdiv.style.cursor = 'auto';
-			feature.style = style;
+			feature.style = {
+				fill: 'none',
+				stroke: e.model.item.stroke
+			};
 			for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
 		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
 		};
@@ -177,6 +188,27 @@ Polymer({
 			});
 		this.map.mapdiv.style.cursor = 'crosshair';
 	},
+	startEdit: function(){
+		var self = this;
+		var featureReady = function(e){
+			self.map.mapdiv.removeEventListener('featureChanged', featureReady);
+			//var feature = e.detail;
+			//self.fire('changedfeature', {feature: feature}); 
+			self.$.drawbuttons.selected = -1;
+		};
+		this.sketch.startEdit();
+	},
+	startRemove: function(){
+		var self = this;
+		var callback = function(e){
+			self.map.mapdiv.removeEventListener('featureRemoved', callback);
+			//var feature = e.detail;
+			//self.fire('removedfeature', {feature: feature}); 
+			self.$.drawbuttons.selected = -1;
+		};
+		this.sketch.startRemove();
+	},
+        
 	finish: function(){
 		this.sketch.finish();
 	},
