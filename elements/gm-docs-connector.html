@@ -58,8 +58,13 @@
 	},
     ready: function() {
 		this.account = this.account || {};		
-		//this.baseUrl = "https://services.geodan.nl";
-		this.baseUrl = "https://ontw.geodan.nl";
+		switch(this.otap) {
+			case "ontw":
+				this.baseUrl = "https://ontw.geodan.nl";
+				break;
+			default:
+				this.baseUrl = "https://services.geodan.nl";
+		}
     }
   });
 </script>

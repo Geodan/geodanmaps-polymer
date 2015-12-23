@@ -1,0 +1,96 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+
+<dom-module id="gm-configlist">
+ <style>
+ paper-item {
+ 	 cursor: pointer;
+ }
+ paper-spinner-lite {
+ 	 padding: 20px;
+ 	 margin: auto;
+ }
+ </style>
+ <template>
+ <iron-ajax
+		auto
+		url="{{listUrl}}"
+		id="getLayers"		
+		verbose="true"
+		handle-as="json"
+		with-credentials="true"
+		on-response="handleLayers"
+		on-error="handleError"
+		></iron-ajax>
+ <paper-spinner-lite id='spinner' alt="Configuraties laden" active></paper-spinner-lite>
+ <iron-selector attr-for-selected="id" selected="{{selected}}">
+ 	<template is="dom-repeat" items="{{projects}}">
+ 		<paper-item id="{{item.id}}" on-click='_getlayers'>
+			<paper-item-body two-line>
+				<div>{{item.title}}</div>
+				<div secondary>{{item.description}}</div>
+			</paper-item-body>
+		</paper-item>
+	</template>
+ </iron-selector>
+ </template>
+ 
+</dom-module>
+
+<script>
+Polymer({
+	is: 'gm-configlist',
+	properties: {
+		projects: {
+			observer: '_projectsChanged'
+		},
+		selected: {
+			type: String,
+			notify: true,
+			observer: '_selectedProjectChanged' 
+		},
+		selectedproject: {
+			type: Object,
+			notify: true
+		}
+		
+	},
+	ready: function(){
+		this.baseUrl = "https://services.geodan.nl";
+	},
+	_selectedProjectChanged: function(id,x){
+		var candidates = this.projects.filter(function(d){
+			return d.id == id;
+		});
+		if (candidates.length > 0){
+			this.selectedproject = candidates[0];
+		}
+			
+	},
+	_projectsChanged: function(){
+		if (this.projects.length > 0)
+			this.$.spinner.active = false;
+			this.$.spinner.style.display = 'none';
+	},
+	_getlayers: function(e){
+		var item = e.model.item;
+		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.OrganisationCode + "/"+item.service+"/" + item.name;
+	},
+	// add a callback to the element's prototype
+	handleLayers: function(d){		
+		this.documents =d.detail.xhr.response;
+		this.error = '';
+		var layers = this.documents.map.layers;
+		this.fire('configselected',{layers: layers});
+	},	
+	handleError: function(e){
+		if(e.detail.request.xhr.status==404) {
+			this.error = "Er zijn geen documenten gevonden"
+		}
+	},
+});
+</script>

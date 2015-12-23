@@ -6,7 +6,7 @@
 <template>
 <iron-ajax method="get" id="ajaxRequest"
    auto
-   url="https://ontw.geodan.nl/geocas/whoami.jsp"  
+   url="{{_whoamiurl(otap)}}"  
    verbose="true"
    with-credentials="true"
    on-response="_handleResponse"></iron-ajax>
@@ -18,7 +18,7 @@
    on-response="_handleLoginResponse"></iron-ajax>
    -->
 <iron-ajax method="get" id="logout"
-   url="https://ontw.geodan.nl/geocas/cas-logout.jsp"
+   url="{{_logouturl(otap)}}"
    verbose="true"
    with-credentials="true"
    on-response="_handleLogoutResponse"></iron-ajax>
@@ -45,6 +45,10 @@ Polymer({
 		host: {
 			type: String,
 			notify: true
+		},
+		otap: {
+			type: String,
+			value: 'prod'
 		}
 	},
 	_accountHandler: function(acc){
@@ -57,6 +61,32 @@ Polymer({
   login: function(){
   	  //login doesn't work like that
   	  //this.$.login.generateRequest();
+  },
+  _logouturl:  function(otap){
+		switch(otap) {
+			case "ontw":
+				return "https://ontw.geodan.nl/geocas/cas-logout.jsp";
+				break;
+				/*
+			case "tst":
+				return "https://tst.geodan.nl/geocas/cas-logout.jsp";
+				break;
+			case "acc":
+				return "https://acc.geodan.nl/geocas/cas-logout.jsp";
+				break;*/
+			default:
+				return "https://services.geodan.nl/cas/logout";
+		}
+  }, 
+  _whoamiurl: function(otap){
+  	  switch(otap) {
+		case "ontw":
+			return "https://ontw.geodan.nl/geocas/whoami.jsp";
+			break;
+		default:
+			return "https://services.geodan.nl/geocas/whoami.jsp";
+			break;
+	  }
   },
   logout: function(){
   	  this.$.logout.generateRequest();
