@@ -1,0 +1,135 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+
+
+<link rel="import" href="../../elements/gm-cas-core.html">
+<link rel="import" href="../../elements/gm-cas-icon.html">
+<link rel="import" href="../../elements/gm-docs-connector.html">
+<link rel="import" href="../../elements/gm-configlist.html">
+
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-ogcparser.html">
+<link rel="import" href="../../elements/gm-routing.html">
+
+<link rel="import" href="demo-viewermap.html">
+
+<dom-module id="demo-viewer">
+<style>
+	paper-header-panel {
+	  height: 100%;
+	  background: white;
+	}
+	.accounting {
+		background: #3f51b5;
+		color: white;
+	}
+	
+</style>
+<template>
+	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
+	<gm-cas-core id='cascore' 
+		account="{{account}}" 
+		loggedin="{{loggedin}}" 
+		host="{{host}}"
+		></gm-cas-core>
+	<gm-docs-connector id='docsconnector' 
+		account="{{account}}" 
+		configs="{{configs}}"
+		></gm-docs-connector>
+		
+	<paper-drawer-panel id='drawerpanel' selected='drawer'>
+		 <!-- MENU -->
+		 <paper-header-panel mode="seamed" drawer>
+			<paper-toolbar>
+				<h2>GeodanMaps</h2>
+			</paper-toolbar>
+			<div class='accounting'>
+				<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
+			</div>
+			<template is="dom-if" if="[[account.ID]]">
+				<gm-configlist name='projects' projects="{{configs}}"
+					account="{{account}}"
+					selectedproject="{{selectedproject}}"
+				></gm-configlist>
+			</template>
+		</paper-header-panel>
+		
+		<!--MAIN SCREEN-->
+		<paper-header-panel main>
+			<paper-toolbar>
+				<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+				<div class='title'>{{selectedproject.title}}</div>
+			</paper-toolbar>
+			<demo-viewermap class='content fit' name='map' id='viewermap'
+					account="{{account}}"
+					configs="{{configs}}"
+			></demo-viewermap>
+		</paper-header-panel>
+	</paper-drawer-panel>
+	
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-viewer',
+    properties: {
+    	map: Object,
+    	account: {
+    		type: Object,
+    		observer: '_accountChanged'
+    	},
+    	selectedproject: {
+    		type: Object,
+    		observer: '_projectChanged'
+    	},
+    	selected: {
+    		observer: '_selectedChanged'
+    	}
+    },
+    ready: function(){
+    	var self = this;
+    	this.addEventListener('configselected', function(c){
+    		layers = c.detail.layers;
+    		self.$.viewermap.addLayers(layers);
+    	});
+    	this.addEventListener('logout',function(){
+    		self.$.cascore.logout();
+    	});
+		this.addEventListener('goto-coords',function(c){
+			//self.map.center = c.detail;
+		});
+		this.$.drawerpanel.openDrawer();
+    },
+    _accountChanged: function(acc){
+    },
+    _projectChanged: function(){
+    	this.$.drawerpanel.closeDrawer();
+   		this.$.viewermap.activate();
+    },
+    login: function(){
+    	this.$.cas.login();
+    },
+    toggleCatalog: function(){
+    	this.$.dialog.toggle();
+    }
+});
+</script>

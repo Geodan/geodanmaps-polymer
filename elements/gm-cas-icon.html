@@ -48,7 +48,7 @@
 	
 		<template is="dom-if" if="{{!loggedin}}">
 			<paper-item class='menu' name='login' on-click='login'>
-				<a href="https://ontw.geodan.nl/cas/login?service={{host}}">Inloggen</a>
+				<a href="{{_loginurl(otap)}}?service={{host}}">Inloggen</a>
 			</paper-item>
 		</template>
 		
@@ -80,10 +80,23 @@ Polymer({
 		},
 		host: {
 			type: String
+		},
+		otap: {
+			type: String,
+			value: "prod"
 		}
 	},
 	ready: function() {
 	},
+	_loginurl:  function(otap){
+		switch(otap) {
+			case "ontw":
+				return "https://ontw.geodan.nl/cas/login"
+				break;
+			default:
+				return "https://services.geodan.nl/cas/login";
+		}
+	}, 
 	toggleLogin: function(){
 		this.$.accountmenu.toggle();
 	},

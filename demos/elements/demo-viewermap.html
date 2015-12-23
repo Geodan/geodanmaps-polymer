@@ -1,0 +1,152 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+
+<link rel="import" href="../../elements/gm-docs-configui.html">
+<link rel="import" href="../../elements/gm-geosearch.html">
+
+
+<dom-module id="demo-viewermap">
+<style>
+ #drawer {
+ 	 opacity: 1;
+ }
+ #mapelement {
+ 	 position: absolute;
+ }
+ #geosearchbox {
+ 	 padding: 10px;
+ }
+</style>
+<template>
+	<paper-header-panel>
+	
+	<paper-toolbar>
+		<iron-selector attr-for-selected="name" selected="{{selected}}">
+		  <paper-icon-button on-click='toggledrawer' name="layerbox" toggles icon="maps:layers"></paper-icon-button>
+		  <paper-icon-button on-click='toggledrawer' name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
+		  <paper-icon-button on-click='enterFullscreen' name="" toggles icon="icons:fullscreen"></paper-icon-button>
+		</iron-selector>
+	</paper-toolbar>
+	<div class='content'>
+		
+		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
+			<paper-header-panel drawer>
+			<iron-pages attr-for-selected="id" selected="{{selected}}">
+				<div id='geosearchbox'>
+					<gm-geosearch></gm-geosearch>
+				</div>
+				<div id='layerbox'>
+					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+				</div>
+			</iron-pages>
+			</paper-header-panel>
+			<div main>
+				<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
+					<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+				</gm-mappu-map>
+			</div>
+		</paper-drawer-panel>
+	</div>
+
+	</paper-header-panel>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-viewermap',
+    properties: {
+    	map: Object,
+    	startlocation: {
+    		observer: 'activate'
+    	},
+    	gmlayers: {
+    		type: Array,
+    		value: function(){return [];} 
+    	},
+    	selected: {
+    		value: 'layerbox',
+    		type: String,
+    		observer: '_selectedChanged'
+    	}
+    },
+    observers: [
+    	
+    ],
+    ready: function(){
+    	var self = this;
+    	this.$.drawer.closeDrawer();
+    	this.map = this.$.mapelement.map;
+
+		//TODO: Would like to automise this
+		this.$.layermanager.layers = this.map.layers;
+		
+		
+    	
+		this.addEventListener('goto-coords',function(c){
+			self.map.center = c.detail;
+			window.setTimeout(function(){
+					self.map.zoom = 24;
+			},1000);//emberassing
+		});
+    },
+    addLayers: function(layers){
+    	var self = this;
+    	//Remove existing gm layers
+    	this.gmlayers.forEach(function(d){
+    		self.map.removeLayer(d);
+    	});
+    	this.gmlayers = [];
+    	//Add wms layers
+		layers.filter(function(l){
+			return l.source.type.toLowerCase() == 'ogc_wms';
+		}).forEach(function(l){
+			var layer = new d3.mappu.RasterLayer(l.title,  {
+				ogc_type: 'wms',
+				url: l.source.url,
+				layers: [l.source.featureName],
+				visible: true || l.options.visible
+			 })
+			 .addTo(self.map);
+			 self.gmlayers.push(layer);
+		});
+		//TODO: Would like to automise this
+		//self.$.layermanager.layers = self.map.layers;
+	},
+    activate: function(){
+    	var self = this;
+		window.setTimeout(function(){
+			self.map.resize();
+			self.map.zoom = 16
+		});
+	},
+	_selectedChanged: function(){
+		//this.$.drawer.openDrawer();
+	},
+	toggledrawer: function(){
+		this.$.drawer.openDrawer();
+	},
+	enterFullscreen: function () {
+		var self = this;
+		this.$.mapelement.webkitRequestFullscreen();
+		//TODO: this should be a promise or something...
+		window.setTimeout(function(){
+			self.map.resize();
+		},1000);
+    }
+});
+</script>
