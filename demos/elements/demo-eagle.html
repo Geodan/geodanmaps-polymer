@@ -42,13 +42,13 @@
 		background: #3f51b5;
 		color: white;
 	}
-	
+
 	#eagletext {
 		width:600px;
 		overflow: auto;
 		z-index: 100;
 	}
-	
+
 	#toast {
 		z-index: 1000;
 	}
@@ -56,29 +56,32 @@
 </style>
 <template>
 	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
-	<gm-cas-core id='cascore' 
-		account="{{account}}" 
-		loggedin="{{loggedin}}" 
+	<gm-cas-core id='cascore'
+		account="{{account}}"
+		loggedin="{{loggedin}}"
 		host="{{host}}"
+		otap="ontw"
 		></gm-cas-core>
-	<gm-docs-connector id='docsconnector' 
-		account="{{account}}" 
+	<gm-docs-connector id='docsconnector'
+		account="{{account}}"
 		configs="{{configs}}"
+		otap="ontw"
 		></gm-docs-connector>
-	<gm-docs-text 
-		account="{{account}}" 
-		projectid="{{curproject._id}}" 
+	<gm-docs-text
+		account="{{account}}"
+		projectid="{{curproject._id}}"
 		data="{{textdata}}"
+		otap="ontw"
 		></gm-docs-text>
-	
-		
-	<gm-cow-core id="cowcore" 
-		config="{{cowconfig}}" 
+
+
+	<gm-cow-core id="cowcore"
+		config="{{cowconfig}}"
 		core="{{core}}"
 		></gm-cow-core>
-	<gm-cow-connector id="cowconnector" 
-		account="{{account}}" 
-		core="{{core}}" 
+	<gm-cow-connector id="cowconnector"
+		account="{{account}}"
+		core="{{core}}"
 		selectedproject="{{selectedproject}}"
 		project="{{curproject}}"
 		users="{{users}}"
@@ -89,7 +92,7 @@
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
 		></gm-cow-connector>
-		
+
 	<paper-drawer-panel id='drawerpanel'>
 	 <!-- MENU -->
 	 <paper-header-panel mode="seamed" drawer>
@@ -119,44 +122,44 @@
     	</paper-toolbar>
 		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
 			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
-		
+
 			<div name='nouser'>
 				<div class="horizontal center center-justified layout">
 					<gm-cas-icon account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-icon>
 				</div>
 			</div>
-			
+
 			<gm-cow-userlist name='users' users="{{users}}"></gm-cow-userlist>
-			
-			<gm-cow-projectlist name='projects' projects="{{projects}}" 
+
+			<gm-cow-projectlist name='projects' projects="{{projects}}"
 				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
-			
-			
+
+
 					<!--OBS
-					<demo-eagletext id="eagletext"  
-						items="{{textitems}}" 
-						store="{{itemstore}}" 
-						account="{{account}}" 
+					<demo-eagletext id="eagletext"
+						items="{{textitems}}"
+						store="{{itemstore}}"
+						account="{{account}}"
 						curproject="{{curproject}}"
 						activeuser="{{activeuser}}"
 						on-goto-location="gotolocation">
 					</demo-eagletext>
 					-->
-			
+
 			<div name="text">
-				<gm-icm-text id="eagletext" 
-					data="{{textdata}}" 
-					items="{{textitems}}" 
-					store="{{itemstore}}" 
+				<gm-icm-text id="eagletext"
+					data="{{textdata}}"
+					items="{{textitems}}"
+					store="{{itemstore}}"
 					activeuser="{{activeuser}}"
 					on-goto-location="gotolocation">
 				</gm-icm-text>
 			</div>
-			
+
 			<div name="map">
-				<demo-eaglemap class='fit' id='map' 
+				<demo-eaglemap class='fit' id='map'
 					startlocation="{{startlocation}}"
-					features="{{featureitems}}" 
+					features="{{featureitems}}"
 					store="{{itemstore}}"
 					account="{{account}}"
 					configs="{{configs}}"
@@ -166,12 +169,12 @@
 					>
 				</demo-eaglemap>
 			</div>
-			
-			
+
+
 			<div name="chat">
 				Chat will be here...
 			</div>
-			
+
 		</iron-pages>
     </paper-header-panel>
 </paper-drawer-panel>
@@ -206,7 +209,10 @@ Polymer({
     	},
     	selectedproject: {
     		type: String
-    	}
+    	},
+			toasttext: {
+				type: String
+			}
     },
     ready: function(){
     	var self = this;
@@ -263,9 +269,9 @@ Polymer({
     gotolocation: function(d){
     	var text = d.detail.text;
     	var items = this.featureitems.filter(function(d){
-			return d.data('feature').properties 
+			return d.data('feature').properties
 				&& d.data('feature').properties.label
-				&& d.data('feature').properties.label == text; 
+				&& d.data('feature').properties.label == text;
 		});
 		if (items[0]){
 			var feature = items[0].data('feature');

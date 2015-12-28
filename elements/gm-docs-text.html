@@ -7,7 +7,7 @@
 		<iron-ajax
 		auto
 		url="{{documentUrl}}"
-		id="getDocument"		
+		id="getDocument"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
@@ -21,7 +21,7 @@
 	properties: {
 		account: {
 			type: Object,
-			
+
 		},
 		projectid: {
 			type: String,
@@ -29,7 +29,11 @@
 		data: {
 			type: Object,
 			notify: true
-		}
+		},
+    otap: {
+      type: String,
+      value: 'prod'
+    }
 	},
 	observers: [
 		'_urlHandler(projectid, account)'
@@ -41,11 +45,11 @@
 		}
 	},
     // add a callback to the element's prototype
-	handleDocument: function(d){		
+	handleDocument: function(d){
 		this.document =d.detail.xhr.response;
 		this.data = this.document.content;
 		this.error = '';
-	},	
+	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"
@@ -55,7 +59,7 @@
 	makeUrl: function(item){
 		if(item.public) {
 			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
-			return url 
+			return url
 		}
 		else {
 			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
@@ -63,9 +67,14 @@
 	},
 	*/
     ready: function() {
-		this.account = this.account || {};		
-		//this.baseUrl = "https://services.geodan.nl";
-		this.baseUrl = "https://ontw.geodan.nl";
+  		this.account = this.account || {};
+      switch(this.otap) {
+  			case "ontw":
+  				this.baseUrl = "https://ontw.geodan.nl";
+  				break;
+  			default:
+  				this.baseUrl = "https://services.geodan.nl";
+  		}
     }
   });
 </script>

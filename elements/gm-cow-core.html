@@ -11,7 +11,7 @@
  <content>
  </content>
  </template>
- 
+
 </dom-module>
 
 <script>
@@ -34,10 +34,10 @@ Polymer({
     	this.core = core;
     	window.cow = core; //debug
     	core.socketservers({
-    		_id: 'default', 
+    		_id: 'default',
     		data: {
     			protocol:this.config.protocol,
-    			ip:this.config.url, 
+    			ip:this.config.url,
     			port:this.config.port,
     			dir: this.config.dir
     		}
@@ -46,7 +46,7 @@ Polymer({
 		this.connect();//todo: make optional
     },
     ready: function(){
-    	
+
     },
     connect: function(){
 		return this.core.connect().then(function(d){
