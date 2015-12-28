@@ -60,18 +60,18 @@
 		account="{{account}}"
 		loggedin="{{loggedin}}"
 		host="{{host}}"
-		otap="ontw"
+		otap="{{otap}}"
 		></gm-cas-core>
 	<gm-docs-connector id='docsconnector'
 		account="{{account}}"
 		configs="{{configs}}"
-		otap="ontw"
+		otap="{{otap}}"
 		></gm-docs-connector>
 	<gm-docs-text
 		account="{{account}}"
 		projectid="{{curproject._id}}"
 		data="{{textdata}}"
-		otap="ontw"
+		otap="{{otap}}"
 		></gm-docs-text>
 
 
@@ -100,7 +100,12 @@
 	 		<img src='../images/icon-eagle.png'/>
 	 	</paper-toolbar>
 	 	<div class='accounting'>
-			<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
+			<gm-cas-icon
+				account="[[account]]"
+				loggedin="[[loggedin]]"
+				host="[[host]]"
+				otap="[[otap]]"
+			></gm-cas-icon>
 		</div>
     	<iron-selector attr-for-selected="name" selected="{{selected}}">
     		<template is="dom-if" if="[[account.ID]]">
@@ -125,7 +130,12 @@
 
 			<div name='nouser'>
 				<div class="horizontal center center-justified layout">
-					<gm-cas-icon account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-icon>
+					<gm-cas-icon
+						account="{{account}}"
+						loggedin="{{loggedin}}"
+						host="{{host}}"
+						otap="[[otap]]"
+					></gm-cas-icon>
 				</div>
 			</div>
 
@@ -212,6 +222,10 @@ Polymer({
     	},
 			toasttext: {
 				type: String
+			},
+			otap: {
+				type: String,
+				value: 'ontw'
 			}
     },
     ready: function(){

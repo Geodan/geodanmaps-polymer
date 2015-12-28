@@ -33,7 +33,7 @@
 		</paper-item-body>
 		<iron-icon icon="social:person-outline" ></iron-icon>
 	</template>
-	
+
 	<template is="dom-if" if="[[loggedin]]">
 		<paper-item-body two-line>
 			<div>{{account.FirstName}} {{account.LastName}}</div>
@@ -41,17 +41,17 @@
 		</paper-item-body>
 		<iron-icon icon="icons:account-circle"></iron-icon>
 	</template>
-	
+
 </paper-item>
 <iron-collapse id="accountmenu" class='collapse-content' opened="{{!loggedin}}">
 	<iron-selector attr-for-selected="name" selected="{{selected}}">
-	
+
 		<template is="dom-if" if="{{!loggedin}}">
 			<paper-item class='menu' name='login' on-click='login'>
 				<a href="{{_loginurl(otap)}}?service={{host}}">Inloggen</a>
 			</paper-item>
 		</template>
-		
+
 		<template is="dom-if" if="{{loggedin}}">
 			<paper-item class='menu' name='logout' on-click='logout'>
 				Uitloggen
@@ -61,7 +61,7 @@
 				-->
 			</paper-item>
 		</template>
-	
+
 	</iron-selector>
 </iron-collapse>
 </template>
@@ -82,8 +82,8 @@ Polymer({
 			type: String
 		},
 		otap: {
-			type: String,
-			value: "prod"
+			type: String
+
 		}
 	},
 	ready: function() {
@@ -96,7 +96,7 @@ Polymer({
 			default:
 				return "https://services.geodan.nl/cas/login";
 		}
-	}, 
+	},
 	toggleLogin: function(){
 		this.$.accountmenu.toggle();
 	},
@@ -109,6 +109,6 @@ Polymer({
 	}
 });
 </script>
-  
+
 
 </dom-module>

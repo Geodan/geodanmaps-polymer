@@ -6,7 +6,7 @@
 <template>
 <iron-ajax method="get" id="ajaxRequest"
    auto
-   url="{{_whoamiurl(otap)}}"  
+   url="{{_whoamiurl(otap)}}"
    verbose="true"
    with-credentials="true"
    on-response="_handleResponse"></iron-ajax>
@@ -22,7 +22,7 @@
    verbose="true"
    with-credentials="true"
    on-response="_handleLogoutResponse"></iron-ajax>
-   
+
 </template>
 
 </template>
@@ -47,12 +47,12 @@ Polymer({
 			notify: true
 		},
 		otap: {
-			type: String,
-			value: 'prod'
+			type: String
+
 		}
 	},
 	_accountHandler: function(acc){
-		this.loggedin=acc.ID?true:false; 			
+		this.loggedin=acc.ID?true:false;
 	},
 	ready: function() {
 		this.host = window.location.href.split('?')[0];
@@ -77,7 +77,7 @@ Polymer({
 			default:
 				return "https://services.geodan.nl/cas/logout";
 		}
-  }, 
+  },
   _whoamiurl: function(otap){
   	  switch(otap) {
 		case "ontw":
@@ -96,7 +96,7 @@ Polymer({
         this.account = d.detail.xhr.response;
 		this.loggedin = true;
     }
-    
+
   },
   _handleLoginResponse: function(d,e) {
   	  if(d.detail&&d.detail.xhr&&d.detail.xhr.response) {
@@ -108,10 +108,10 @@ Polymer({
         this.account = new Object;
 		this.loggedin = false;
     }
-    
+
   }
   });
 </script>
-  
+
 
 </dom-module>
