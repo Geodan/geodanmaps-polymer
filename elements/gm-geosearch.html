@@ -16,29 +16,30 @@ paper-item {
 		<iron-ajax
 		auto
 		url="{{listUrl}}"
-		id="getList"		
+		id="getList"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
 		on-response="handleList"
 		on-error="handleError"
 		></iron-ajax>
-		
+
 		<iron-ajax
 		auto
 		url="{{searchUrl}}"
-		id="getLocation"		
+		id="getLocation"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
 		on-response="handleLocation"
 		on-error="handleError"
 		></iron-ajax>
-		
-		<paper-input type="search" value="{{key::input}}"
+
+		<paper-input id='keystring' type="search" value="{{key::input}}"
+            on-input="_keyChanged"
 			placeholder="zoek een plaats" autosave="test" results="5">
 		</paper-input>
-		
+
 		<iron-selector selected="{{selectedconfig}}">
 			<template is="dom-repeat" items="{{suggestions}}">
 				<paper-item on-click='_getlocation'>
@@ -48,46 +49,66 @@ paper-item {
 		</iron-selector>
 	</template>
 </dom-module>
-	
+
 <script>
   Polymer({
     is: "gm-geosearch",
 	properties: {
 		key: {
 			type: String,
-			observer: '_keyChanged'
+			//observer: '_keyChanged'
 		},
 		suggestions: {
 			type: Array
-		}
+		},
+        otap: {
+            type: String,
+            value: 'prod'
+        },
+        location: {
+            type: Object,
+            notify: true
+        }
 	},
 	_getlocation: function(e){
 		var item = e.model.item;
+        this.key = item.displayname;
 		this.searchUrl = this.baseUrl + "/geosearch/lookup?q="+item.id;
 	},
     // add a callback to the element's prototype
-	handleList: function(d){		
+	handleList: function(d){
 		var documents =d.detail.xhr.response;
 		this.error = '';
 		this.suggestions = documents.response.docs;
 	},
-	handleLocation: function(d){		
+	handleLocation: function(d){
 		var documents =d.detail.xhr.response;
 		this.error = '';
 		var l = documents.response.docs[0];
 		var center = l.centroid[0].replace('POINT(','').replace(')','').split(' ');
-		this.fire('goto-coords',[parseFloat(center[0]),parseFloat(center[1])]);
-		//this.location = this.documents.response.docs;
+		//this.fire('goto-coords',[parseFloat(center[0]),parseFloat(center[1])]);
+        this.suggestions = [];
+		this.location = [parseFloat(center[0]),parseFloat(center[1])];
 	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"
 		}
 	},
+    _getBaseUrl: function(){
+
+    },
     ready: function() {
-		this.baseUrl = "https://services.geodan.nl";
+        switch(this.otap) {
+			case "ontw":
+				this.baseUrl = "https://ontw.geodan.nl";
+				break;
+			default:
+				this.baseUrl = "https://services.geodan.nl";
+		}
     },
     _keyChanged: function(k){
+        var k = this.$.keystring.value;
     	var keystring = k.replace(' ','+');
     	this.listUrl = this.baseUrl + '/geosearch/suggest?q=' + keystring;
     }

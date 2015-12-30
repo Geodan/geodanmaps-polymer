@@ -16,7 +16,7 @@ paper-item {
 		<iron-ajax
 		auto
 		url="{{listUrl}}"
-		id="getLayers"		
+		id="getLayers"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
@@ -29,13 +29,13 @@ paper-item {
 		<iron-selector selected="{{selectedconfig}}">
 			<template is="dom-repeat" items="{{configs}}">
 				<paper-item on-click='_getlayers'>
-					<div>{{item.name}}</div>
+					<div>{{item.title}}</div>
 				</paper-item>
 			</template>
 		</iron-selector>
 	</template>
 </dom-module>
-	
+
 <script>
   Polymer({
     is: "gm-docs-configui",
@@ -52,19 +52,20 @@ paper-item {
 		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.OrganisationCode + "/"+item.service+"/" + item.name;
 	},
     // add a callback to the element's prototype
-	handleLayers: function(d){		
+	handleLayers: function(d){
 		this.documents =d.detail.xhr.response;
 		this.error = '';
 		var layers = this.documents.map.layers;
 		this.fire('configselected',{layers: layers});
-	},	
+	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"
 		}
 	},
     ready: function() {
-		this.account = this.account || {};		
+      console.warn('This element is obsoleted by gm-configlist');
+		this.account = this.account || {};
 		//this.baseUrl = "https://services.geodan.nl";
 		this.baseUrl = "https://ontw.geodan.nl";
     }

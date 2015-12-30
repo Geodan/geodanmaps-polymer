@@ -1,8 +1,13 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/Sortable/Sortable.html">
 
 <!--<link rel="import" href="./gm-drag-drop.html">-->
@@ -28,6 +33,7 @@
 		cursor: pointer;
 		min-height: 20px;
 	}
+
 	.layer {
 		border-top: solid 1px rgb(200,200,200);
 		border-bottom: solid 1px white;
@@ -39,12 +45,18 @@
 	}
 	.legendImg, .transparent {
 		padding: 5px 5px 5px 15px;
-    .legendImg {
+  }
+  .legendImg {
 		font-weight: 500;
 	}
 	.zoomin .legendImg {
 		border: red solid 1px;
 	}
+
+  .collapse-content {
+    padding: 5px;
+  }
+
 }
  </style>
  <template>
@@ -54,22 +66,25 @@
         handle=".handle"
         on-end='_shuffle'>
      	 <template id="layerlist" is="dom-repeat" items="{{reverselayers}}">
-     	 	<div class="layer handle">
-    			<paper-icon-item class='layer' on-click='toggle' >
-    				<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-    				<paper-item-body>{{item.name}}</paper-item-body>
-    			</paper-icon-item>
-    			<iron-collapse class='collapse-content'>
-    				<template is="dom-if" if="{{item.options.config.legendUrl}}">
-    					<div class="legendImg" draggable="false">
-    						<img src="{{item.options.config.legendUrl}}"/>
-    					</div>
-    				</template>
-    				<paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
-    				<div>
-    					<span class="removeLayer" on-click="removeLayer">verwijder laag</span>
-    				</div>
-    			</iron-collapse>
+     	 	<div class="layer">
+    			<paper-material class='layer'>
+            <div class="layout horizontal handle">
+              <paper-checkbox checked="{{item.visible}}" style='padding:20px'></paper-checkbox>
+              <h3>{{item.name}}</h3>
+            </div>
+            <iron-collapse class='collapse-content' opened='{{item.visible}}'>
+                <paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
+        				<template is="dom-if" if="{{item.options.legendUrl}}">
+        					<div class="legendImg" draggable="false">
+        						<img src="{{item.options.legendUrl}}"/>
+        					</div>
+        				</template>
+        		</iron-collapse>
+            <div class="layout horizontal">
+              <paper-button class="removeLayer" on-click="removeLayer">verwijder laag</paper-button>
+            </div>
+    			</paper-material>
+
     		</div>
         </template>
   </sortable>
@@ -115,6 +130,7 @@ Polymer({
     observers: [
 
     ],
+    //Reorder the layers after dragging them
     _shuffle: function(d){
       this.layers = this.layers.reverse().move(d.oldIndex,d.newIndex);
       this.map.orderLayers();
@@ -137,10 +153,7 @@ Polymer({
     ready: function(){
 
     },
-    toggle: function(e) {
-       //TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
-       e.currentTarget.nextElementSibling.toggle();
-    },
+
     removeLayer: function(e){
     	var layer = e.model.item;
     	var index = this.map.layers.indexOf(layer);

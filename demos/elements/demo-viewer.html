@@ -65,7 +65,8 @@
 				<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
 			</div>
 			<template is="dom-if" if="[[account.ID]]">
-				<gm-configlist name='projects' projects="{{configs}}"
+				<gm-configlist name='projects'
+				  configs="{{configs}}"
 					account="{{account}}"
 					selectedproject="{{selectedproject}}"
 				></gm-configlist>
@@ -102,7 +103,7 @@ Polymer({
     		observer: '_projectChanged'
     	},
     	selected: {
-    		
+
     	},
 			toasttext: {
 				type: String

@@ -14,10 +14,11 @@
 <link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
 <link rel="import" href="../../elements/gm-mappu-geosearch.html">
 <link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-mylocation.html">
 
 <link rel="import" href="../../elements/gm-docs-configui.html">
 <link rel="import" href="../../elements/gm-geosearch.html">
-
+<link rel="import" href="../../elements/gm-routing.html">
 
 <dom-module id="demo-viewermap">
 <style>
@@ -32,17 +33,20 @@
  }
 </style>
 <template>
+    <gm-mappu-mylocation coords="{{mylocation}}"></gm-mappu-mylocation>
 	<paper-header-panel>
-	
+
 	<paper-toolbar>
 		<iron-selector attr-for-selected="name" selected="{{selected}}">
 		  <paper-icon-button on-click='toggledrawer' name="layerbox" toggles icon="maps:layers"></paper-icon-button>
 		  <paper-icon-button on-click='toggledrawer' name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
-		  <paper-icon-button on-click='enterFullscreen' name="" toggles icon="icons:fullscreen"></paper-icon-button>
+          <paper-icon-button on-click='toggledrawer' name="routingbox" toggles icon="maps:directions"></paper-icon-button>
+          <paper-icon-button on-click='enterFullscreen' name="" toggles icon="icons:fullscreen"></paper-icon-button>
+          <paper-icon-button on-click='gotoMylocation' name="" toggles icon="maps:my-location"></paper-icon-button>
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
-		
+
 		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
 			<paper-header-panel drawer>
 			<iron-pages attr-for-selected="id" selected="{{selected}}">
@@ -51,6 +55,9 @@
 				</div>
 				<div id='layerbox'>
 					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+				</div>
+                <div id='routingbox'>
+					<gm-routing id="routing" map="{{map}}"></gm-routing>
 				</div>
 			</iron-pages>
 			</paper-header-panel>
@@ -76,7 +83,7 @@ Polymer({
     	},
     	gmlayers: {
     		type: Array,
-    		value: function(){return [];} 
+    		value: function(){return [];}
     	},
     	selected: {
     		value: 'layerbox',
@@ -85,7 +92,7 @@ Polymer({
     	}
     },
     observers: [
-    	
+
     ],
     ready: function(){
     	var self = this;
@@ -94,9 +101,9 @@ Polymer({
 
 		//TODO: Would like to automise this
 		this.$.layermanager.layers = this.map.layers;
-		
-		
-    	
+
+
+
 		this.addEventListener('goto-coords',function(c){
 			self.map.center = c.detail;
 			window.setTimeout(function(){
@@ -111,20 +118,11 @@ Polymer({
     		self.map.removeLayer(d);
     	});
     	this.gmlayers = [];
-    	//Add wms layers
-		layers.filter(function(l){
-			return l.source.type.toLowerCase() == 'ogc_wms';
-		}).forEach(function(l){
-			var layer = new d3.mappu.RasterLayer(l.title,  {
-				ogc_type: 'wms',
-				url: l.source.url,
-				layers: [l.source.featureName],
-				visible: true || l.options.visible
-			 })
-			 .addTo(self.map);
-			 self.gmlayers.push(layer);
-		});
-		//TODO: Would like to automise this
+      layers.map(function(layer){
+        self.gmlayers.push(layer);
+        layer.addTo(self.map);
+      });
+		//OBS?
 		//self.$.layermanager.layers = self.map.layers;
 	},
     activate: function(){
@@ -147,6 +145,9 @@ Polymer({
 		window.setTimeout(function(){
 			self.map.resize();
 		},1000);
+    },
+    gotoMylocation: function(){
+        this.map.center = this.mylocation;
     }
 });
 </script>
