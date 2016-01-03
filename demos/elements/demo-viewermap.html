@@ -19,6 +19,7 @@
 <link rel="import" href="../../elements/gm-docs-configui.html">
 <link rel="import" href="../../elements/gm-geosearch.html">
 <link rel="import" href="../../elements/gm-routing.html">
+<link rel="import" href="../../elements/gm-tsp.html">
 
 <dom-module id="demo-viewermap">
 <style>
@@ -30,6 +31,9 @@
  }
  #geosearchbox {
  	 padding: 10px;
+ }
+ #routingbox {
+     padding: 10px
  }
 </style>
 <template>
@@ -46,7 +50,6 @@
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
-
 		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
 			<paper-header-panel drawer>
 			<iron-pages attr-for-selected="id" selected="{{selected}}">
@@ -57,7 +60,8 @@
 					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
 				</div>
                 <div id='routingbox'>
-					<gm-routing id="routing" map="{{map}}"></gm-routing>
+                    <gm-tsp id='tsp' map='{{map}}'></gm-tsp>
+					<!--<gm-routing id="routing" map="{{map}}"></gm-routing>-->
 				</div>
 			</iron-pages>
 			</paper-header-panel>
