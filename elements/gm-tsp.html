@@ -1,0 +1,279 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel='import' href='./gm-geosearch.html'>
+
+<dom-module id="gm-tsp">
+ <style>
+ .button {
+     margin: 10px;
+     border: 1px solid grey;
+ }
+ .iron-selected{
+     color: #3f51b5;
+ }
+ .eenheid{
+     width: 100px;
+ }
+ </style>
+ <template>
+ 	<iron-ajax
+        id='requestTsp'
+        verbose="true"
+        handle-as="json"
+        with-credentials="true"
+        on-response="handleTsp"
+        on-error="handleError"
+		url="{{getUrl(otap)}}"
+		params="{{params}}"
+        body="{{body}}"
+        method='post'
+        content-type= 'application/json'
+	></iron-ajax>
+    <iron-ajax
+        id='requestRoute'
+        verbose="true"
+        handle-as="json"
+        with-credentials="true"
+        on-response="handleRoute"
+        on-error="handleError"
+		url="{{getRouteUrl(otap)}}"
+		params="{{routeparams}}"
+        body="{{routebody}}"
+        method='post'
+        content-type= 'application/json'
+	></iron-ajax>
+
+    <h3>Routeplanner</h3>
+    <div class='layout horizontal'>
+        <iron-selector flex selected='0' id='networkType'>
+            <paper-icon-button name='Auto' icon='maps:directions-car'></paper-icon-button>
+            <paper-icon-button name='gsps_nl' icon='maps:directions-walk'></paper-icon-button>
+            <paper-icon-button name='vrachtwagen' icon='maps:directions-bus'></paper-icon-button>
+        </iron-selector>
+        <paper-dropdown-menu  class='eenheid'>
+          <paper-menu id='calcMode' selected=0 attrForSelected='name' class="dropdown-content">
+            <paper-item name='time'>Tijd</paper-item>
+            <paper-item name='distance'>Afstand</paper-item>
+            <paper-item name='cost'>Kosten</paper-item>
+          </paper-menu>
+        </paper-dropdown-menu>
+    </div>
+    <template is='dom-repeat' items='{{addresses}}' sort='_byIndex' observe='index'>
+        <template is='dom-if' if={{item.time}}>
+            <div style$='margin-top:{{item.time}}'> {{_getTime(item.time)}} u.</div>
+        </template>
+        <div class='layout horizontal'>
+            <gm-geosearch flex id={{item.id}} location={{item.location}} key={{item.value}}></gm-geosearch>
+            <paper-icon-button class='button' icon="remove" on-click='_removeItem'></paper-icon-button>
+        </div>
+    </template>
+    <div class='layout horizontal'>
+        <paper-input disabled placeholder="voeg toe"></paper-input>
+        <paper-icon-button class='button' icon="add" on-click="_addItem"></paper-icon-button>
+    </div>
+    <paper-button  on-click='calculateRoute'>Bereken</paper-button>
+    <hr>
+    <paper-toggle-button id='tspToggle' checked='{{tspActive}}'>Travelling Salesman</paper-toggle-button>
+    <iron-collapse opened='{{tspActive}}'>
+        <div class="collapse-content">
+            <p>
+              Gebruik het travelling salesman algoritme om de volgorde van de route punten te bepalen.
+            </p>
+            <paper-radio-group id='tspMode' selected="small">
+              <paper-radio-button name="Open">Open</paper-radio-button>
+              <!--<p>can start and end on any given location</p>-->
+              <paper-radio-button name="OpenEnd">OpenEnd</paper-radio-button>
+              <!--<p>first given location is the starting point and the route can end on any other location</p>-->
+              <paper-radio-button name="OpenStart">OpenStart</paper-radio-button>
+              <!--<p>last given location is ending point, the route can start on any other location</p>-->
+              <paper-radio-button name="StartEnd">StartEnd</paper-radio-button>
+              <!--<p>first given location is the starting point and last given location is ending point</p>-->
+              <paper-radio-button name="Round">Round</paper-radio-button>
+              <!--<p>first given location is the starting point and the ending point</p>-->
+            </paper-radio-group>
+            <paper-button  on-click='calculateTsp'>Bepaal volgorde</paper-button>
+        </div>
+    </iron-collapse>
+ </template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'gm-tsp',
+    properties: {
+    	url: {
+    		type: String,
+    		value: '/routing/tsp',
+    	},
+    	params: {
+    		type: Object,
+    		value: {}
+    	},
+        otap: {
+            type: String,
+            value: 'prod'
+        },
+        addresses: {
+            type: Array,
+            value: function(){
+                return [
+                    {id:0,index:0},
+                    {id:1,index:1}
+                    /*
+                    {id:0,index:0,time: 0, location: [4.30119, 52.06813], value: 's Gravenhage'},
+                    {id:1,index:1,time: 0, location: [4.4852, 52.15507], value: 'Rotterdam'},
+                    {id:2,index:2,time: 0, location: [4.36312, 51.99848], value: 'Leiden'},
+                    {id:3,index:3,time: 0, location: [4.48656, 51.9225], value: 'Delft'}
+                    */
+                ];
+            }
+        }
+    },
+    ready: function(){
+
+    },
+    _byIndex: function(a,b){
+        if (a.index > b.index) {
+            return 1;
+        }
+        if (a.index < b.index) {
+            return -1;
+        }
+        return 0;
+    },
+    _addItem: function(){
+        var id = this.addresses.length;
+        this.push('addresses',{id:id, index:id+1,time:0});
+    },
+    _removeItem: function(d){
+        var index = d.model.index;
+        this.splice('addresses',index,1);
+    },
+    _getTime: function(seconds){
+        var hours = parseInt( seconds / 3600 );
+        seconds = seconds % 3600;
+        var minutes = parseInt( seconds / 60 );
+        seconds = seconds % 60;
+        return hours +':'+minutes+':'+seconds;
+    },
+    getUrl: function(otap){
+        switch(otap) {
+			case "ontw":
+				return "https://ontw.geodan.nl/routing/tsp";
+				break;
+			default:
+				return "https://services.geodan.nl/routing/tsp";
+		}
+    },
+    getRouteUrl: function(otap){
+        switch(otap) {
+			case "ontw":
+				return "https://ontw.geodan.nl/routing/batchroute";
+				break;
+			default:
+				return "https://services.geodan.nl/routing/batchroute";
+		}
+    },
+    calculateTsp: function(){
+    	this.params = {
+            tspMode:this.$.tspMode.value,
+            identifier:234,
+            srs:'EPSG:4326',
+            format: 'sec-m',
+            networkType: this.$.networkType.selectedItem.getAttribute('name'),
+            calcMode:this.$.calcMode.selectedItem.getAttribute('name'),
+            apikey:'60f144d7',
+    		outputformat: 'json'
+    	}
+        this.body = this.addresses.map(function(d,i){
+            return {Id: i,CoordX: d.location[0], CoordY: d.location[1]}
+        });
+        this.$.requestTsp.generateRequest();
+    },
+    calculateRoute: function(){
+        var points = this.addresses.sort(function(a,b){
+            return b.index - a.index;
+        });
+        var coords = [];
+        for (var i=1;i<points.length;i++){
+            var rec = {
+              "Id": i,
+              "FromCoordX": points[i-1].location[0],
+              "FromCoordY": points[i-1].location[1],
+              "ToCoordX": points[i].location[0],
+              "ToCoordY": points[i].location[1]
+          };
+          coords.push(rec);
+        }
+        this.routebody = coords;
+
+        this.routeparams = {
+            srs:'EPSG:4326',
+            networkType: this.$.networkType.selectedItem.getAttribute('name'),
+            calcMode: this.$.calcMode.selectedItem.getAttribute('name'),
+            returnType:'coords',
+            format:'min-km',
+            apikey:'60f144d7',
+            outputFormat:'geojson'
+    	};
+
+        this.$.requestRoute.generateRequest();
+    },
+
+	handleTsp: function(d,e){
+		var self = this;
+        var data = d.detail.xhr.response;
+        if (!data.exception){
+            data.IndexCosts.forEach(function(d){
+                self.set('addresses.'+d.OldIndex+'.index',d.Index);
+                self.set('addresses.'+d.OldIndex+'.time',parseInt(d.Cost));
+            });
+        }
+	},
+    handleRoute: function(d,e){
+        var map = this.map;
+        var self =this;
+        var scale = d3.scale.category10()
+        this.routelayer = new d3.mappu.VectorLayer('route', {
+                reproject: true,
+                style: {
+                    'stroke-width': '5px',
+                    fill: 'none',
+                    opacity: 1
+                },
+                labelfield: 'distance'
+
+        }).addTo(map);
+        var data = d.detail.xhr.response;
+        if (!data.exception){
+            data.features.forEach(function(feat,i){
+                var address = self.addresses.forEach(function(a,i){
+                    if (a.id == feat.properties.id){
+                        self.set('addresses.'+i+'time',feat.properties.duration);
+                        self.set('addresses.'+i+'distance',feat.properties.distance);
+                    };
+                });
+                //feat.properties.stroke = scale(i);
+                feat.style = {stroke: scale(i)};
+                self.routelayer.addFeature(feat);
+            });
+        }
+
+    },
+    handleError: function(){
+    	console.warn(e.detail.xhr.statustext);
+    }
+});
+</script>
