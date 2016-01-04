@@ -28,6 +28,7 @@
 <link rel="import" href="../../elements/gm-icm-natuurbrand.html">
 <link rel="import" href="../../elements/gm-plugins-rws.html">
 <link rel="import" href="../../elements/gm-plugins-tracker.html">
+<link rel="import" href="../../elements/gm-plugins-eaglespace.html">
 <link rel="import" href="../../elements/gm-plugins-nstwitter.html">
 
 <dom-module id="demo-eaglemap">
@@ -51,6 +52,7 @@
 		  <paper-icon-button name="rwsbox" toggles icon="icons:trending-up"></paper-icon-button>
 		  <paper-icon-button name="nstwitterbox" toggles icon="maps:directions-railway"></paper-icon-button>
 		  <paper-icon-button name="textbox" toggles icon="editor:format-size"></paper-icon-button>
+          <paper-icon-button name="eaglespacebox" toggles icon="editor:format-size"></paper-icon-button>
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
@@ -111,6 +113,10 @@
 						></gm-mappu-sketch>
 					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
 				</div>
+                <div id='eaglespacebox'>
+                    <gm-plugins-eaglespace id="eaglespace" map="{{map}}"></gm-plugins-eaglespace>
+                </div>
+
 			</iron-pages>
 			</paper-header-panel>
 			<div main>
