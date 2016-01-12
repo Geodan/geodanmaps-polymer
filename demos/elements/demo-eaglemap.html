@@ -164,12 +164,30 @@ Polymer({
 		//Add all layers from selected config
 		this.addEventListener('configselected', function(c){
 			var layers = c.detail.layers;
-      layers.map(function(layer){layer.addTo(self.map)});
+            layers.map(function(layer){layer.addTo(self.map)});
 			//OBS?
 			//self.$.layermanager.layers = self.map.layers;
-    });
+        });
+        function getAttention(point){
+            //fire circle
+            var screencoords = self.map.projection(point);
+            self.map.svg.append('circle')
+                .attr('cx',screencoords[0])
+                .attr('cy',screencoords[1])
+                .attr('r',20)
+                .style('stroke','red')
+                .style('fill','none')
+                .each(function(){
+                    d3.select(this).transition().duration(10000)
+                        .style('opacity',0)
+                        .attr('r',1)
+                        .remove();
+                });
+        }
 		this.addEventListener('goto-coords',function(c){
-			self.map.center = c.detail;
+
+            window.setTimeout(function(){getAttention(c.detail)},0);
+            self.map.center = c.detail;
 		});
     },
     activate: function(){

@@ -12,7 +12,9 @@
 	collapse-content {
 		padding: 20px;
 	}
-
+    .alert {
+        color: red;
+    }
 
 </style>
 	<template>
@@ -22,12 +24,13 @@
 			</paper-toolbar>
 
 			<template is="dom-repeat" items="[[vehicles]]">
-			<paper-item on-click='_goto'>
+			<paper-icon-item on-click='_goto' >
+                <iron-icon style='color: orange' icon$="{{_speedClass(item)}}" item-icon></iron-icon>
 				<paper-item-body two-line>
                     <div>Vehicle {{item.id}}</div>
 				    <div secondary>[[item.properties.speed]] km/h</div>
                 </paper-item-body>
-			</paper-item>
+			</paper-icon-item>
 		  </template>
 	</template>
 </dom-module>
@@ -50,7 +53,7 @@
 	},
 
     ready: function() {
-        this.loadData();
+
     },
     _goto: function(e) {
 		this.fire('goto-coords',e.model.item.geometry.coordinates);
@@ -60,7 +63,7 @@
 			this.enable();
 		}
 		else { //OFF
-			this.data = [];
+            this.tracks = [];
 			clearInterval(this.interval);
 			this.map.removeLayer(this.layer);
 		}
@@ -78,11 +81,14 @@
 	parseTime: function(t){
 		return new Date(t * 1000).toLocaleString();
 	},
-	loadData: function(){
-        var self = this;
-
-
-	},
+    _speedClass: function(item){
+            if (item.properties.speed<5){
+                return 'icons:warning';
+            }
+            else{
+                return null;
+            }
+    },
 	enable: function(){
 		var self = this;
 		var map = this.map;
@@ -123,17 +129,29 @@
             return this * Math.PI / 180;
           }
         }
+        // Converts from radians to degrees.
+        if (typeof(Number.prototype.toDegrees) === "undefined") {
+          Number.prototype.toDegrees = function() {
+              return this * 180 / Math.PI;
+          }
+        };
+
         var haversine = function(point1, point2){
-            if (!point2){return null};
-            var lat1 = point1[0];
-            var lon1 = point1[1];
-            var lat2 = point2[0];
-            var lon2 = point2[1];
+            if (!point2){return {distance: null,bearing: null};};
+            var φ1=point1[0];
+            var φ2=point2[0];
+            var λ1=point1[1];
+            var λ2=point2[1];
             var R = 6371000; // metres
-            var φ1 = lat1.toRadians();
-            var φ2 = lat2.toRadians();
-            var Δφ = (lat2-lat1).toRadians();
-            var Δλ = (lon2-lon1).toRadians();
+            var φ1 = φ1.toRadians();
+            var φ2 = φ2.toRadians();
+            var Δφ = (φ2-φ1).toRadians();
+            var Δλ = (λ2-λ1).toRadians();
+
+            var y = Math.sin(λ2-λ1) * Math.cos(φ2);
+            var x = Math.cos(φ1)*Math.sin(φ2) -
+            Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+            var brng = Math.atan2(y, x).toDegrees();
 
             var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
                     Math.cos(φ1) * Math.cos(φ2) *
@@ -141,8 +159,9 @@
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
             var d = R * c;
-            return d;
+            return {distance: d,bearing: brng};
         }
+
         var loadtrack = function(fileloc,trackid){
             return new Promise(function(done, reject){
                 d3.json(fileloc, function(e,d){
@@ -154,7 +173,9 @@
                         d.id = trackid;
                         d.properties.name = 'Vehicle ' + trackid;
                         d.properties.T = new Date(d.properties.time) - t0;
-                        d.properties.distance = haversine(d.geometry.coordinates, oldpoint); //meters
+                        var distbear = haversine(d.geometry.coordinates, oldpoint);
+                        d.properties.distance = distbear.distance;//meters
+                        d.properties.bearing = Math.round(distbear.bearing);//degrees
                         d.properties.tdiff = (new Date(d.properties.time) - new Date(oldtime))/1000; //in seconds
                         d.properties.speed = Math.round(d.properties.distance / d.properties.tdiff) * 3.6;
                         oldtime = d.properties.time;
@@ -167,6 +188,7 @@
                 });
             });
         }
+
         loadtrack('./data/hubertus.geojson','A').then(function(returndata){
             self.tracks.push(returndata);
         });

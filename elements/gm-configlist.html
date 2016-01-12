@@ -102,7 +102,7 @@ Polymer({
           returnlayers.push(
             new d3.mappu.RasterLayer(l.title,  {
               ogc_type: 'wms',
-              url: l.source.url,
+              url: l.source.url + '&sld=' + l.style.url, //TODO: check for styleurl availability
               layers: [l.source.featureName],
               visible: true || l.options.visible,
               legendUrl: l.legendUrl,
