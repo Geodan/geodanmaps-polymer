@@ -1,7 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
-
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
@@ -68,21 +68,23 @@
      	 <template id="layerlist" is="dom-repeat" items="{{reverselayers}}">
      	 	<div class="layer">
     			<paper-material class='layer'>
-            <div class="layout horizontal handle">
-              <paper-checkbox checked="{{item.visible}}" style='padding:20px'></paper-checkbox>
-              <h3>{{item.name}}</h3>
-            </div>
-            <iron-collapse class='collapse-content' opened='{{item.visible}}'>
-                <paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
+                    <div class="layout horizontal handle">
+                      <paper-checkbox checked="{{item.visible}}" style='padding:20px'></paper-checkbox>
+                      <h3>{{item.name}}</h3>
+                    </div>
+                    <iron-collapse class='collapse-content' opened='{{item.visible}}'>
+                        <paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
         				<template is="dom-if" if="{{item.options.legendUrl}}">
         					<div class="legendImg" draggable="false">
         						<img src="{{item.options.legendUrl}}"/>
         					</div>
         				</template>
-        		</iron-collapse>
-            <div class="layout horizontal">
-              <paper-button class="removeLayer" on-click="removeLayer">verwijder laag</paper-button>
-            </div>
+                        <paper-textarea label="CQL filter" value='aant_koei>1000'></paper-textarea>
+                        <paper-button on-click='_applycql'>Toepassen</paper-button>
+                	</iron-collapse>
+                    <div class="layout horizontal">
+                      <paper-button class="removeLayer" on-click="removeLayer">verwijder laag</paper-button>
+                    </div>
     			</paper-material>
 
     		</div>
@@ -153,7 +155,16 @@ Polymer({
     ready: function(){
 
     },
-
+    _applycql: function(e){
+        var layer = e.model.item;
+        var cql = e.target.previousElementSibling.value;
+        if (cql){
+            layer.cql_filter = cql;
+            //TODO: move this to mappu functionaliteit
+            layer.drawboard.selectAll('.tile').remove();
+            layer.draw();
+        }
+    },
     removeLayer: function(e){
     	var layer = e.model.item;
     	var index = this.map.layers.indexOf(layer);

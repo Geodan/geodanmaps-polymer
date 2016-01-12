@@ -3,6 +3,9 @@
 <link rel="import" href="../bower_components/iron-dropdown/iron-dropdown.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/device-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-menu/paper-menu.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
@@ -56,12 +59,24 @@
 	></iron-ajax>
 
     <h3>Routeplanner</h3>
-    <div class='layout horizontal'>
-        <iron-selector flex selected='0' id='networkType'>
-            <paper-icon-button name='Auto' icon='maps:directions-car'></paper-icon-button>
-            <paper-icon-button name='gsps_nl' icon='maps:directions-walk'></paper-icon-button>
-            <paper-icon-button name='vrachtwagen' icon='maps:directions-bus'></paper-icon-button>
-        </iron-selector>
+    <div class='layout vertical'>
+        <div>
+            Transport:
+            <iron-selector flex selected='0' id='networkType'>
+                <paper-icon-button name='Auto' icon='maps:directions-car'></paper-icon-button>
+                <paper-icon-button name='gsps_nl' icon='maps:directions-walk'></paper-icon-button>
+                <paper-icon-button name='vrachtwagen' icon='maps:directions-bus'></paper-icon-button>
+            </iron-selector>
+        </div>
+        <div>
+            Eenheid:
+            <iron-selector flex selected='0' id='calcMode'>
+                <paper-icon-button name='time' icon='device:access-time'></paper-icon-button>
+                <paper-icon-button name='distance' icon='icons:code'></paper-icon-button>
+                <paper-icon-button name='cost' icon='editor:attach-money'></paper-icon-button>
+            </iron-selector>
+        </div>
+        <!--
         <paper-dropdown-menu  class='eenheid'>
           <paper-menu id='calcMode' selected=0 attrForSelected='name' class="dropdown-content">
             <paper-item name='time'>Tijd</paper-item>
@@ -69,10 +84,11 @@
             <paper-item name='cost'>Kosten</paper-item>
           </paper-menu>
         </paper-dropdown-menu>
+        -->
     </div>
     <template is='dom-repeat' items='{{addresses}}' sort='_byIndex' observe='index'>
         <template is='dom-if' if={{item.time}}>
-            <div style$='margin-top:{{item.time}}'> {{_getTime(item.time)}} u.</div>
+            <div style="margin-left: 50px;color: grey;"> {{_getTime(item.time)}} u.</div>
         </template>
         <div class='layout horizontal'>
             <gm-geosearch flex id={{item.id}} location={{item.location}} key={{item.value}}></gm-geosearch>
@@ -91,10 +107,10 @@
             <p>
               Gebruik het travelling salesman algoritme om de volgorde van de route punten te bepalen.
             </p>
-            <paper-radio-group id='tspMode' selected="small">
+            <paper-radio-group id='tspMode' selected="OpenEnd">
               <paper-radio-button name="Open">Open</paper-radio-button>
               <!--<p>can start and end on any given location</p>-->
-              <paper-radio-button name="OpenEnd">OpenEnd</paper-radio-button>
+              <paper-radio-button name="OpenEnd" >OpenEnd</paper-radio-button>
               <!--<p>first given location is the starting point and the route can end on any other location</p>-->
               <paper-radio-button name="OpenStart">OpenStart</paper-radio-button>
               <!--<p>last given location is ending point, the route can start on any other location</p>-->
@@ -188,8 +204,8 @@ Polymer({
     },
     calculateTsp: function(){
     	this.params = {
-            tspMode:this.$.tspMode.value,
-            identifier:234,
+            tspMode:this.$.tspMode.selected,
+            identifier:'no_id',
             srs:'EPSG:4326',
             format: 'sec-m',
             networkType: this.$.networkType.selectedItem.getAttribute('name'),
