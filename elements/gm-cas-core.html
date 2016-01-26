@@ -48,7 +48,7 @@ Polymer({
 		},
 		otap: {
 			type: String,
-      value: 'prod'
+			value: 'https://services.geodan.nl/'
 		}
 	},
 	_accountHandler: function(acc){
@@ -62,31 +62,11 @@ Polymer({
   	  //login doesn't work like that
   	  //this.$.login.generateRequest();
   },
-  _logouturl:  function(otap){
-		switch(otap) {
-			case "ontw":
-				return "https://ontw.geodan.nl/geocas/cas-logout.jsp";
-				break;
-				/*
-			case "tst":
-				return "https://tst.geodan.nl/geocas/cas-logout.jsp";
-				break;
-			case "acc":
-				return "https://acc.geodan.nl/geocas/cas-logout.jsp";
-				break;*/
-			default:
-				return "https://services.geodan.nl/cas/logout";
-		}
+  _logouturl:  function(){
+  	  return this.otap + '/geocas/cas-logout.jsp';
   },
-  _whoamiurl: function(otap){
-  	  switch(otap) {
-		case "ontw":
-			return "https://ontw.geodan.nl/geocas/whoami.jsp";
-			break;
-		default:
-			return "https://services.geodan.nl/geocas/whoami.jsp";
-			break;
-	  }
+  _whoamiurl: function(){
+  	  return this.otap + '/geocas/whoami.jsp';
   },
   logout: function(){
   	  this.$.logout.generateRequest();

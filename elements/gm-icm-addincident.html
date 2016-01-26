@@ -1,0 +1,88 @@
+<!--
+	Create, update or delete incident
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+
+<link rel="import" href="./gm-mappu-map.html">
+<link rel="import" href="./gm-geosearch.html">
+
+<dom-module id="gm-icm-addincident">
+
+<style>
+#paper-button {
+    background: steelBlue;
+    color: yellow;
+}
+#mapelement {
+  height: 400px;
+  width: 400px;
+  position: relative;
+  display: block;
+}
+#suggest {
+  display: block;
+  position: absolute;
+  left: 40%;
+  top: 10px;
+  width: 400px;
+  z-index: 101;
+}
+
+</style>
+<template>
+    <paper-input id="name" label="Naam"></paper-input><br>
+    <gm-geosearch></gm-geosearch>
+    <gm-mappu-map
+    	id='mapelement'
+    	map="{{map}}" 
+    	>
+	</gm-mappu-map>
+    <paper-button on-click="add">Voeg toe</paper-button>
+    
+</template>
+</dom-module>
+<script>
+
+Polymer({
+	is: 'gm-icm-addincident',
+	properties: {
+		map: {
+			type: Object
+			
+		}
+	},
+	add: function(a,b,c){
+		var name = this.$.name.value;
+		var center = this.$.mapelement.map.center;
+		var zoom = this.$.mapelement.map.zoom;
+		this.fire('newincident',{msg: {name: name, center: center, zoom: zoom}});
+	},
+	ready: function(){
+		var self = this;
+		this.addEventListener('goto-coords',function(c){
+            self.map.center = c.detail;
+		});
+		this.activate();
+	},
+	activate: function(){
+		this.startlocation = {lng:4.9,lat:52.2,zoom: 16};
+		var center = this.startlocation;
+		this.map.center = [center.lng,center.lat];
+		this.map.zoom = center.zoom;
+		var self = this;
+		window.setTimeout(function(){
+			self.map.resize();
+		},1000); //TODO
+	},
+	name: function(d){
+		return d.data('name');
+	},                      
+	date: function(d){
+		return new Date(d.created()).toLocaleString();
+	}
+
+});
+</script>

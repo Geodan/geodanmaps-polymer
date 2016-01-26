@@ -209,7 +209,7 @@
 				}
 			});
 			if (item.intersects != intersects){
-			if (self.smsalert && !intersects){
+				if (self.smsalert && !intersects){
 					self.$.sendSms.params.message = 'Vehicle '+item.id+' left zone ' + item.intersects;
 					self.$.sendSms.params.recipient = self.telnr;
 					/*DANGER ZONE*/

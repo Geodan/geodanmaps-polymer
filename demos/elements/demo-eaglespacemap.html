@@ -5,7 +5,6 @@
 <link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
@@ -29,11 +28,10 @@
 <link rel="import" href="../../elements/gm-icm-natuurbrand.html">
 <link rel="import" href="../../elements/gm-plugins-rws.html">
 <link rel="import" href="../../elements/gm-plugins-tracker.html">
-<link rel="import" href="../../elements/gm-plugins-cameras.html">
 <link rel="import" href="../../elements/gm-plugins-eaglespace.html">
 <link rel="import" href="../../elements/gm-plugins-nstwitter.html">
 
-<dom-module id="demo-eaglemap">
+<dom-module id="demo-eaglespacemap">
 <style>
  #drawer {
  	 opacity: 0.9;
@@ -43,19 +41,13 @@
 	<paper-header-panel>
 	<paper-toolbar>
 		<iron-selector attr-for-selected="name" selected="{{selected}}">
-		  <paper-icon-button name="sketchbox" toggles icon="icons:create"></paper-icon-button>
-		  <paper-icon-button name="layerbox" toggles icon="maps:layers"></paper-icon-button>
-		  <paper-icon-button name="" toggles icon="maps:my-location"></paper-icon-button>
-		  <paper-icon-button name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
-		  <paper-icon-button name="natuurbrandbox" toggles icon="social:whatshot"></paper-icon-button>
 		  <paper-icon-button name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
+		  <paper-icon-button name="sketchbox" toggles icon="icons:create"></paper-icon-button>
 		  <paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>
-		  <paper-icon-button name="trackerbox" toggles icon="icons:settings-input-antenna"></paper-icon-button>
-		  <paper-icon-button name="rwsbox" toggles icon="icons:trending-up"></paper-icon-button>
-		  <paper-icon-button name="nstwitterbox" toggles icon="maps:directions-railway"></paper-icon-button>
+		  <paper-icon-button name="layerbox" toggles icon="maps:layers"></paper-icon-button>
 		  <paper-icon-button name="textbox" toggles icon="editor:format-size"></paper-icon-button>
-          <paper-icon-button name="eaglespacebox" toggles icon="editor:format-size"></paper-icon-button>
-          <paper-icon-button name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
+		  <paper-icon-button name="natuurbrandbox" toggles icon="social:whatshot"></paper-icon-button>
+          <paper-icon-button name="eaglespacebox" toggles icon="icons:settings-input-antenna"></paper-icon-button>
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
@@ -75,27 +67,15 @@
 						configs="{{configs}}"
 						account="{{account}}"
 						></gm-docs-configui>-->
-            <gm-configlist id='gmconfig' name='configs'
-  						configs="{{configs}}"
-  						account="{{account}}"
-              otap="ontw"
-  						></gm-configlist>
+					<gm-configlist id='gmconfig' name='configs'
+						configs="{{configs}}"
+						account="{{account}}"
+						otap="prod"
+						></gm-configlist>
 				</div>
 
 				<div id='layerbox'>
 					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
-				</div>
-
-				<div id='rwsbox'>
-					<gm-plugins-rws id="rwsplugin" map="{{map}}"></gm-plugins-rws>
-				</div>
-
-				<div id='nstwitterbox'>
-					<gm-plugins-nstwitter id="nstwitterplugin" map="{{map}}"></gm-plugins-nstwitter>
-				</div>
-
-				<div id='trackerbox'>
-					<gm-plugins-tracker id="tracker" map="{{map}}"></gm-plugins-tracker>
 				</div>
 
 				<div id='textbox'>
@@ -118,10 +98,6 @@
 				</div>
                 <div id='eaglespacebox'>
                     <gm-plugins-eaglespace id="eaglespace" map="{{map}}"></gm-plugins-eaglespace>
-                </div>
-                
-                <div id='camerasbox'>
-                	<gm-plugins-cameras id='cameras' map="{{map}}" cameras="{{cameras}}"></gm-plugins-cameras>
                 </div>
 
 			</iron-pages>
@@ -147,7 +123,7 @@
 
 <script>
 Polymer({
-    is: 'demo-eaglemap',
+    is: 'demo-eaglespacemap',
     properties: {
     	map: Object,
     	selected: {

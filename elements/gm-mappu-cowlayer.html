@@ -1,5 +1,8 @@
 <link rel="import"
       href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <dom-module id="gm-mappu-cowlayer">
 <style>
 	
@@ -31,12 +34,12 @@
     _mapChanged: function() {
 		var self = this;
 		var map = this.map;
-		this.layer = new d3.mappu.VectorLayer('cow',{
+		this.layer = new d3.mappu.VectorLayer('Draw',{
     		reproject: true,
     		style: {
     			'fill-opacity': 0.5
     		},
-			labelfield: 'label',
+			labelfield: 'name',
 			events: [{
 				event:'click',
 				action: function(d){
@@ -115,6 +118,28 @@
 						.transition()
 						.style('left', location[0] - offset + 'px')
 						.style('top', location[1] - offset + 'px');
+					//Cambait
+					if (d.geometry.type == 'Point'){
+						d3.select(self.map.mapdiv).append('paper-fab')
+							.classed('menu', true)
+							.on('click',function(){
+									//add cambait
+									var properties = d.properties || {};
+									properties.cambait = true;
+									d.properties = properties;
+									self.store.records(d.id.toString()).data('feature',d).sync();
+							})
+							.attr('icon', 'image:remove-red-eye')
+							.attr('mini', 'true')
+							.style('position', 'absolute')
+							.style('left', location[0] + 'px')
+							.style('top', location[1] + 'px')
+							.style('background', 'green')
+							.transition()
+							.style('left', location[0] - offset + 'px')
+							.style('top', location[1] + offset + 'px');
+						}
+					
 					d3.select(self.map.mapdiv).on('click', function(){
 						d3.select(self.map.mapdiv).selectAll('.menu').remove();
 					});
@@ -122,10 +147,6 @@
 			}]
 		 })
 		 .addTo(this.map);
-		 
-		 
-		 
-		 
 	},
 	_reload: function(){
 		if (this.features){//TODO
@@ -133,7 +154,12 @@
 				//copy stype from properties to be in line with EagleWater
 				var feat = d.data('feature');
 				feat.id = d.id();
-				feat.style = feat.properties;
+				if (!feat.properties){
+					feat.properties = {};
+				}
+				if (!feat.style){
+					feat.style = feat.properties;
+				}
 				return feat;
 			});
 		}

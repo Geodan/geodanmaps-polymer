@@ -87,7 +87,7 @@ paper-item {
 		this.error = '';
 		var l = documents.response.docs[0];
 		var center = l.centroid[0].replace('POINT(','').replace(')','').split(' ');
-		//this.fire('goto-coords',[parseFloat(center[0]),parseFloat(center[1])]);
+		this.fire('goto-coords',[parseFloat(center[0]),parseFloat(center[1])]);
         this.suggestions = [];
 		this.location = [parseFloat(center[0]),parseFloat(center[1])];
 	},

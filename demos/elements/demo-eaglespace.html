@@ -15,7 +15,6 @@
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
 
-<script src="../cow-eagle-wrapper.js"></script>
 
 <link rel="import" href="../../elements/gm-cas-core.html">
 <link rel="import" href="../../elements/gm-cas-icon.html">
@@ -27,9 +26,9 @@
 <link rel="import" href="../../elements/gm-docs-text.html">
 <link rel="import" href="../../elements/gm-icm-text.html">
 
-<link rel="import" href="./demo-eaglemap.html">
+<link rel="import" href="./demo-eaglespacemap.html">
 
-<dom-module id="demo-eagle">
+<dom-module id="demo-eaglespace">
 <style>
 	paper-header-panel {
 	  height: 100%;
@@ -79,6 +78,7 @@
 	<gm-cow-core id="cowcore"
 		config="{{cowconfig}}"
 		core="{{core}}"
+		
 		></gm-cow-core>
 	<gm-cow-connector id="cowconnector"
 		account="{{account}}"
@@ -90,9 +90,9 @@
 		activeuser="{{activeuser}}"
 		textitems="{{textitems}}"
 		featureitems="{{featureitems}}"
-		cameras="{{cameras}}"
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
+		on-zoomto='zoomto'
 		></gm-cow-connector>
 
 	<paper-drawer-panel id='drawerpanel'>
@@ -116,7 +116,6 @@
 				<template is="dom-if" if="[[curproject]]">
 					<paper-item class='menu' name='text'>Text</paper-item>
 					<paper-item class='menu' name='map'>Map</paper-item>
-					<paper-item class='menu' name='chat'>Chat</paper-item>
 				</template>
 			</template>
     	</iron-selector>
@@ -169,7 +168,7 @@
 			</div>
 
 			<div name="map">
-				<demo-eaglemap class='fit' id='map'
+				<demo-eaglespacemap class='fit' id='map'
 					startlocation="{{startlocation}}"
 					features="{{featureitems}}"
 					store="{{itemstore}}"
@@ -178,9 +177,8 @@
 					textdata="{{textdata}}"
 					textitems="{{textitems}}"
 					activeuser="{{activeuser}}"
-					cameras="{{cameras}}"
 					>
-				</demo-eaglemap>
+				</demo-eaglespacemap>
 			</div>
 
 
@@ -196,7 +194,7 @@
 
 <script>
 Polymer({
-    is: 'demo-eagle',
+    is: 'demo-eaglespace',
     properties: {
     	map: Object,
     	cowconfig: {
@@ -228,7 +226,7 @@ Polymer({
 			},
 			otap: {
 				type: String,
-				value: 'ontw'
+				value: 'prod'
 			}
     },
     ready: function(){
@@ -240,10 +238,25 @@ Polymer({
     	this.addEventListener('gotolocation',function(d){
     		self.gotolocation(d);
     	});
+    	this.addEventListener('newincident',function(e){
+			var msg = e.detail.msg;
+			self.core.projects({})
+				.data('name',msg.name)
+				.data('incidentLocation',{lng: msg.center[0],lat: msg.center[1], zoom: msg.zoom})
+				.sync();
+		});
+    },
+    zoomto: function(e){
+    	var bbox = e.detail.payload.data.bbox;
+    	//TODO: use feature instead of midpoint
+    	var x = bbox[0] + (bbox[2] - bbox[0]);
+    	var y = bbox[1] + (bbox[3] - bbox[1]);
+    	var center = [x,y];
+    	console.log('zooming to ', center);
+    	this.$.map.map.center = center;
     },
     _accountChanged: function(acc){
     	switch (acc.OrganisationCode){
-    		/*
     	case 'GEOF7646XXXX':
     		this.cowconfig = {
     			protocol: 'wss',
@@ -253,15 +266,22 @@ Polymer({
     			key: 'geofort'
     		};
     		break;
-    		*/
     	default:
     		this.cowconfig = {
 				protocol: 'wss',
 				url: 'websocket.geodan.nl',
 				port: 443,
-				dir: 'eaglewaterdemo',
-				key: 'eaglewaterdemo'
+				dir: 'eaglespace',
+				key: 'eaglespace'
 			};
+			/*
+    		this.cowconfig = {
+    			protocol: 'ws',
+    			url: 'eaglewater-ontw.geodan.nl',
+    			port: 8081,
+    			dir: 'ontw',
+    			key: 'ontw'
+    		};*/
     		break;
     	}
     },

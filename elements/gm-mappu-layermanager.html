@@ -5,6 +5,7 @@
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
@@ -38,6 +39,7 @@
 		border-top: solid 1px rgb(200,200,200);
 		border-bottom: solid 1px white;
 		background: white;
+		cursor: pointer;
 	}
 	.removeLayer {
 		color: red;
@@ -70,17 +72,20 @@
     			<paper-material class='layer'>
                     <div class="layout horizontal handle">
                       <paper-checkbox checked="{{item.visible}}" style='padding:20px'></paper-checkbox>
-                      <h3>{{item.name}}</h3>
+                      <h3 class="flex">{{item.name}}</h3>
+                      <paper-toggle-button checked="{{item.toggled}}" style='padding:20px'></paper-toggle-button>
                     </div>
-                    <iron-collapse class='collapse-content' opened='{{item.visible}}'>
+                    <iron-collapse class='collapse-content' opened='{{item.toggled}}'>
                         <paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
         				<template is="dom-if" if="{{item.options.legendUrl}}">
         					<div class="legendImg" draggable="false">
         						<img src="{{item.options.legendUrl}}"/>
         					</div>
         				</template>
-                        <paper-textarea label="CQL filter" value='aant_koei>1000'></paper-textarea>
-                        <paper-button on-click='_applycql'>Toepassen</paper-button>
+        				<template is="dom-if" if="{{item.iswms}}">
+                        	<paper-textarea label="CQL filter"></paper-textarea>
+                        	<paper-button on-click='_applycql'>Toepassen</paper-button>
+                        </template>
                 	</iron-collapse>
                     <div class="layout horizontal">
                       <paper-button class="removeLayer" on-click="removeLayer">verwijder laag</paper-button>
@@ -143,9 +148,13 @@ Polymer({
     },
     mapChanged: function(){
     	var self = this;
-      map = this.map; //debug
+    	map = this.map; //debug
     	function rerender(){
     		self.layers = self.map.layers;
+    		self.layers.forEach(function(d){
+    			//a bit of a hassle to pick the wms layers...
+    			if (d.options && d.options.ogc_type == 'wms') d.iswms = true;
+    		});
     		self.reverselayers = self.map.layers.slice(0).reverse();
     		self.$.layerlist.render(); //somehow it's not autorefreshing
     	}

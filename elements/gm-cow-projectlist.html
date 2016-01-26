@@ -1,7 +1,11 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+
+<link rel="import" href="./gm-icm-addincident.html">
 
 <dom-module id="gm-cow-projectlist">
  <style>
@@ -10,13 +14,21 @@
  }
  </style>
  <template>
- 
+ <paper-button on-click='add'>Nieuw incident</paper-button>
+ <paper-dialog id='adddialog'>
+ 	<h2>Nieuw incident</h2>
+ 	<gm-icm-addincident id='addincident'></gm-icm-addincident>
+ 	<div class="buttons">
+ 		<paper-button dialog-dismiss>Cancel</paper-button>
+ 	</div>
+ </paper-dialog>
  <iron-selector attr-for-selected="id" selected="{{selectedproject}}">
  	<template is="dom-repeat" items="{{projects}}">
  		<paper-item id="{{item._id}}">
 			<paper-item-body two-line>
 				<div>{{item._data.name}}</div>
 				<div secondary>{{updated(item)}}</div>
+				<div secondary style="color:red" on-click='remove'>Verwijder</div>
 			</paper-item-body>
 		</paper-item>
 	</template>
@@ -34,8 +46,30 @@ Polymer({
 			notify: true
 		}
 	},
+	ready: function(){
+		var self = this;
+		this.addEventListener('newincident',function(e){
+			self.$.adddialog.close();
+		});
+	},
 	updated: function(d){
-		return new Date(parseInt(d.updated())).toLocaleString();
+		var date = new Date(parseInt(d.updated())).toLocaleString();
+		var creator = d.creator()?d.creator().data('name'):'unknown'; 
+		return date + ' (by: ' + creator + ')';
+	},
+	add: function(){
+		this.$.adddialog.open();
+		this.$.addincident.activate();//TODO
+	},
+	remove: function(e){
+		e.stopPropagation();
+		var r = confirm("You are going to remove this incident from the list!");
+		if (r == true) {
+			e.model.item.deleted(true).sync();
+		} else {
+			// do nothing
+		}
+		
 	}
 
 });

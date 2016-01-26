@@ -28,10 +28,10 @@
 			type: Array,
 			notify: true
 		},
-    otap: {
-      type: String,
-      value: 'prod'
-    }
+		otap: {
+		  type: String,
+		  value: 'https://services.geodan.nl'
+		}
 	},
 	_accountHandler: function(acc){
 		if(acc.ID) {
@@ -62,13 +62,7 @@
 	},
     ready: function() {
 		this.account = this.account || {};
-		switch(this.otap) {
-			case "ontw":
-				this.baseUrl = "https://ontw.geodan.nl";
-				break;
-			default:
-				this.baseUrl = "https://services.geodan.nl";
-		}
+		this.baseUrl = this.otap;
     }
   });
 </script>

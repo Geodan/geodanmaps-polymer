@@ -30,10 +30,10 @@
 			type: Object,
 			notify: true
 		},
-    otap: {
-      type: String,
-      value: 'prod'
-    }
+		otap: {
+		  type: String,
+		  value: "https://services.geodan.nl"
+		}
 	},
 	observers: [
 		'_urlHandler(projectid, account)'
@@ -68,13 +68,9 @@
 	*/
     ready: function() {
   		this.account = this.account || {};
-      switch(this.otap) {
-  			case "ontw":
-  				this.baseUrl = "https://ontw.geodan.nl";
-  				break;
-  			default:
-  				this.baseUrl = "https://services.geodan.nl";
-  		}
+  		this.baseUrl = this.otap;
+  		
+  		
     }
   });
 </script>

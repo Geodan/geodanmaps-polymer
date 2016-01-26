@@ -15,7 +15,10 @@
 </dom-module>
 
 <script>
-var cow; //for debug
+
+(function(){
+  'use strict';
+  var cowcore = window.cowcore;
 Polymer({
     is: 'gm-cow-core',
     properties: {
@@ -30,10 +33,17 @@ Polymer({
     	connection: Object
     },
     _configChanged: function(){
-    	var core = new Cow.core({'herdname': this.config.key});
-    	this.core = core;
-    	window.cow = core; //debug
-    	core.socketservers({
+    	//Check for existing connections
+    	if (cowcore){
+    		//cowcore.disconnect();
+    	}
+    	else{
+    		cowcore = new Cow.core({'herdname': this.config.key});
+    	}
+    	
+    	this.core = cowcore;
+    	window.cowcore = cowcore; //make global
+    	this.core.socketservers({
     		_id: 'default',
     		data: {
     			protocol:this.config.protocol,
@@ -42,19 +52,24 @@ Polymer({
     			dir: this.config.dir
     		}
 		});
-		core.socketserver('default');
-		this.connect();//todo: make optional
+		this.core.socketserver('default');
+		//this.connect();//todo: make optional
+		
+		
+		
     },
     ready: function(){
 
     },
     connect: function(){
+    	var self = this;
 		return this.core.connect().then(function(d){
 				//todo, add event;
-				this.connection = d;
+				self.connection = d;
 		}, function(e){
 			console.log('Connecting error', e);
 		});
     }
 });
+})();
 </script>

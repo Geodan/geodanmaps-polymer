@@ -1,0 +1,138 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-input-container.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<script src="http://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+
+<dom-module id="gm-plugins-cameras">
+<style>
+	paper-icon-item {
+		cursor: pointer;
+	}
+	text {
+            font: 12px sans-serif;
+	}
+	.intersecting {
+		background: red;
+	}
+	#dashboard {
+		padding: 20px;
+	}
+	paper-card {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+	paper-dialog {
+	  position: fixed;
+	  bottom: 0px;
+	  left: 500px;
+	  margin: 0px;
+	}
+</style>
+	<template>
+	
+	<paper-dialog id='camdialog' noCancelOnOutsideClick='true'>
+	  <h2>Entrance Cam</h2>
+	  <div>
+		<img id="stream" src="http://192.168.26.104/mjpg/video.mjpg?resolution=320x180&amp;compression=30&amp;rotation=0&amp;textstring=PAN%20%23x%20-%20TILT%20%23y%20-%20ZOOM%20%23z%20-%20TEMP_C%20%23TC1%20-%20FAN%20%23U1%20-%20PRESET%20%23P%20-%20Geodan%20BV%20-&amp;textsize=small&amp;textposition=top&amp;textbackgroundcolor=black&amp;textcolor=white&amp;text=1&amp;clock=1&amp;date=1&amp;overlayimage=0&amp;fps=0&amp;videokeyframeinterval=32&amp;videobitrate=0&amp;maxframesize=0&amp;timestamp=1453390661952" width="320" height="180" border="0">
+	  </div>
+	  <div class="buttons">
+		<paper-button dialog-dismiss>Close</paper-button>
+	  </div>
+	</paper-dialog>
+	
+			<paper-toolbar>
+				<div class="title">Cameras</div>
+				<paper-toggle-button on-change="onoff" label="sync"></paper-toggle-button>
+			</paper-toolbar>
+			<div id='dashboard'>
+				
+			</div>
+			<template id='list' is="dom-repeat" items="[[cameras]]">
+			<paper-icon-item on-click='gotoLocation'>
+				<iron-icon icon="av:videocam" item-icon></iron-icon>
+					<paper-item-body>
+						Click me
+					
+					<br>
+				</paper-item-body>
+			</paper-icon-item>
+		  </template>
+	</template>
+</dom-module>
+	
+<script>
+  Polymer({
+    is: "gm-plugins-cameras",
+	properties: {
+		cameras: {
+			type:Array,
+			value: function(){return [];},
+			
+		}
+	},
+	
+    ready: function() {
+	
+    },
+    gotoLocation: function(e) {
+    	this.$.camdialog.noCancelOnOutsideClick = true;
+    	this.$.camdialog.toggle();
+    	
+        var location = e.model.item.data().location;
+		this.fire('goto-coords',location);
+    },
+	onoff: function(e){
+	    if (e.srcElement.checked){ //ON
+			this.enable();
+		}
+		else { //OFF
+			this.routes = [];
+			this.map.removeLayer(this.camlayer);
+		}
+	},
+	selectionChanged: function(){
+		if (this.selection){
+			this.map.center = this.selection.geometry.coordinates;
+			//this.map.map.zoom = 24; //can't zoom while still centering (bug in mappu)
+		}
+		
+	},
+	dropdownToggle: function(e){
+		e.currentTarget.nextElementSibling.toggle();
+	},
+	enable: function(){
+		var self = this;
+		var map = this.map;
+
+		this.camlayer = new d3.mappu.VectorLayer('Cameras', {
+				reproject: true,
+				style: {
+					stroke: 'orange',
+					fill: 'none',
+					opacity: 0.5
+				}
+				
+		}).addTo(map);
+	}
+  });
+</script>
+</dom-module>

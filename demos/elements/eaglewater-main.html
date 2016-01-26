@@ -15,8 +15,6 @@
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
 
-<script src="../cow-eagle-wrapper.js"></script>
-
 <link rel="import" href="../../elements/gm-cas-core.html">
 <link rel="import" href="../../elements/gm-cas-icon.html">
 <link rel="import" href="../../elements/gm-docs-connector.html">
@@ -27,9 +25,22 @@
 <link rel="import" href="../../elements/gm-docs-text.html">
 <link rel="import" href="../../elements/gm-icm-text.html">
 
-<link rel="import" href="./demo-eaglemap.html">
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-stylesets.html">
+<link rel="import" href="../../elements/gm-mappu-cowlayer.html">
 
-<dom-module id="demo-eagle">
+<link rel="import" href="../../elements/gm-mappu-sketch.html">
+
+<link rel="import" href="../../elements/gm-configlist.html">
+<link rel="import" href="../../elements/gm-geosearch.html">
+<link rel="import" href="../../elements/gm-plugins-cameras.html">
+
+
+<dom-module id="eaglewater-main">
 <style>
 	paper-header-panel {
 	  height: 100%;
@@ -96,8 +107,8 @@
 		></gm-cow-connector>
 
 	<paper-drawer-panel id='drawerpanel'>
-	 <!-- MENU -->
-	 <paper-header-panel mode="seamed" drawer>
+	<!-- MENU -->
+	<paper-header-panel mode="seamed" drawer>
 	 	<paper-toolbar>
 	 		<img src='../images/icon-eagle.png'/>
 	 	</paper-toolbar>
@@ -109,18 +120,18 @@
 				otap="[[otap]]"
 			></gm-cas-icon>
 		</div>
-    	<iron-selector attr-for-selected="name" selected="{{selected}}">
+		<iron-selector attr-for-selected="name" selected="{{selected}}">
     		<template is="dom-if" if="[[account.ID]]">
 				<paper-item class='menu' name='users'>Users</paper-item>
 				<paper-item class='menu' name='projects'>Incidents</paper-item>
 				<template is="dom-if" if="[[curproject]]">
 					<paper-item class='menu' name='text'>Text</paper-item>
 					<paper-item class='menu' name='map'>Map</paper-item>
-					<paper-item class='menu' name='chat'>Chat</paper-item>
 				</template>
 			</template>
     	</iron-selector>
     </paper-header-panel>
+    
     <!--MAIN SCREEN-->
     <paper-header-panel main>
     	<paper-toolbar>
@@ -145,19 +156,6 @@
 
 			<gm-cow-projectlist name='projects' projects="{{projects}}"
 				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
-
-
-					<!--OBS
-					<demo-eagletext id="eagletext"
-						items="{{textitems}}"
-						store="{{itemstore}}"
-						account="{{account}}"
-						curproject="{{curproject}}"
-						activeuser="{{activeuser}}"
-						on-goto-location="gotolocation">
-					</demo-eagletext>
-					-->
-
 			<div name="text">
 				<gm-icm-text id="eagletext"
 					data="{{textdata}}"
@@ -169,34 +167,82 @@
 			</div>
 
 			<div name="map">
-				<demo-eaglemap class='fit' id='map'
-					startlocation="{{startlocation}}"
-					features="{{featureitems}}"
-					store="{{itemstore}}"
-					account="{{account}}"
-					configs="{{configs}}"
-					textdata="{{textdata}}"
-					textitems="{{textitems}}"
-					activeuser="{{activeuser}}"
-					cameras="{{cameras}}"
-					>
-				</demo-eaglemap>
-			</div>
-
-
-			<div name="chat">
-				Chat will be here...
+				<paper-header-panel>
+				<paper-toolbar>
+					<iron-selector attr-for-selected="name" selected="{{selectedBox}}">
+					  <paper-icon-button name="sketchbox" toggles icon="icons:create"></paper-icon-button>
+					  <paper-icon-button name="layerbox" toggles icon="maps:layers"></paper-icon-button>
+					  <paper-icon-button name="" toggles icon="maps:my-location"></paper-icon-button>
+					  <paper-icon-button name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
+					  <paper-icon-button name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
+					  <paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>
+					  <paper-icon-button name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
+					</iron-selector>
+				</paper-toolbar>
+				<div class='content'>
+			
+					<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
+						<paper-header-panel drawer>
+						<iron-pages attr-for-selected="id" selected="{{selectedBox}}">
+							<div id='natuurbrandbox'>
+								<gm-icm-natuurbrand map="{{map}}"></gm-icm-natuurbrand>
+							</div>
+							<div id='geosearchbox'>
+								<gm-geosearch></gm-geosearch>
+							</div>
+							<div id='gmconfigbox'>
+								<gm-configlist id='gmconfig' name='configs'
+									configs="{{configs}}"
+									account="{{account}}"
+									otap="{{otap}}"
+								></gm-configlist>
+							</div>
+			
+							<div id='layerbox'>
+								<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+							</div>
+			
+							<div id='sketchbox'>
+								<gm-mappu-sketch id="sketch"
+									layer="{{cowlayer}}"
+									styleset="{{styleset}}"
+									store="{{itemstore}}"
+									></gm-mappu-sketch>
+								<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
+							</div>
+							<div id='camerasbox'>
+								<gm-plugins-cameras id='cameras' map="{{map}}" cameras="{{cameras}}"></gm-plugins-cameras>
+							</div>
+			
+						</iron-pages>
+						</paper-header-panel>
+						<div main>
+							<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
+								<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+							</gm-mappu-map>
+							<gm-mappu-cowlayer
+								id="cowlayer"
+								map="{{map}}"
+								features="{{featureitems}}"
+								store="{{itemstore}}"
+								layer="{{cowlayer}}">
+							</gm-mappu-cowlayer>
+						</div>
+					</paper-drawer-panel>
+				</div>
+			
+				</paper-header-panel>
 			</div>
 
 		</iron-pages>
     </paper-header-panel>
-</paper-drawer-panel>
+    </paper-drawer-panel>
 </template>
 </dom-module>
 
 <script>
 Polymer({
-    is: 'demo-eagle',
+    is: 'eaglewater-main',
     properties: {
     	map: Object,
     	cowconfig: {
@@ -223,23 +269,75 @@ Polymer({
     	selectedproject: {
     		type: String
     	},
-			toasttext: {
-				type: String
-			},
-			otap: {
-				type: String,
-				value: 'ontw'
-			}
+    	selectedBox: {
+    		observer: '_selectedBoxChanged'
+    	},
+		toasttext: {
+			type: String
+		},
+		otap: {
+			type: String,
+			value: 'https://test.geodan.nl'
+		},
+		startlocation: {
+    		observer: 'activate'
+    	}
     },
     ready: function(){
     	var self = this;
+    	this.$.cowcore.connect();
     	this.addEventListener('logout',function(){
     		self.$.cascore.logout();
     		self.selected = 'nouser';
     	});
+    	this.addEventListener('newincident',function(e){
+			var msg = e.detail.msg;
+			/* TODO: doen we nog even niets mee
+			self.core.projects({})
+				.data('name',msg.name)
+				.data('date',new Date().getTime())
+				
+				.data('incidentLocation',{lng: msg.center[0],lat: msg.center[1], zoom: msg.zoom})
+				.sync();
+				*/
+		});
     	this.addEventListener('gotolocation',function(d){
     		self.gotolocation(d);
     	});
+    	this.$.drawer.closeDrawer();
+    	this.map = this.$.mapelement.map;
+
+		//TODO: Would like to automise this
+		this.$.layermanager.layers = this.map.layers;
+
+		//Add all layers from selected config
+		this.addEventListener('configselected', function(c){
+			var layers = c.detail.layers;
+            layers.map(function(layer){layer.addTo(self.map)});
+			//OBS?
+			//self.$.layermanager.layers = self.map.layers;
+        });
+        function getAttention(point){
+            //fire circle
+            var screencoords = self.map.projection(point);
+            self.map.svg.append('circle')
+                .attr('cx',screencoords[0])
+                .attr('cy',screencoords[1])
+                .attr('r',20)
+                .style('stroke','red')
+                .style('fill','none')
+                .each(function(){
+                    d3.select(this).transition().duration(10000)
+                        .style('opacity',0)
+                        .attr('r',1)
+                        .remove();
+                });
+        }
+		this.addEventListener('goto-coords',function(c){
+
+            window.setTimeout(function(){getAttention(c.detail)},0);
+            self.map.center = c.detail;
+		});
     },
     _accountChanged: function(acc){
     	switch (acc.OrganisationCode){
@@ -279,8 +377,30 @@ Polymer({
     _selectedChanged: function(s){
     	this.$.drawerpanel.closeDrawer();
     	if (this.selected == 'map'){
-    		this.$.map.activate();
+    		this.activate();
     	}
+    },
+    _selectedBoxChanged: function(){
+		this.$.drawer.openDrawer();
+	},
+	activate: function(){
+    	if (this.startlocation){//TODO
+			var center = this.startlocation;
+			this.map.center = [center.lng,center.lat];
+			this.map.zoom = center.zoom;
+			var self = this;
+			window.setTimeout(function(){
+				self.map.resize();
+			});
+		}
+	},
+	enterFullscreen: function () {
+		var self = this;
+		this.$.mapelement.webkitRequestFullscreen();
+		//TODO: this should be a promise or something...
+		window.setTimeout(function(){
+			self.map.resize();
+		},1000);
     },
     login: function(){
     	this.$.cas.login();
