@@ -52,6 +52,12 @@
 	#toast {
 		z-index: 1000;
 	}
+	
+	.title {
+		color: white;
+	}
+	
+	
 
 </style>
 <template>
@@ -110,7 +116,7 @@
 			></gm-cas-icon>
 		</div>
     	<iron-selector attr-for-selected="name" selected="{{selected}}">
-    		<template is="dom-if" if="[[account.ID]]">
+    		<template is="dom-if" if="[[account.id]]">
 				<paper-item class='menu' name='users'>Users</paper-item>
 				<paper-item class='menu' name='projects'>Incidents</paper-item>
 				<template is="dom-if" if="[[curproject]]">
@@ -226,7 +232,7 @@ Polymer({
 			},
 			otap: {
 				type: String,
-				value: 'prod'
+				value: 'https://services.geodan.nl/'
 			}
     },
     ready: function(){

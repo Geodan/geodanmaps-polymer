@@ -52,7 +52,7 @@ Polymer({
 		}
 	},
 	_accountHandler: function(acc){
-		this.loggedin=acc.ID?true:false;
+		this.loggedin=acc.id?true:false;
 	},
 	ready: function() {
 		this.host = window.location.href.split('?')[0];
@@ -63,12 +63,13 @@ Polymer({
   	  //this.$.login.generateRequest();
   },
   _logouturl:  function(){
-  	  return this.otap + '/geocas/cas-logout.jsp';
+  	  return this.otap + '/cas/logout';
   },
   _whoamiurl: function(){
-  	  return this.otap + '/geocas/whoami.jsp';
+  	  return this.otap + '/accounts/details';
   },
   logout: function(){
+  	  document.cookie = 'MOD_AUTH_CAS=; path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
   	  this.$.logout.generateRequest();
   },
   _handleResponse: function(d,e) {

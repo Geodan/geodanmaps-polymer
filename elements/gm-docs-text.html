@@ -39,9 +39,9 @@
 		'_urlHandler(projectid, account)'
 	],
 	_urlHandler: function(id,acc){
-		if(acc.ID) {
+		if(acc.id) {
 			//https://services.geodan.nl/document/api/data/GEOF7646XXXX/text/1433231122171
-			this.documentUrl = this.baseUrl + "/document/api/data/"+ acc.OrganisationCode + "/text/" + id;
+			this.documentUrl = this.baseUrl + "/document/api/data/"+ acc.groups[0].value + "/text/" + id;
 		}
 	},
     // add a callback to the element's prototype
@@ -58,11 +58,11 @@
 	/*
 	makeUrl: function(item){
 		if(item.public) {
-			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			var url = this.baseUrl + '/public/document/'+ this.account.groups[0].value + '/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 			return url
 		}
 		else {
-			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			return this.baseUrl + '/document/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 		}
 	},
 	*/

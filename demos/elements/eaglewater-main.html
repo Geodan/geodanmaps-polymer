@@ -19,6 +19,7 @@
 <link rel="import" href="../../elements/gm-cas-icon.html">
 <link rel="import" href="../../elements/gm-docs-connector.html">
 <link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-status.html">
 <link rel="import" href="../../elements/gm-cow-connector.html">
 <link rel="import" href="../../elements/gm-cow-projectlist.html">
 <link rel="import" href="../../elements/gm-cow-userlist.html">
@@ -30,6 +31,7 @@
 <link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
 <link rel="import" href="../../elements/gm-mappu-geosearch.html">
 <link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-mylocation.html">
 <link rel="import" href="../../elements/gm-mappu-stylesets.html">
 <link rel="import" href="../../elements/gm-mappu-cowlayer.html">
 
@@ -50,6 +52,13 @@
 		cursor: pointer;
 		background: white;
 	}
+	.title {
+		color: white;
+	}
+	.toolbutton {
+		color: white;
+	}
+	
 	.accounting {
 		background: #3f51b5;
 		color: white;
@@ -64,9 +73,10 @@
 	#toast {
 		z-index: 1000;
 	}
-
+	
 </style>
 <template>
+
 	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
 	<gm-cas-core id='cascore'
 		account="{{account}}"
@@ -101,9 +111,11 @@
 		activeuser="{{activeuser}}"
 		textitems="{{textitems}}"
 		featureitems="{{featureitems}}"
+		iconitems="{{iconitems}}"
 		cameras="{{cameras}}"
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
+		on-zoomto="zoomtoextent"
 		></gm-cow-connector>
 
 	<paper-drawer-panel id='drawerpanel'>
@@ -111,6 +123,7 @@
 	<paper-header-panel mode="seamed" drawer>
 	 	<paper-toolbar>
 	 		<img src='../images/icon-eagle.png'/>
+
 	 	</paper-toolbar>
 	 	<div class='accounting'>
 			<gm-cas-icon
@@ -121,7 +134,7 @@
 			></gm-cas-icon>
 		</div>
 		<iron-selector attr-for-selected="name" selected="{{selected}}">
-    		<template is="dom-if" if="[[account.ID]]">
+    		<template is="dom-if" if="[[account.id]]">
 				<paper-item class='menu' name='users'>Users</paper-item>
 				<paper-item class='menu' name='projects'>Incidents</paper-item>
 				<template is="dom-if" if="[[curproject]]">
@@ -137,6 +150,7 @@
     	<paper-toolbar>
     		<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
     		<div class='title'>{{curproject._data.name}}</div>
+    		<gm-cow-status core='{{core}}'></gm-cow-status>
     	</paper-toolbar>
 		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
 			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
@@ -170,13 +184,14 @@
 				<paper-header-panel>
 				<paper-toolbar>
 					<iron-selector attr-for-selected="name" selected="{{selectedBox}}">
-					  <paper-icon-button name="sketchbox" toggles icon="icons:create"></paper-icon-button>
-					  <paper-icon-button name="layerbox" toggles icon="maps:layers"></paper-icon-button>
-					  <paper-icon-button name="" toggles icon="maps:my-location"></paper-icon-button>
-					  <paper-icon-button name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
-					  <paper-icon-button name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
-					  <paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>
-					  <paper-icon-button name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="sketchbox" toggles icon="icons:create"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="layerbox" toggles icon="maps:layers"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="mylocation" icon="maps:my-location" on-click='gotoMylocation'></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
+					  <!--<paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>-->
+					  <paper-icon-button class='toolbutton' name="" toggles icon="communication:screen-share" on-click='shareExtent'></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
 					</iron-selector>
 				</paper-toolbar>
 				<div class='content'>
@@ -208,7 +223,7 @@
 									styleset="{{styleset}}"
 									store="{{itemstore}}"
 									></gm-mappu-sketch>
-								<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
+								<gm-mappu-stylesets styleset2="{{styleset}}"></gm-mappu-stylesets>
 							</div>
 							<div id='camerasbox'>
 								<gm-plugins-cameras id='cameras' map="{{map}}" cameras="{{cameras}}"></gm-plugins-cameras>
@@ -217,6 +232,7 @@
 						</iron-pages>
 						</paper-header-panel>
 						<div main>
+							<gm-mappu-mylocation coords="{{mylocation}}"></gm-mappu-mylocation>
 							<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
 								<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
 							</gm-mappu-map>
@@ -224,6 +240,7 @@
 								id="cowlayer"
 								map="{{map}}"
 								features="{{featureitems}}"
+								icons="{{iconitems}}"
 								store="{{itemstore}}"
 								layer="{{cowlayer}}">
 							</gm-mappu-cowlayer>
@@ -364,7 +381,22 @@ Polymer({
     	}
     },
     _projectChanged: function(){
+    	var self = this;
     	this.selected = 'map';
+    	//TODO: add layers and other info in sceneario
+    	var scenario = this.core.project().data('scenario');
+    	if (scenario){
+    		/*WORKING ON THIS
+    		scenario.layers.forEach(function(l){
+    			new d3.mappu.RasterLayer(l.data.layer.title,{
+    				ogc_type: 'wms',
+    				url: l.data.layer.url,
+    				layers: [l.data.layer.name]
+    			}).addTo(self.map);
+    		});
+    		*/
+    	}
+    	
     },
     _activeuserChanged: function(){
     	if (this.activeuser){
@@ -380,8 +412,10 @@ Polymer({
     		this.activate();
     	}
     },
-    _selectedBoxChanged: function(){
-		this.$.drawer.openDrawer();
+    _selectedBoxChanged: function(item){
+    	if (item!='mylocation'){
+    		this.$.drawer.openDrawer();
+    	}
 	},
 	activate: function(){
     	if (this.startlocation){//TODO
@@ -402,6 +436,13 @@ Polymer({
 			self.map.resize();
 		},1000);
     },
+    shareExtent: function(){
+    	var extent = null;
+    	var ll = this.map.extent[0];
+    	var ur = this.map.extent[1];
+    	var feat = {type: "Feature", bbox: [ll[0], ll[1], ur[0], ur[1]], geometry: {type: 'Point', coordinates: [0,0]}};
+    	this.core.messenger().sendData({command: 'ZoomToBbox',data: feat}, 'command');
+    },
     login: function(){
     	this.$.cas.login();
     },
@@ -421,6 +462,12 @@ Polymer({
 			this.toasttext = 'No such location found';
 			this.$.toast.show();
 		}
+    },
+    gotoMylocation: function(){
+        this.map.center = this.mylocation;
+    },
+    zoomtoextent: function(e){
+    	this.map.zoomToExtent(e.detail.bbox);
     }
 });
 </script>

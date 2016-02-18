@@ -52,10 +52,10 @@
 	<paper-dialog id='camdialog' noCancelOnOutsideClick='true'>
 	  <h2>Entrance Cam</h2>
 	  <div>
-		<img id="stream" src="http://192.168.26.104/mjpg/video.mjpg?resolution=320x180&amp;compression=30&amp;rotation=0&amp;textstring=PAN%20%23x%20-%20TILT%20%23y%20-%20ZOOM%20%23z%20-%20TEMP_C%20%23TC1%20-%20FAN%20%23U1%20-%20PRESET%20%23P%20-%20Geodan%20BV%20-&amp;textsize=small&amp;textposition=top&amp;textbackgroundcolor=black&amp;textcolor=white&amp;text=1&amp;clock=1&amp;date=1&amp;overlayimage=0&amp;fps=0&amp;videokeyframeinterval=32&amp;videobitrate=0&amp;maxframesize=0&amp;timestamp=1453390661952" width="320" height="180" border="0">
+		<img id="stream" src="{{stream}}" width="320" height="180" border="0">
 	  </div>
 	  <div class="buttons">
-		<paper-button dialog-dismiss>Close</paper-button>
+		<paper-button dialog-dismiss on-click='closestream'>Close</paper-button>
 	  </div>
 	</paper-dialog>
 	
@@ -70,10 +70,8 @@
 			<paper-icon-item on-click='gotoLocation'>
 				<iron-icon icon="av:videocam" item-icon></iron-icon>
 					<paper-item-body>
-						Click me
-					
-					<br>
-				</paper-item-body>
+						{{item._data.name}}
+					</paper-item-body>
 			</paper-icon-item>
 		  </template>
 	</template>
@@ -87,6 +85,10 @@
 			type:Array,
 			value: function(){return [];},
 			
+		},
+		stram: {
+			type: String,
+			value: ""
 		}
 	},
 	
@@ -96,7 +98,7 @@
     gotoLocation: function(e) {
     	this.$.camdialog.noCancelOnOutsideClick = true;
     	this.$.camdialog.toggle();
-    	
+    	this.stream = "http://192.168.26.104/mjpg/video.mjpg?resolution=320x180&amp;compression=30&amp;rotation=0&amp;textstring=PAN%20%23x%20-%20TILT%20%23y%20-%20ZOOM%20%23z%20-%20TEMP_C%20%23TC1%20-%20FAN%20%23U1%20-%20PRESET%20%23P%20-%20Geodan%20BV%20-&amp;textsize=small&amp;textposition=top&amp;textbackgroundcolor=black&amp;textcolor=white&amp;text=1&amp;clock=1&amp;date=1&amp;overlayimage=0&amp;fps=0&amp;videokeyframeinterval=32&amp;videobitrate=0&amp;maxframesize=0&amp;timestamp=1453390661952";
         var location = e.model.item.data().location;
 		this.fire('goto-coords',location);
     },
@@ -106,6 +108,7 @@
 		}
 		else { //OFF
 			this.routes = [];
+			this.stream = "";
 			this.map.removeLayer(this.camlayer);
 		}
 	},
@@ -116,13 +119,16 @@
 		}
 		
 	},
+	closestream: function(){
+		this.stream = "";
+	},
 	dropdownToggle: function(e){
 		e.currentTarget.nextElementSibling.toggle();
 	},
 	enable: function(){
 		var self = this;
 		var map = this.map;
-
+		
 		this.camlayer = new d3.mappu.VectorLayer('Cameras', {
 				reproject: true,
 				style: {

@@ -28,6 +28,11 @@
 		layer: {
 			type: Object,
 			notify: true
+		},
+		icons: {
+			type: Array,
+			value: function(){return [];},
+			observer: '_reload'
 		}
 	},
 	
@@ -39,7 +44,7 @@
     		style: {
     			'fill-opacity': 0.5
     		},
-			labelfield: 'name',
+			labelfield: 'label',
 			events: [{
 				event:'click',
 				action: function(d){
@@ -149,6 +154,7 @@
 		 .addTo(this.map);
 	},
 	_reload: function(){
+		var self = this;
 		if (this.features){//TODO
 			this.layer.data = this.features.map(function(d){
 				//copy stype from properties to be in line with EagleWater
@@ -160,10 +166,25 @@
 				if (!feat.style){
 					feat.style = feat.properties;
 				}
+				
+				//prepare binary icons
+				if (d.data('iconref')){
+					//TODO: put binary dat in marker-url
+					var icon = self.icons.filter(function(i){
+							return i.id() == d.data('iconref');
+					})[0];
+					//data:image/png;base64,
+					if (icon){
+						feat.style['marker-url'] = 'data:'+icon.data('encoding') + ';base64,' + icon.data('base64');
+					}
+				}
+				
 				return feat;
 			});
+			this.layer.draw(true); //rebuild features
 		}
-	},
+	
+	}
   });
 </script>
 </dom-module>

@@ -34,8 +34,8 @@
 		}
 	},
 	_accountHandler: function(acc){
-		if(acc.ID) {
-			this.listUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/config/";
+		if(acc.id) {
+			this.listUrl = this.baseUrl + "/document/api/"+ acc.groups[0].value + "/config/";
 		}
 	},
     // add a callback to the element's prototype
@@ -53,11 +53,11 @@
 	},
 	makeUrl: function(item){
 		if(item.public) {
-			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			var url = this.baseUrl + '/public/document/'+ this.account.groups[0].value + '/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 			return url
 		}
 		else {
-			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			return this.baseUrl + '/document/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 		}
 	},
     ready: function() {

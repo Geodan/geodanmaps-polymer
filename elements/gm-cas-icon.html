@@ -37,9 +37,11 @@
 
 	<template is="dom-if" if="[[loggedin]]">
 		<paper-item-body two-line>
-			<div>{{account.FirstName}} {{account.LastName}}</div>
-			<div secondary>{{account.ID}}</div>
+			<div>{{account.displayName}}</div>
+			<div secondary>{{account.id}}</div>
+			<!-- not working in new accounting
 			<div secondary>{{account.Organisation}}, {{account.Department}}</div>
+			-->
 		</paper-item-body>
 		<iron-icon icon="icons:account-circle"></iron-icon>
 	</template>
@@ -94,7 +96,7 @@ Polymer({
 	ready: function() {
 	},
 	_loginurl:  function(){
-		this.otap + '/cas/login';
+		return this.otap + '/cas/login';
 	},
 	toggleLogin: function(){
 		this.$.accountmenu.toggle();

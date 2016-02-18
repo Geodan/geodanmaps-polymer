@@ -82,7 +82,7 @@ Polymer({
 	},
 	_getlayers: function(e){
 		var item = e.model.item;
-		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.OrganisationCode + "/"+item.service+"/" + item.name;
+		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.groups[0].value + "/"+item.service+"/" + item.name;
 	},
 	// add a callback to the element's prototype
 	handleLayers: function(d){

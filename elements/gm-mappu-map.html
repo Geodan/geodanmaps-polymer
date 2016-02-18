@@ -12,6 +12,7 @@
 <dom-module id="gm-mappu-map">
  <style>
  	#mapdiv {
+ 		position: absolute;
  		display: inline-block;
 		width: 100%;
 		height: 100%;
@@ -36,7 +37,7 @@ Polymer({
     	},
     	center: {
     		type: Array,
-    		value: [5,52]
+    		value: [0,0]
     	}
     },
     ready: function(){
@@ -47,7 +48,7 @@ Polymer({
 
         //Edit functionality
         new d3.mappu.Sketch().addTo(this.map);
-
+        
         //Background layer;
     	new d3.mappu.RasterLayer('Topografie',  {
             ogc_type: 'tms',
@@ -56,6 +57,7 @@ Polymer({
             visible: true
 		 })
 		 .addTo(this.map);
+		 
     },
     created: function(){
     },

@@ -200,20 +200,29 @@ Polymer({
 		map.dispatch.on('zoomend', function(){
 				self.zoomChanged();
 		});
-		/*
+		
 		new d3.mappu.RasterLayer('Vegetatie',{
-				visible: true,
+				visible: false,
 				ogc_type: 'wms',
 				url: 'http://model.geodan.nl/geoserver/model_wildfire/wms?',
-				layers: 'model_wildfire:l8_20140419_nphv_ml2'
+				layers: 'model_wildfire:l8_20140419_nphv_ml2',
+				opacity: 0
 		}).addTo(map);
 		new d3.mappu.RasterLayer('ProbaV NDVI',{
+			visible: false,
     		ogc_type: 'wms',
     		url: 'http://model.geodan.nl/geoserver/eaglespace/wms?',
     		layers: ['eaglespace:PROBAV_S5_TOC_20140326_100M_V001_NDVI'],
-    		visible: true
-    	}).addTo(this.map);	
-		*/
+    		opacity: 0
+    	}).addTo(this.map);
+    	new d3.mappu.RasterLayer('Biomass prod',{
+    		visible: false,
+    		ogc_type: 'wms',
+    		url: 'http://model.geodan.nl/geoserver/eaglespace/wms?',
+    		layers: ['eaglespace:biomassProduction_Hoge_Veluwe_20150315_20151004'],
+    		opacity: 0
+    	}).addTo(this.map);
+		
 		this.layer = new d3.mappu.VectorLayer('Natuurbrand invoer',{
             visible: true,
             reproject: true,

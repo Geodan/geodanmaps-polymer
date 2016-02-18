@@ -55,6 +55,10 @@ Polymer({
     		type: Array,
     		notify: true
     	},
+    	iconitems: {
+    		type: Array,
+    		notify: true
+    	},
     	startlocation: {
     		type: Object,
     		notify: true
@@ -74,8 +78,10 @@ Polymer({
     _coreChanged: function(){
     	var self = this;
     	this.core.messenger().on('command',function(d){
-    		console.log('firing');
-			self.fire('zoomto',d);
+    		if (d.payload.command == 'ZoomToBbox'){
+    			console.log('firing');
+    			self.fire('zoomto',d.payload.data);
+    		}
 		});
     },
     _projectChanged: function(){
@@ -91,7 +97,10 @@ Polymer({
     			.filter(function(d){
     				return !d.deleted() && d.data('type') == 'feature';
     			});
-    		 
+    		self.iconitems = self.project.items()
+    			.filter(function(d){
+    				return !d.deleted() && d.data('type') == 'icon';
+    			}); 
     		
     	}
     	
@@ -115,14 +124,14 @@ Polymer({
     	this.core.projectStore().on('datachange',loadprojects);
     	
     	function setuser(){
-    		if (self.account.ID){
-    			var user = self.core.user(self.account.ID);
+    		if (self.account.id){
+    			var user = self.core.user(self.account.id);
     			if (!user)
     			{
 					//if user is not know to cow yet, create it
-					self.core.users({_id:self.account.ID})
-						.data('name',self.account.FirstName + ' ' + self.account.LastName);
-						self.core.user(self.account.ID);
+					self.core.users({_id:self.account.id})
+						.data('name',self.account.displayName);
+						self.core.user(self.account.id);
 				}
 				self.activeuser = self.core.user();
     		}
