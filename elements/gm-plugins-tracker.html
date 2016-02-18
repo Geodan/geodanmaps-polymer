@@ -209,7 +209,7 @@
 				}
 			});
 			if (item.intersects != intersects){
-			if (self.smsalert && !intersects){
+				if (self.smsalert && !intersects){
 					self.$.sendSms.params.message = 'Vehicle '+item.id+' left zone ' + item.intersects;
 					self.$.sendSms.params.recipient = self.telnr;
 					/*DANGER ZONE*/
@@ -305,6 +305,8 @@
 					fill: 'none'
 				}
 		}).addTo(map);
+		
+	
 		
 		/*
 		var circle = map.svg.select('#'+this.tracklayer.id)

@@ -5,12 +5,14 @@
 <dom-module id="gm-cas">
 
 <template>
+
 <iron-ajax method="get" id="ajaxRequest"
    auto
-   url="https://services.geodan.nl/geocas/whoami.jsp"  
+   url="https://services.geodan.nl/geocas/whoami.jsp"
    verbose="true"
    with-credentials="true"
    on-response="handleResponse"></iron-ajax>
+
 <template is="dom-if" if="{{!loggedin}}">
 <div style="min-height:60px">
 U bent momenteel niet ingelogd.
@@ -44,7 +46,7 @@ Polymer({
 		}
 	},
 	_accountHandler: function(acc){
-		this.loggedin=acc.ID?true:false; 			
+		this.loggedin=acc.id?true:false;
 	},
 	ready: function() {
 		this.host = window.location.href.split('?')[0];
@@ -55,10 +57,10 @@ Polymer({
         this.account = d.detail.xhr.response;
 		this.loggedin = true;
     }
-    
+
   }
   });
 </script>
-  
+
 
 </dom-module>

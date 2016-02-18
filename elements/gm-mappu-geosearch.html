@@ -25,7 +25,7 @@
       #menuButton {
       	  display: none;
       }
-      
+
  </style>
  <template>
  	<paper-input label="Find location" size=40 id="geosuggest" on-keydown="suggest"></paper-input>
@@ -44,7 +44,7 @@
 	</iron-selector>
 	-->
  <iron-ajax
-    id='suggest' 
+    id='suggest'
     auto
     url="/service/geosearch/suggest"
     params='{"q":""}'
@@ -53,19 +53,19 @@
     on-response="handleSuggestResponse"></iron-ajax>
    </div>
    <iron-ajax
-    id='lookup' 
+    id='lookup'
     auto
     url="/service/geosearch/lookup"
     params='{"q":""}'
     handleAs="json"
     on-response="handleLookupResponse"></iron-ajax>
-   </div>	
- 	
+   </div>
+
  </template>
- 
- 
- 
- 
+
+
+
+
 </dom-module>
 
 <script>
@@ -80,10 +80,14 @@ Polymer({
     	iselected: {
     		type: Number,
     		value: 0
-    	}
+    	},
+        location: {
+            type: Object,
+            readonly: true
+        }
     },
     ready: function(){
-
+        console.warn('gm-mappu-geosearch became obsolete by gm-geosearch');
     },
     suggest: function(e){
      	 if (e.keyCode == 13 && this.$.suggestlist.selectedItem){ //enter
@@ -125,12 +129,13 @@ Polymer({
 			 msg.centroid = {id: 1,type: 'Feature', geometry: Terraformer.WKT.parse(msg.centroid[0]).toJSON()};
 			 msg.geom = {
 			 	id: 1,
-			 	type: 'Feature', 
-			 	geometry: Terraformer.WKT.parse(msg.geom).toJSON(), 
-			 	style: {stroke: 'red', "stroke-width": '1px', fill: 'none'}, 
+			 	type: 'Feature',
+			 	geometry: Terraformer.WKT.parse(msg.geom).toJSON(),
+			 	style: {stroke: 'red', "stroke-width": '1px', fill: 'none'},
 			 	properties: {name: msg.displayname}
-			 }; 
-			 this.map.center = msg.centroid.geometry.coordinates;
+			 };
+             this.location = msg.centroid.geometry.coordinates;
+			 //this.map.center = msg.centroid.geometry.coordinates;
 		 }
      },
      lookmeup: function(e){
@@ -140,6 +145,6 @@ Polymer({
 		 this.suggestions = [];
 		 this.iselected = -1;
      }
-    
+
 });
 </script>

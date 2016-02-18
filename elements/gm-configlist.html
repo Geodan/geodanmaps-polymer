@@ -19,7 +19,7 @@
  <iron-ajax
 		auto
 		url="{{listUrl}}"
-		id="getLayers"		
+		id="getLayers"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
@@ -28,7 +28,7 @@
 		></iron-ajax>
  <paper-spinner-lite id='spinner' alt="Configuraties laden" active></paper-spinner-lite>
  <iron-selector attr-for-selected="id" selected="{{selected}}">
- 	<template is="dom-repeat" items="{{projects}}">
+ 	<template is="dom-repeat" items="{{configs}}">
  		<paper-item id="{{item.id}}" on-click='_getlayers'>
 			<paper-item-body two-line>
 				<div>{{item.title}}</div>
@@ -38,55 +38,92 @@
 	</template>
  </iron-selector>
  </template>
- 
+
 </dom-module>
 
 <script>
 Polymer({
 	is: 'gm-configlist',
 	properties: {
-		projects: {
-			observer: '_projectsChanged'
+		configs: {
+			observer: '_configsChanged'
 		},
 		selected: {
 			type: String,
 			notify: true,
-			observer: '_selectedProjectChanged' 
+			observer: '_selectedProjectChanged'
 		},
 		selectedproject: {
 			type: Object,
 			notify: true
-		}
-		
+		},
+    otap: {
+      type: String,
+      value: 'prod'
+    }
+
 	},
 	ready: function(){
-		this.baseUrl = "https://services.geodan.nl";
+		this.baseUrl = this.otap || "https://services.geodan.nl";
 	},
 	_selectedProjectChanged: function(id,x){
-		var candidates = this.projects.filter(function(d){
+		var candidates = this.configs.filter(function(d){
 			return d.id == id;
 		});
 		if (candidates.length > 0){
 			this.selectedproject = candidates[0];
 		}
-			
+
 	},
-	_projectsChanged: function(){
-		if (this.projects.length > 0)
+	_configsChanged: function(){
+		if (this.configs.length > 0)
 			this.$.spinner.active = false;
 			this.$.spinner.style.display = 'none';
 	},
 	_getlayers: function(e){
 		var item = e.model.item;
-		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.OrganisationCode + "/"+item.service+"/" + item.name;
+		this.listUrl = this.baseUrl + "/document/api/data/"+ this.account.groups[0].value + "/"+item.service+"/" + item.name;
 	},
 	// add a callback to the element's prototype
-	handleLayers: function(d){		
+	handleLayers: function(d){
 		this.documents =d.detail.xhr.response;
 		this.error = '';
+    var returnlayers = [];
 		var layers = this.documents.map.layers;
-		this.fire('configselected',{layers: layers});
-	},	
+    layers.forEach(function(l){
+      switch (l.source.type.toLowerCase()){
+        case 'ogc_wms':
+          var styleurl = l.style? '&sld=' + l.style.url:'';
+          returnlayers.push(
+            new d3.mappu.RasterLayer(l.title,  {
+              ogc_type: 'wms',
+              url: l.source.url + styleurl, 
+              layers: [l.source.featureName],
+              visible: true || l.options.visible,
+              legendUrl: l.legendUrl,
+              infoUrl: l.infoUrl
+            })
+          );
+          break;
+        case 'ogc_wmts FORGET IT SINCE ALL ARE IN nltilingschema':
+          returnlayers.push(
+            new d3.mappu.RasterLayer(l.title,  {
+              ogc_type: 'wmts',
+              url: l.source.url,
+              layers: [l.source.featureName],
+              visible: true || l.options.visible,
+              legendUrl: l.legendUrl,
+              infoUrl: l.infoUrl
+            })
+          );
+          break;
+        default:
+          //don't add layer
+      }
+    });
+
+		this.fire('configselected',{layers: returnlayers});
+	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"

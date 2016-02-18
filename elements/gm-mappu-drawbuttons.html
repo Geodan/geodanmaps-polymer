@@ -158,9 +158,13 @@ Polymer({
 			self.map.mapdiv.style.cursor = 'auto';
 			feature.style = {
 				fill: 'none',
-				stroke: e.model.item.stroke
+				stroke: e.model.item.stroke,
+				"stroke-width": e.model.item['stroke-width']
 			};
-			for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
+			feature.style = e.model.item;
+			for (var attrname in feature.style) { 
+				feature.properties[attrname] = feature.style[attrname]; 
+			}
 		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
 		};
 		this.sketch.finish();
@@ -176,8 +180,10 @@ Polymer({
 			self.map.mapdiv.style.cursor = 'auto';
 			feature.style = {
 				fill: 'none',
-				stroke: e.model.item.stroke
+				stroke: e.model.item.stroke,
+				"stroke-width": e.model.item['stroke-width']
 			};
+			feature.style = e.model.item;
 			for (var attrname in feature.style) { feature.properties[attrname] = feature.style[attrname]; }
 		 	self.store.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
 		};

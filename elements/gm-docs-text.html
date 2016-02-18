@@ -7,7 +7,7 @@
 		<iron-ajax
 		auto
 		url="{{documentUrl}}"
-		id="getDocument"		
+		id="getDocument"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
@@ -21,7 +21,7 @@
 	properties: {
 		account: {
 			type: Object,
-			
+
 		},
 		projectid: {
 			type: String,
@@ -29,23 +29,27 @@
 		data: {
 			type: Object,
 			notify: true
+		},
+		otap: {
+		  type: String,
+		  value: "https://services.geodan.nl"
 		}
 	},
 	observers: [
 		'_urlHandler(projectid, account)'
 	],
 	_urlHandler: function(id,acc){
-		if(acc.ID) {
+		if(acc.id) {
 			//https://services.geodan.nl/document/api/data/GEOF7646XXXX/text/1433231122171
-			this.documentUrl = this.baseUrl + "/document/api/data/"+ acc.OrganisationCode + "/text/" + id;
+			this.documentUrl = this.baseUrl + "/document/api/data/"+ acc.groups[0].value + "/text/" + id;
 		}
 	},
     // add a callback to the element's prototype
-	handleDocument: function(d){		
+	handleDocument: function(d){
 		this.document =d.detail.xhr.response;
 		this.data = this.document.content;
 		this.error = '';
-	},	
+	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"
@@ -54,18 +58,19 @@
 	/*
 	makeUrl: function(item){
 		if(item.public) {
-			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
-			return url 
+			var url = this.baseUrl + '/public/document/'+ this.account.groups[0].value + '/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
+			return url
 		}
 		else {
-			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			return this.baseUrl + '/document/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 		}
 	},
 	*/
     ready: function() {
-		this.account = this.account || {};		
-		//this.baseUrl = "https://services.geodan.nl";
-		this.baseUrl = "https://ontw.geodan.nl";
+  		this.account = this.account || {};
+  		this.baseUrl = this.otap;
+  		
+  		
     }
   });
 </script>

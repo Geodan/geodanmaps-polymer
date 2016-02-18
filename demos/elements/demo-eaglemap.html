@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
@@ -23,11 +24,13 @@
 <link rel="import" href="../../elements/gm-cow-core.html">
 <link rel="import" href="../../elements/gm-cow-projectlist.html">
 <link rel="import" href="../../elements/gm-cow-userlist.html">
-<link rel="import" href="../../elements/gm-docs-configui.html">
+<link rel="import" href="../../elements/gm-configlist.html">
 <link rel="import" href="../../elements/gm-geosearch.html">
 <link rel="import" href="../../elements/gm-icm-natuurbrand.html">
 <link rel="import" href="../../elements/gm-plugins-rws.html">
 <link rel="import" href="../../elements/gm-plugins-tracker.html">
+<link rel="import" href="../../elements/gm-plugins-cameras.html">
+<link rel="import" href="../../elements/gm-plugins-eaglespace.html">
 <link rel="import" href="../../elements/gm-plugins-nstwitter.html">
 
 <dom-module id="demo-eaglemap">
@@ -51,10 +54,12 @@
 		  <paper-icon-button name="rwsbox" toggles icon="icons:trending-up"></paper-icon-button>
 		  <paper-icon-button name="nstwitterbox" toggles icon="maps:directions-railway"></paper-icon-button>
 		  <paper-icon-button name="textbox" toggles icon="editor:format-size"></paper-icon-button>
+          <paper-icon-button name="eaglespacebox" toggles icon="editor:format-size"></paper-icon-button>
+          <paper-icon-button name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
 		</iron-selector>
 	</paper-toolbar>
 	<div class='content'>
-		
+
 		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
 			<paper-header-panel drawer>
 			<iron-pages attr-for-selected="id" selected="{{selected}}">
@@ -65,57 +70,71 @@
 					<gm-geosearch></gm-geosearch>
 				</div>
 				<div id='gmconfigbox'>
+          <!--
 					<gm-docs-configui id='gmconfig' name='configs'
 						configs="{{configs}}"
 						account="{{account}}"
-						></gm-docs-configui>
+						></gm-docs-configui>-->
+            <gm-configlist id='gmconfig' name='configs'
+  						configs="{{configs}}"
+  						account="{{account}}"
+              otap="ontw"
+  						></gm-configlist>
 				</div>
-			
+
 				<div id='layerbox'>
 					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
 				</div>
-				
+
 				<div id='rwsbox'>
 					<gm-plugins-rws id="rwsplugin" map="{{map}}"></gm-plugins-rws>
 				</div>
-				
+
 				<div id='nstwitterbox'>
 					<gm-plugins-nstwitter id="nstwitterplugin" map="{{map}}"></gm-plugins-nstwitter>
 				</div>
-				
+
 				<div id='trackerbox'>
 					<gm-plugins-tracker id="tracker" map="{{map}}"></gm-plugins-tracker>
 				</div>
-				
+
 				<div id='textbox'>
-					<gm-icm-text id="eagletext" 
-						data="{{textdata}}" 
-						items="{{textitems}}" 
-						store="{{store}}" 
+					<gm-icm-text id="eagletext"
+						data="{{textdata}}"
+						items="{{textitems}}"
+						store="{{store}}"
 						activeuser="{{activeuser}}"
 						on-goto-location="gotolocation">
 					</gm-icm-text>
 				</div>
-				
+
 				<div id='sketchbox'>
-					<gm-mappu-sketch id="sketch" 
-						layer="{{cowlayer}}" 
+					<gm-mappu-sketch id="sketch"
+						layer="{{cowlayer}}"
 						styleset="{{styleset}}"
 						store="{{store}}"
 						></gm-mappu-sketch>
 					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
 				</div>
+                <div id='eaglespacebox'>
+                    <gm-plugins-eaglespace id="eaglespace" map="{{map}}"></gm-plugins-eaglespace>
+                </div>
+                
+                <div id='camerasbox'>
+                	<gm-plugins-cameras id='cameras' map="{{map}}" cameras="{{cameras}}"></gm-plugins-cameras>
+                </div>
+
 			</iron-pages>
 			</paper-header-panel>
 			<div main>
 				<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
 					<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
 				</gm-mappu-map>
-				<gm-mappu-cowlayer 
+				<gm-mappu-cowlayer
 					id="cowlayer"
-					map="{{map}}" 
-					features="{{features}}" 
-					store="{{store}}" 
+					map="{{map}}"
+					features="{{features}}"
+					store="{{store}}"
 					layer="{{cowlayer}}">
 				</gm-mappu-cowlayer>
 			</div>
@@ -132,14 +151,14 @@ Polymer({
     properties: {
     	map: Object,
     	selected: {
-    		observer: '_selectedChanged' 
+    		observer: '_selectedChanged'
     	},
     	startlocation: {
     		observer: 'activate'
     	}
     },
     observers: [
-    	
+
     ],
     ready: function(){
     	var self = this;
@@ -148,26 +167,34 @@ Polymer({
 
 		//TODO: Would like to automise this
 		this.$.layermanager.layers = this.map.layers;
-		
+
 		//Add all layers from selected config
 		this.addEventListener('configselected', function(c){
 			var layers = c.detail.layers;
-			layers.filter(function(l){
-				return l.source.type.toLowerCase() == 'ogc_wms';
-			}).forEach(function(l){
-				new d3.mappu.RasterLayer(l.title,  {
-					ogc_type: 'wms',
-					url: l.source.url,
-					layers: [l.source.featureName],
-					visible: true || l.options.visible
-				 })
-				 .addTo(self.map);
-			});
-			//TODO: Would like to automise this
-			self.$.layermanager.layers = self.map.layers;
-    	});
+            layers.map(function(layer){layer.addTo(self.map)});
+			//OBS?
+			//self.$.layermanager.layers = self.map.layers;
+        });
+        function getAttention(point){
+            //fire circle
+            var screencoords = self.map.projection(point);
+            self.map.svg.append('circle')
+                .attr('cx',screencoords[0])
+                .attr('cy',screencoords[1])
+                .attr('r',20)
+                .style('stroke','red')
+                .style('fill','none')
+                .each(function(){
+                    d3.select(this).transition().duration(10000)
+                        .style('opacity',0)
+                        .attr('r',1)
+                        .remove();
+                });
+        }
 		this.addEventListener('goto-coords',function(c){
-			self.map.center = c.detail;
+
+            window.setTimeout(function(){getAttention(c.detail)},0);
+            self.map.center = c.detail;
 		});
     },
     activate: function(){

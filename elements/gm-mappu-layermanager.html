@@ -1,8 +1,16 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/Sortable/Sortable.html">
+
 <!--<link rel="import" href="./gm-drag-drop.html">-->
 
 
@@ -26,53 +34,90 @@
 		cursor: pointer;
 		min-height: 20px;
 	}
+
 	.layer {
 		border-top: solid 1px rgb(200,200,200);
 		border-bottom: solid 1px white;
 		background: white;
+		cursor: pointer;
 	}
 	.removeLayer {
 		color: red;
 		cursor: pointer;
 	}
-	.legendImg, .transparent {    
+	.legendImg, .transparent {
 		padding: 5px 5px 5px 15px;
-    .legendImg {
+  }
+  .legendImg {
 		font-weight: 500;
 	}
 	.zoomin .legendImg {
 		border: red solid 1px;
 	}
+
+  .collapse-content {
+    padding: 5px;
+  }
+
 }
  </style>
  <template>
-  	<div class='container' style=$'display:{{display}}'>
- 	 <template id="layerlist" is="dom-repeat" items="{{reverselayers}}">
- 	 	<div class="layer">
-			<paper-icon-item class='layer' on-click='toggle' >
-				<iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-				<paper-item-body>{{item.name}}</paper-item-body>
-			</paper-icon-item>
-			<iron-collapse class='collapse-content'>
-				<template is="dom-if" if="{{item.options.config.legendUrl}}">
-					<div class="legendImg" draggable="false">
-						<img src="{{item.options.config.legendUrl}}"/>
-					</div>
-				</template>
-				<paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
-				<div>
-					<span class="removeLayer" on-click="removeLayer">verwijder laag</span>
-				</div>
-			</iron-collapse>
-		</div>
-    </template>
- 	</div>
+  	<!--obs?<div class='container' style=$'display:{{display}}'>-->
+      <sortable-js
+        id='sortable'
+        handle=".handle"
+        on-end='_shuffle'>
+     	 <template id="layerlist" is="dom-repeat" items="{{reverselayers}}">
+     	 	<div class="layer">
+    			<paper-material class='layer'>
+                    <div class="layout horizontal handle">
+                      <paper-checkbox checked="{{item.visible}}" style='padding:20px'></paper-checkbox>
+                      <h3 class="flex">{{item.name}}</h3>
+                      <paper-toggle-button checked="{{item.toggled}}" style='padding:20px'></paper-toggle-button>
+                    </div>
+                    <iron-collapse class='collapse-content' opened='{{item.toggled}}'>
+                        <paper-slider min="0" max="1" step="0.01" value='1' immediateValue="{{item.opacity}}" on-value-change="setOpacity" title="Schuif om de transparantie van de laag in te stellen"></paper-slider>
+        				<template is="dom-if" if="{{item.options.legendUrl}}">
+        					<div class="legendImg" draggable="false">
+        						<img src="{{item.options.legendUrl}}"/>
+        					</div>
+        				</template>
+        				<template is="dom-if" if="{{item.iswms}}">
+                        	<paper-textarea label="CQL filter"></paper-textarea>
+                        	<paper-button on-click='_applycql'>Toepassen</paper-button>
+                        </template>
+                	</iron-collapse>
+                    <div class="layout horizontal">
+                      <paper-button class="removeLayer" on-click="removeLayer">verwijder laag</paper-button>
+                    </div>
+    			</paper-material>
+
+    		</div>
+        </template>
+  </sortable>
+ 	<!--</div>-->
 </template>
 </dom-module>
 
 <script>
 var layers = null;
 var map = null; //For debug
+Array.prototype.move = function (old_index, new_index) {
+    while (old_index < 0) {
+        old_index += this.length;
+    }
+    while (new_index < 0) {
+        new_index += this.length;
+    }
+    if (new_index >= this.length) {
+        var k = new_index - this.length;
+        while ((k--) + 1) {
+            this.push(undefined);
+        }
+    }
+    this.splice(new_index, 0, this.splice(old_index, 1)[0]);
+    return this; // for testing purposes
+};
 Polymer({
     is: 'gm-mappu-layermanager',
     properties: {
@@ -90,38 +135,54 @@ Polymer({
     	}
     },
     observers: [
-    	
+
     ],
+    //Reorder the layers after dragging them
+    _shuffle: function(d){
+      this.layers = this.layers.reverse().move(d.oldIndex,d.newIndex);
+      this.map.orderLayers();
+    },
     reverse: function(){
     	this.reverselayers = self.map.layers.slice(0).reverse();
     	this.$.layerlist.render(); //somehow it's not autorefreshing
     },
     mapChanged: function(){
     	var self = this;
+    	map = this.map; //debug
     	function rerender(){
     		self.layers = self.map.layers;
+    		self.layers.forEach(function(d){
+    			//a bit of a hassle to pick the wms layers...
+    			if (d.options && d.options.ogc_type == 'wms') d.iswms = true;
+    		});
     		self.reverselayers = self.map.layers.slice(0).reverse();
     		self.$.layerlist.render(); //somehow it's not autorefreshing
     	}
-    	this.map.mapdiv.addEventListener('layeradded',rerender);	
+    	this.map.mapdiv.addEventListener('layeradded',rerender);
     	this.map.mapdiv.addEventListener('layerremoved',rerender);
     },
     ready: function(){
-    	
+
     },
-    toggle: function(e) {
-       //TODO e.target.parentElement.icon=e.target.parentElement.icon=='arrow-drop-down'?'arrow-drop-up':'arrow-drop-down';
-       e.currentTarget.nextElementSibling.toggle();
+    _applycql: function(e){
+        var layer = e.model.item;
+        var cql = e.target.previousElementSibling.value;
+        if (cql){
+            layer.cql_filter = cql;
+            //TODO: move this to mappu functionaliteit
+            layer.drawboard.selectAll('.tile').remove();
+            layer.draw();
+        }
     },
     removeLayer: function(e){
     	var layer = e.model.item;
     	var index = this.map.layers.indexOf(layer);
     	if (index > -1) {
-    		//Pff, annoying. Because the dom-repeat wants it's own splicing method 
+    		//Pff, annoying. Because the dom-repeat wants it's own splicing method
     		//(otherwhise it doesn't refresh) we have to make a d-tour.
     		this.splice('reverselayers',this.map.layers.length - index, 1);
 		}
-    	this.map.removeLayer(layer); 
+    	this.map.removeLayer(layer);
     },
     setOpacity: function(e){
     	var opacity = e.target.value;

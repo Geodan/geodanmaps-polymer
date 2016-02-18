@@ -15,6 +15,7 @@
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
 
+<script src="../cow-eagle-wrapper.js"></script>
 
 <link rel="import" href="../../elements/gm-cas-core.html">
 <link rel="import" href="../../elements/gm-cas-icon.html">
@@ -42,13 +43,13 @@
 		background: #3f51b5;
 		color: white;
 	}
-	
+
 	#eagletext {
 		width:600px;
 		overflow: auto;
 		z-index: 100;
 	}
-	
+
 	#toast {
 		z-index: 1000;
 	}
@@ -56,29 +57,32 @@
 </style>
 <template>
 	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
-	<gm-cas-core id='cascore' 
-		account="{{account}}" 
-		loggedin="{{loggedin}}" 
+	<gm-cas-core id='cascore'
+		account="{{account}}"
+		loggedin="{{loggedin}}"
 		host="{{host}}"
+		otap="{{otap}}"
 		></gm-cas-core>
-	<gm-docs-connector id='docsconnector' 
-		account="{{account}}" 
+	<gm-docs-connector id='docsconnector'
+		account="{{account}}"
 		configs="{{configs}}"
+		otap="{{otap}}"
 		></gm-docs-connector>
-	<gm-docs-text 
-		account="{{account}}" 
-		projectid="{{curproject._id}}" 
+	<gm-docs-text
+		account="{{account}}"
+		projectid="{{curproject._id}}"
 		data="{{textdata}}"
+		otap="{{otap}}"
 		></gm-docs-text>
-	
-		
-	<gm-cow-core id="cowcore" 
-		config="{{cowconfig}}" 
+
+
+	<gm-cow-core id="cowcore"
+		config="{{cowconfig}}"
 		core="{{core}}"
 		></gm-cow-core>
-	<gm-cow-connector id="cowconnector" 
-		account="{{account}}" 
-		core="{{core}}" 
+	<gm-cow-connector id="cowconnector"
+		account="{{account}}"
+		core="{{core}}"
 		selectedproject="{{selectedproject}}"
 		project="{{curproject}}"
 		users="{{users}}"
@@ -86,10 +90,11 @@
 		activeuser="{{activeuser}}"
 		textitems="{{textitems}}"
 		featureitems="{{featureitems}}"
+		cameras="{{cameras}}"
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
 		></gm-cow-connector>
-		
+
 	<paper-drawer-panel id='drawerpanel'>
 	 <!-- MENU -->
 	 <paper-header-panel mode="seamed" drawer>
@@ -97,7 +102,12 @@
 	 		<img src='../images/icon-eagle.png'/>
 	 	</paper-toolbar>
 	 	<div class='accounting'>
-			<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
+			<gm-cas-icon
+				account="[[account]]"
+				loggedin="[[loggedin]]"
+				host="[[host]]"
+				otap="[[otap]]"
+			></gm-cas-icon>
 		</div>
     	<iron-selector attr-for-selected="name" selected="{{selected}}">
     		<template is="dom-if" if="[[account.ID]]">
@@ -119,59 +129,65 @@
     	</paper-toolbar>
 		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
 			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
-		
+
 			<div name='nouser'>
 				<div class="horizontal center center-justified layout">
-					<gm-cas-icon account="{{account}}" loggedin="{{loggedin}}" host="{{host}}"></gm-cas-icon>
+					<gm-cas-icon
+						account="{{account}}"
+						loggedin="{{loggedin}}"
+						host="{{host}}"
+						otap="[[otap]]"
+					></gm-cas-icon>
 				</div>
 			</div>
-			
+
 			<gm-cow-userlist name='users' users="{{users}}"></gm-cow-userlist>
-			
-			<gm-cow-projectlist name='projects' projects="{{projects}}" 
+
+			<gm-cow-projectlist name='projects' projects="{{projects}}"
 				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
-			
-			
+
+
 					<!--OBS
-					<demo-eagletext id="eagletext"  
-						items="{{textitems}}" 
-						store="{{itemstore}}" 
-						account="{{account}}" 
+					<demo-eagletext id="eagletext"
+						items="{{textitems}}"
+						store="{{itemstore}}"
+						account="{{account}}"
 						curproject="{{curproject}}"
 						activeuser="{{activeuser}}"
 						on-goto-location="gotolocation">
 					</demo-eagletext>
 					-->
-			
+
 			<div name="text">
-				<gm-icm-text id="eagletext" 
-					data="{{textdata}}" 
-					items="{{textitems}}" 
-					store="{{itemstore}}" 
+				<gm-icm-text id="eagletext"
+					data="{{textdata}}"
+					items="{{textitems}}"
+					store="{{itemstore}}"
 					activeuser="{{activeuser}}"
 					on-goto-location="gotolocation">
 				</gm-icm-text>
 			</div>
-			
+
 			<div name="map">
-				<demo-eaglemap class='fit' id='map' 
+				<demo-eaglemap class='fit' id='map'
 					startlocation="{{startlocation}}"
-					features="{{featureitems}}" 
+					features="{{featureitems}}"
 					store="{{itemstore}}"
 					account="{{account}}"
 					configs="{{configs}}"
 					textdata="{{textdata}}"
 					textitems="{{textitems}}"
 					activeuser="{{activeuser}}"
+					cameras="{{cameras}}"
 					>
 				</demo-eaglemap>
 			</div>
-			
-			
+
+
 			<div name="chat">
 				Chat will be here...
 			</div>
-			
+
 		</iron-pages>
     </paper-header-panel>
 </paper-drawer-panel>
@@ -206,7 +222,14 @@ Polymer({
     	},
     	selectedproject: {
     		type: String
-    	}
+    	},
+			toasttext: {
+				type: String
+			},
+			otap: {
+				type: String,
+				value: 'ontw'
+			}
     },
     ready: function(){
     	var self = this;
@@ -220,6 +243,7 @@ Polymer({
     },
     _accountChanged: function(acc){
     	switch (acc.OrganisationCode){
+    		/*
     	case 'GEOF7646XXXX':
     		this.cowconfig = {
     			protocol: 'wss',
@@ -229,14 +253,15 @@ Polymer({
     			key: 'geofort'
     		};
     		break;
+    		*/
     	default:
     		this.cowconfig = {
-    			protocol: 'ws',
-    			url: 'eaglewater-ontw.geodan.nl',
-    			port: 8081,
-    			dir: 'ontw',
-    			key: 'ontw'
-    		};
+				protocol: 'wss',
+				url: 'websocket.geodan.nl',
+				port: 443,
+				dir: 'eaglewaterdemo',
+				key: 'eaglewaterdemo'
+			};
     		break;
     	}
     },
@@ -263,9 +288,9 @@ Polymer({
     gotolocation: function(d){
     	var text = d.detail.text;
     	var items = this.featureitems.filter(function(d){
-			return d.data('feature').properties 
+			return d.data('feature').properties
 				&& d.data('feature').properties.label
-				&& d.data('feature').properties.label == text; 
+				&& d.data('feature').properties.label == text;
 		});
 		if (items[0]){
 			var feature = items[0].data('feature');

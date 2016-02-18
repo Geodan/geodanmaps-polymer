@@ -1,6 +1,8 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -36,16 +38,21 @@
 					Clear
 			</paper-button>
 			<div class='inputs'>
-				<b>Inputs:</b>
+				<b>Inputs:</b><br>
+				
 				Current area: 
 				<div><span>{{area}}</span> km&sup2; <span style="color: red; display:{{area>100?'inline':'none'}}"><small> (max 100!)</small></span></div>
 				
+				<paper-radio-group id='source' selected="top10">
+				  <paper-radio-button name="top10">Top10NL</paper-radio-button>
+				  <paper-radio-button name="nlr">NLR</paper-radio-button>
+				</paper-radio-group>
+				
 				<paper-input 
 					id="windspeed" 
-					pattern="^[0-9]." 
-					value="4" 
+					value="8" 
 					type="number" 
-					label="Windspeed" 
+					label="Windspeed (m/s)" 
 					floatingLabel 
 					error-message="Value must be a number!">
 					<!--isInvalid="{{!$.windspeed.validity.valid}}">-->
@@ -53,8 +60,8 @@
 				<paper-input 
 					id="winddir" 
 					type="number" 
-					value="225" 
-					label="Winddir" 
+					value="45" 
+					label="Winddir (deg)" 
 					floatingLabel 
 					error-message="Value must be a number!"> 
 					<!--isInvalid="{{!$.winddir.validity.valid}}">-->
@@ -126,7 +133,7 @@ var Natuurbrand_utils = {
 			mimeType: 'application/json'
 		};
 		return params;
-	}	
+	}
 }
 function zpad(i, width) {
     var s = Math.round(i) + '';
@@ -181,9 +188,9 @@ Polymer({
 		var height = ur[1] - bl[1];
 		this.area = Math.round((width * height)/1000000);
 	},
-	observe: {
-		//'layer.map.zoom': 'zoomChanged'
-	},
+	observers: [
+		'zoomChanged(map.zoom)'
+	],
 	init: function(){
 		var self = this;
 		var map = this.map;
@@ -193,6 +200,29 @@ Polymer({
 		map.dispatch.on('zoomend', function(){
 				self.zoomChanged();
 		});
+		
+		new d3.mappu.RasterLayer('Vegetatie',{
+				visible: false,
+				ogc_type: 'wms',
+				url: 'http://model.geodan.nl/geoserver/model_wildfire/wms?',
+				layers: 'model_wildfire:l8_20140419_nphv_ml2',
+				opacity: 0
+		}).addTo(map);
+		new d3.mappu.RasterLayer('ProbaV NDVI',{
+			visible: false,
+    		ogc_type: 'wms',
+    		url: 'http://model.geodan.nl/geoserver/eaglespace/wms?',
+    		layers: ['eaglespace:PROBAV_S5_TOC_20140326_100M_V001_NDVI'],
+    		opacity: 0
+    	}).addTo(this.map);
+    	new d3.mappu.RasterLayer('Biomass prod',{
+    		visible: false,
+    		ogc_type: 'wms',
+    		url: 'http://model.geodan.nl/geoserver/eaglespace/wms?',
+    		layers: ['eaglespace:biomassProduction_Hoge_Veluwe_20150315_20151004'],
+    		opacity: 0
+    	}).addTo(this.map);
+		
 		this.layer = new d3.mappu.VectorLayer('Natuurbrand invoer',{
             visible: true,
             reproject: true,
@@ -386,6 +416,14 @@ Polymer({
 			
 		var windString = windArr.join(',');
 		var name = this.$.name.value;
+		
+		if (this.$.source.selected == 'top10') {
+			var fuelmodel = landscapeid;
+		}
+		else if (this.$.source.selected == 'nlr') {
+			var fuelmodel = '9999';
+		}
+		
 		var run_params = {
 			service: 'WPS',
 			version: '1.1.0',
@@ -394,7 +432,7 @@ Polymer({
 			datainputs: combineParams({
 				userid: 1,
 				name: name, // naam van brand
-				fuelmodel: landscapeid, // runid van fuelmodel (resultaat van makelcp)
+				fuelmodel: fuelmodel, // runid van fuelmodel (resultaat van makelcp)
 				geom: geom, // wkt LINESTRING(x y, ...) RD projectie
 				windstring: windString,
 				weatherstring: weatherString,
@@ -434,11 +472,13 @@ Polymer({
 				case 'makeSubset':
 					self.startMakeLcp(runid);
 					var map = self.map
+					/* uitgeschaked, voegde weinig toe
 					var layer =  new d3.mappu.RasterLayer('terrain'+runid,{
 						ogc_type: 'wms',
 						url: "/service/geoserver/model_wildfire/ows?",
 						layers: 'model_wildfire:terrein_'+runid
-					}).addTo(map);       
+					}).addTo(map);
+					*/
 					break;
 				case 'makeLcp':
 					self.startFire(runid);
@@ -448,15 +488,20 @@ Polymer({
 					var map = self.map
 					var url = '/service/geoserver/model_wildfire/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=model_wildfire:result_'+runid+'&maxFeatures=100&outputFormat=json&srsName=EPSG:4326'; 
 					d3.json(url, function(res){
-					 	var layer =  new d3.mappu.VectorLayer('fire'+runid,{
-					 		reproject: true,
-							labels: true,
-							labelfield: 'elapsed_mi',
-							style: {
-								stroke: 'red',
-								fill: 'none'
-							}
-					 }).addTo(map);
+						var layer =  new d3.mappu.VectorLayer('fire'+runid,{
+								reproject: true,
+								labels: true,
+								labelfield: 'elapsed_mi',
+								style: {
+									stroke: 'red',
+									'stroke-width':'2px',
+									fill: 'none'
+								}
+						}).addTo(map);
+						var s = d3.scale.linear().domain([0,360]).range(['red','yellow']);
+						res.features.forEach(function(f){
+							f.style = {stroke: s(f.properties.elapsed_mi)};
+						});
 					 	layer.data = res.features;
 					 });
 					 this.makeSubsetStatus = 'idle';

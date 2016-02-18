@@ -6,7 +6,7 @@
 <template>
 <iron-ajax method="get" id="ajaxRequest"
    auto
-   url="{{_whoamiurl(otap)}}"  
+   url="{{_whoamiurl(otap)}}"
    verbose="true"
    with-credentials="true"
    on-response="_handleResponse"></iron-ajax>
@@ -22,7 +22,7 @@
    verbose="true"
    with-credentials="true"
    on-response="_handleLogoutResponse"></iron-ajax>
-   
+
 </template>
 
 </template>
@@ -48,11 +48,11 @@ Polymer({
 		},
 		otap: {
 			type: String,
-			value: 'prod'
+			value: 'https://services.geodan.nl/'
 		}
 	},
 	_accountHandler: function(acc){
-		this.loggedin=acc.ID?true:false; 			
+		this.loggedin=acc.id?true:false;
 	},
 	ready: function() {
 		this.host = window.location.href.split('?')[0];
@@ -62,33 +62,14 @@ Polymer({
   	  //login doesn't work like that
   	  //this.$.login.generateRequest();
   },
-  _logouturl:  function(otap){
-		switch(otap) {
-			case "ontw":
-				return "https://ontw.geodan.nl/geocas/cas-logout.jsp";
-				break;
-				/*
-			case "tst":
-				return "https://tst.geodan.nl/geocas/cas-logout.jsp";
-				break;
-			case "acc":
-				return "https://acc.geodan.nl/geocas/cas-logout.jsp";
-				break;*/
-			default:
-				return "https://services.geodan.nl/cas/logout";
-		}
-  }, 
-  _whoamiurl: function(otap){
-  	  switch(otap) {
-		case "ontw":
-			return "https://ontw.geodan.nl/geocas/whoami.jsp";
-			break;
-		default:
-			return "https://services.geodan.nl/geocas/whoami.jsp";
-			break;
-	  }
+  _logouturl:  function(){
+  	  return this.otap + '/cas/logout';
+  },
+  _whoamiurl: function(){
+  	  return this.otap + '/accounts/details';
   },
   logout: function(){
+  	  document.cookie = 'MOD_AUTH_CAS=; path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
   	  this.$.logout.generateRequest();
   },
   _handleResponse: function(d,e) {
@@ -96,7 +77,7 @@ Polymer({
         this.account = d.detail.xhr.response;
 		this.loggedin = true;
     }
-    
+
   },
   _handleLoginResponse: function(d,e) {
   	  if(d.detail&&d.detail.xhr&&d.detail.xhr.response) {
@@ -108,10 +89,10 @@ Polymer({
         this.account = new Object;
 		this.loggedin = false;
     }
-    
+
   }
   });
 </script>
-  
+
 
 </dom-module>

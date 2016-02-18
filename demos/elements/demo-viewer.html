@@ -41,20 +41,20 @@
 		background: #3f51b5;
 		color: white;
 	}
-	
+
 </style>
 <template>
 	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
-	<gm-cas-core id='cascore' 
-		account="{{account}}" 
-		loggedin="{{loggedin}}" 
+	<gm-cas-core id='cascore'
+		account="{{account}}"
+		loggedin="{{loggedin}}"
 		host="{{host}}"
 		></gm-cas-core>
-	<gm-docs-connector id='docsconnector' 
-		account="{{account}}" 
+	<gm-docs-connector id='docsconnector'
+		account="{{account}}"
 		configs="{{configs}}"
 		></gm-docs-connector>
-		
+
 	<paper-drawer-panel id='drawerpanel' selected='drawer'>
 		 <!-- MENU -->
 		 <paper-header-panel mode="seamed" drawer>
@@ -65,13 +65,14 @@
 				<gm-cas-icon account="[[account]]" loggedin="[[loggedin]]" host="[[host]]"></gm-cas-icon>
 			</div>
 			<template is="dom-if" if="[[account.ID]]">
-				<gm-configlist name='projects' projects="{{configs}}"
+				<gm-configlist name='projects'
+				  configs="{{configs}}"
 					account="{{account}}"
 					selectedproject="{{selectedproject}}"
 				></gm-configlist>
 			</template>
 		</paper-header-panel>
-		
+
 		<!--MAIN SCREEN-->
 		<paper-header-panel main>
 			<paper-toolbar>
@@ -84,7 +85,7 @@
 			></demo-viewermap>
 		</paper-header-panel>
 	</paper-drawer-panel>
-	
+
 </template>
 </dom-module>
 
@@ -102,8 +103,11 @@ Polymer({
     		observer: '_projectChanged'
     	},
     	selected: {
-    		observer: '_selectedChanged'
-    	}
+
+    	},
+			toasttext: {
+				type: String
+			}
     },
     ready: function(){
     	var self = this;

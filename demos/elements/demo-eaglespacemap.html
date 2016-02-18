@@ -1,0 +1,208 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+
+
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-stylesets.html">
+<link rel="import" href="../../elements/gm-mappu-cowlayer.html">
+
+<link rel="import" href="../../elements/gm-mappu-sketch.html">
+
+<link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-projectlist.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
+<link rel="import" href="../../elements/gm-configlist.html">
+<link rel="import" href="../../elements/gm-geosearch.html">
+<link rel="import" href="../../elements/gm-icm-natuurbrand.html">
+<link rel="import" href="../../elements/gm-plugins-rws.html">
+<link rel="import" href="../../elements/gm-plugins-tracker.html">
+<link rel="import" href="../../elements/gm-plugins-eaglespace.html">
+<link rel="import" href="../../elements/gm-plugins-nstwitter.html">
+
+<dom-module id="demo-eaglespacemap">
+<style>
+ #drawer {
+ 	 opacity: 0.9;
+ }
+ paper-toolbar {
+		color: white;
+	}
+</style>
+<template>
+	<paper-header-panel>
+	<paper-toolbar>
+		<iron-selector attr-for-selected="name" selected="{{selected}}">
+		  <paper-icon-button name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
+		  <paper-icon-button name="sketchbox" toggles icon="icons:create"></paper-icon-button>
+		  <paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>
+		  <paper-icon-button name="layerbox" toggles icon="maps:layers"></paper-icon-button>
+		  <paper-icon-button name="textbox" toggles icon="editor:format-size"></paper-icon-button>
+		  <paper-icon-button name="natuurbrandbox" toggles icon="social:whatshot"></paper-icon-button>
+          <paper-icon-button name="eaglespacebox" toggles icon="icons:settings-input-antenna"></paper-icon-button>
+		</iron-selector>
+	</paper-toolbar>
+	<div class='content'>
+
+		<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
+			<paper-header-panel drawer>
+			<iron-pages attr-for-selected="id" selected="{{selected}}">
+				<div id='natuurbrandbox'>
+					<gm-icm-natuurbrand map="{{map}}"></gm-icm-natuurbrand>
+				</div>
+				<div id='geosearchbox'>
+					<gm-geosearch></gm-geosearch>
+				</div>
+				<div id='gmconfigbox'>
+          <!--
+					<gm-docs-configui id='gmconfig' name='configs'
+						configs="{{configs}}"
+						account="{{account}}"
+						></gm-docs-configui>-->
+					<gm-configlist id='gmconfig' name='configs'
+						configs="{{configs}}"
+						account="{{account}}"
+						otap="prod"
+						></gm-configlist>
+				</div>
+
+				<div id='layerbox'>
+					<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+				</div>
+
+				<div id='textbox'>
+					<gm-icm-text id="eagletext"
+						data="{{textdata}}"
+						items="{{textitems}}"
+						store="{{store}}"
+						activeuser="{{activeuser}}"
+						on-goto-location="gotolocation">
+					</gm-icm-text>
+				</div>
+
+				<div id='sketchbox'>
+					<gm-mappu-sketch id="sketch"
+						layer="{{cowlayer}}"
+						styleset="{{styleset}}"
+						store="{{store}}"
+						></gm-mappu-sketch>
+					<gm-mappu-stylesets styleset1="{{styleset}}"></gm-mappu-stylesets>
+				</div>
+                <div id='eaglespacebox'>
+                    <gm-plugins-eaglespace id="eaglespace" map="{{map}}"></gm-plugins-eaglespace>
+                </div>
+
+			</iron-pages>
+			</paper-header-panel>
+			<div main>
+				<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
+					<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+				</gm-mappu-map>
+				<gm-mappu-cowlayer
+					id="cowlayer"
+					map="{{map}}"
+					features="{{features}}"
+					store="{{store}}"
+					layer="{{cowlayer}}">
+				</gm-mappu-cowlayer>
+			</div>
+		</paper-drawer-panel>
+	</div>
+
+	</paper-header-panel>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'demo-eaglespacemap',
+    properties: {
+    	map: Object,
+    	selected: {
+    		observer: '_selectedChanged'
+    	},
+    	startlocation: {
+    		observer: 'activate'
+    	}
+    },
+    observers: [
+
+    ],
+    ready: function(){
+    	var self = this;
+    	this.$.drawer.closeDrawer();
+    	this.map = this.$.mapelement.map;
+    	
+    	//TODO: this data sourced is not supposed to be used without permit 
+    	new d3.mappu.RasterLayer('Topografie',  {
+            ogc_type: 'tms',
+            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpamVuY3cxbzAwMG12ZGx4cGljbGtqMGUifQ.vpDqms08MBqoRgp667Yz5Q',
+            visible: true
+		 })
+		 .addTo(this.map);
+		 
+
+		//TODO: Would like to automise this
+		this.$.layermanager.layers = this.map.layers;
+
+		//Add all layers from selected config
+		this.addEventListener('configselected', function(c){
+			var layers = c.detail.layers;
+            layers.map(function(layer){layer.addTo(self.map)});
+			//OBS?
+			//self.$.layermanager.layers = self.map.layers;
+        });
+        function getAttention(point){
+            //fire circle
+            var screencoords = self.map.projection(point);
+            self.map.svg.append('circle')
+                .attr('cx',screencoords[0])
+                .attr('cy',screencoords[1])
+                .attr('r',20)
+                .style('stroke','red')
+                .style('fill','none')
+                .each(function(){
+                    d3.select(this).transition().duration(10000)
+                        .style('opacity',0)
+                        .attr('r',1)
+                        .remove();
+                });
+        }
+		this.addEventListener('goto-coords',function(c){
+
+            window.setTimeout(function(){getAttention(c.detail)},0);
+            self.map.center = c.detail;
+		});
+    },
+    activate: function(){
+    	if (this.startlocation){//TODO
+    		this.map.resize();
+			var center = this.startlocation;
+			this.map.center = [center.lng,center.lat];
+			this.map.zoom = center.zoom;
+		}
+	},
+	_selectedChanged: function(){
+		this.$.drawer.openDrawer();
+	},
+	enterFullscreen: function () {
+		var self = this;
+		this.$.mapelement.webkitRequestFullscreen();
+		//TODO: this should be a promise or something...
+		window.setTimeout(function(){
+			self.map.resize();
+		},1000);
+    }
+});
+</script>

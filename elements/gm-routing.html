@@ -1,20 +1,25 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel='import' href='./gm-geosearch.html'>
 
 <dom-module id="gm-routing">
  <style>
  </style>
  <template>
  	<iron-ajax
- 		auto
- 		verbose
- 		handle-as="json"
-    	on-error="error"
-    	id="getCapabilities"
-		url="{{url}}"
+        id='requestRoute'
+        verbose="true"
+        handle-as="json"
+        with-credentials="true"
+        on-response="handleRoute"
+        on-error="handleError"
+		url="{{getUrl(otap)}}"
 		params="{{params}}"
-		on-response="handleResponse"
 	></iron-ajax>
+    <gm-geosearch location='{{from}}'></gm-geosearch>
+    <gm-geosearch location='{{to}}'></gm-geosearch>
+    <paper-button on-click='calculate'>Calculate</paper-button>
  </template>
 </dom-module>
 
@@ -29,19 +34,39 @@ Polymer({
     	params: {
     		type: Object,
     		value: {}
-    	}
+    	},
+        otap: {
+            type: String,
+            value: 'prod'
+        },
+        map: {
+            type: Object
+        },
+        route: {
+            type: Object
+        }
     },
     ready: function(){
-    	this.calculate();
+
+    	//this.calculate();
+    },
+    getUrl: function(otap){
+        switch(otap) {
+			case "ontw":
+				return "https://ontw.geodan.nl/routing/route";
+				break;
+			default:
+				return "https://services.geodan.nl/routing/route";
+		}
     },
     calculate: function(){
     	this.params = {
-    		fromcoordx: 4.91311,
-    		fromcoordy: 52.34232,
-    		tocoordx: 5.29969,
-    		tocoordy: 51.69176,
+    		fromcoordx: this.from[0],
+    		fromcoordy: this.from[1],
+    		tocoordx: this.to[0],
+    		tocoordy: this.to[1],
     		srs: 'epsg:4326',
-    		routetype: 'cost',
+    		routetype: 'distance',
     		returntype: 'coords',
     		outputformat: 'json'
     	}
@@ -56,12 +81,30 @@ Polymer({
     		returntype=coords&
     		outputformat=json
     		*/
+        this.$.requestRoute.generateRequest();
     },
     //The response from the document service will be parsed here.
-	handleResponse: function(d,e){
-		//TODO console.log(d,e);
+	handleRoute: function(d,e){
+		var self = this;
+        var map = this.map;
+        this.routelayer = new d3.mappu.VectorLayer('route', {
+				reproject: true,
+				style: {
+					stroke: 'orange',
+                    'stroke-width': '5px',
+					fill: 'none',
+					opacity: 1
+				}
+
+		}).addTo(map);
+        var data = d.detail.xhr.response;
+        if (!data.exception){
+            var feat = data.features[0];
+            this.routelayer.addFeature(feat);
+        }
+        map.zoomToFeature(feat);
 	},
-    error: function(){
+    handleError: function(){
     	console.warn(e.detail.xhr.statustext);
     }
 });

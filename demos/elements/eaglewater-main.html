@@ -1,0 +1,473 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
+
+<link rel="import" href="../../elements/gm-cas-core.html">
+<link rel="import" href="../../elements/gm-cas-icon.html">
+<link rel="import" href="../../elements/gm-docs-connector.html">
+<link rel="import" href="../../elements/gm-cow-core.html">
+<link rel="import" href="../../elements/gm-cow-status.html">
+<link rel="import" href="../../elements/gm-cow-connector.html">
+<link rel="import" href="../../elements/gm-cow-projectlist.html">
+<link rel="import" href="../../elements/gm-cow-userlist.html">
+<link rel="import" href="../../elements/gm-docs-text.html">
+<link rel="import" href="../../elements/gm-icm-text.html">
+
+<link rel="import" href="../../elements/gm-mappu-map.html">
+<link rel="import" href="../../elements/gm-mappu-layermanager.html">
+<link rel="import" href="../../elements/gm-mappu-zoombuttons.html">
+<link rel="import" href="../../elements/gm-mappu-geosearch.html">
+<link rel="import" href="../../elements/gm-mappu-catalog.html">
+<link rel="import" href="../../elements/gm-mappu-mylocation.html">
+<link rel="import" href="../../elements/gm-mappu-stylesets.html">
+<link rel="import" href="../../elements/gm-mappu-cowlayer.html">
+
+<link rel="import" href="../../elements/gm-mappu-sketch.html">
+
+<link rel="import" href="../../elements/gm-configlist.html">
+<link rel="import" href="../../elements/gm-geosearch.html">
+<link rel="import" href="../../elements/gm-plugins-cameras.html">
+
+
+<dom-module id="eaglewater-main">
+<style>
+	paper-header-panel {
+	  height: 100%;
+	  background: white;
+	}
+	 .menu {
+		cursor: pointer;
+		background: white;
+	}
+	.title {
+		color: white;
+	}
+	.toolbutton {
+		color: white;
+	}
+	
+	.accounting {
+		background: #3f51b5;
+		color: white;
+	}
+
+	#eagletext {
+		width:600px;
+		overflow: auto;
+		z-index: 100;
+	}
+
+	#toast {
+		z-index: 1000;
+	}
+	
+</style>
+<template>
+
+	<paper-toast id="toast" text="{{toasttext}}"></paper-toast>
+	<gm-cas-core id='cascore'
+		account="{{account}}"
+		loggedin="{{loggedin}}"
+		host="{{host}}"
+		otap="{{otap}}"
+		></gm-cas-core>
+	<gm-docs-connector id='docsconnector'
+		account="{{account}}"
+		configs="{{configs}}"
+		otap="{{otap}}"
+		></gm-docs-connector>
+	<gm-docs-text
+		account="{{account}}"
+		projectid="{{curproject._id}}"
+		data="{{textdata}}"
+		otap="{{otap}}"
+		></gm-docs-text>
+
+
+	<gm-cow-core id="cowcore"
+		config="{{cowconfig}}"
+		core="{{core}}"
+		></gm-cow-core>
+	<gm-cow-connector id="cowconnector"
+		account="{{account}}"
+		core="{{core}}"
+		selectedproject="{{selectedproject}}"
+		project="{{curproject}}"
+		users="{{users}}"
+		projects="{{projects}}"
+		activeuser="{{activeuser}}"
+		textitems="{{textitems}}"
+		featureitems="{{featureitems}}"
+		iconitems="{{iconitems}}"
+		cameras="{{cameras}}"
+		itemstore="{{itemstore}}"
+		startlocation="{{startlocation}}"
+		on-zoomto="zoomtoextent"
+		></gm-cow-connector>
+
+	<paper-drawer-panel id='drawerpanel'>
+	<!-- MENU -->
+	<paper-header-panel mode="seamed" drawer>
+	 	<paper-toolbar>
+	 		<img src='../images/icon-eagle.png'/>
+
+	 	</paper-toolbar>
+	 	<div class='accounting'>
+			<gm-cas-icon
+				account="[[account]]"
+				loggedin="[[loggedin]]"
+				host="[[host]]"
+				otap="[[otap]]"
+			></gm-cas-icon>
+		</div>
+		<iron-selector attr-for-selected="name" selected="{{selected}}">
+    		<template is="dom-if" if="[[account.id]]">
+				<paper-item class='menu' name='users'>Users</paper-item>
+				<paper-item class='menu' name='projects'>Incidents</paper-item>
+				<template is="dom-if" if="[[curproject]]">
+					<paper-item class='menu' name='text'>Text</paper-item>
+					<paper-item class='menu' name='map'>Map</paper-item>
+				</template>
+			</template>
+    	</iron-selector>
+    </paper-header-panel>
+    
+    <!--MAIN SCREEN-->
+    <paper-header-panel main>
+    	<paper-toolbar>
+    		<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+    		<div class='title'>{{curproject._data.name}}</div>
+    		<gm-cow-status core='{{core}}'></gm-cow-status>
+    	</paper-toolbar>
+		<iron-pages class='content fit pages' attr-for-selected="name" selected="{{selected}}"
+			entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+
+			<div name='nouser'>
+				<div class="horizontal center center-justified layout">
+					<gm-cas-icon
+						account="{{account}}"
+						loggedin="{{loggedin}}"
+						host="{{host}}"
+						otap="[[otap]]"
+					></gm-cas-icon>
+				</div>
+			</div>
+
+			<gm-cow-userlist name='users' users="{{users}}"></gm-cow-userlist>
+
+			<gm-cow-projectlist name='projects' projects="{{projects}}"
+				selectedproject="{{selectedproject}}"></gm-cow-projectlist>
+			<div name="text">
+				<gm-icm-text id="eagletext"
+					data="{{textdata}}"
+					items="{{textitems}}"
+					store="{{itemstore}}"
+					activeuser="{{activeuser}}"
+					on-goto-location="gotolocation">
+				</gm-icm-text>
+			</div>
+
+			<div name="map">
+				<paper-header-panel>
+				<paper-toolbar>
+					<iron-selector attr-for-selected="name" selected="{{selectedBox}}">
+					  <paper-icon-button class='toolbutton' name="sketchbox" toggles icon="icons:create"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="layerbox" toggles icon="maps:layers"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="mylocation" icon="maps:my-location" on-click='gotoMylocation'></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="geosearchbox" toggles icon="icons:search"></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="" toggles icon="icons:fullscreen" on-click='enterFullscreen'></paper-icon-button>
+					  <!--<paper-icon-button name="gmconfigbox" toggles icon="icons:cloud"></paper-icon-button>-->
+					  <paper-icon-button class='toolbutton' name="" toggles icon="communication:screen-share" on-click='shareExtent'></paper-icon-button>
+					  <paper-icon-button class='toolbutton' name="camerasbox" toggles icon="av:videocam"></paper-icon-button>
+					</iron-selector>
+				</paper-toolbar>
+				<div class='content'>
+			
+					<paper-drawer-panel id="drawer" right-drawer disable-swipe drawer-width="300">
+						<paper-header-panel drawer>
+						<iron-pages attr-for-selected="id" selected="{{selectedBox}}">
+							<div id='natuurbrandbox'>
+								<gm-icm-natuurbrand map="{{map}}"></gm-icm-natuurbrand>
+							</div>
+							<div id='geosearchbox'>
+								<gm-geosearch></gm-geosearch>
+							</div>
+							<div id='gmconfigbox'>
+								<gm-configlist id='gmconfig' name='configs'
+									configs="{{configs}}"
+									account="{{account}}"
+									otap="{{otap}}"
+								></gm-configlist>
+							</div>
+			
+							<div id='layerbox'>
+								<gm-mappu-layermanager id="layermanager" map="{{map}}"></gm-mappu-layermanager>
+							</div>
+			
+							<div id='sketchbox'>
+								<gm-mappu-sketch id="sketch"
+									layer="{{cowlayer}}"
+									styleset="{{styleset}}"
+									store="{{itemstore}}"
+									></gm-mappu-sketch>
+								<gm-mappu-stylesets styleset2="{{styleset}}"></gm-mappu-stylesets>
+							</div>
+							<div id='camerasbox'>
+								<gm-plugins-cameras id='cameras' map="{{map}}" cameras="{{cameras}}"></gm-plugins-cameras>
+							</div>
+			
+						</iron-pages>
+						</paper-header-panel>
+						<div main>
+							<gm-mappu-mylocation coords="{{mylocation}}"></gm-mappu-mylocation>
+							<gm-mappu-map class='fit' id='mapelement' map="[[map]]">
+								<gm-mappu-zoombuttons id="zoombuttons" map="{{map}}"></gm-mappu-zoombuttons>
+							</gm-mappu-map>
+							<gm-mappu-cowlayer
+								id="cowlayer"
+								map="{{map}}"
+								features="{{featureitems}}"
+								icons="{{iconitems}}"
+								store="{{itemstore}}"
+								layer="{{cowlayer}}">
+							</gm-mappu-cowlayer>
+						</div>
+					</paper-drawer-panel>
+				</div>
+			
+				</paper-header-panel>
+			</div>
+
+		</iron-pages>
+    </paper-header-panel>
+    </paper-drawer-panel>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'eaglewater-main',
+    properties: {
+    	map: Object,
+    	cowconfig: {
+    		type: Object
+    	},
+    	account: {
+    		type: Object,
+    		observer: '_accountChanged'
+    	},
+    	activeuser: {
+    		type: Object,
+    		observer: '_activeuserChanged'
+    	},
+    	curproject: {
+    		type: Object,
+    		observer: '_projectChanged'
+    	},
+    	selected: {
+    		value: function(){
+    			return this.account?'projects':'nouser';
+    		},
+    		observer: '_selectedChanged'
+    	},
+    	selectedproject: {
+    		type: String
+    	},
+    	selectedBox: {
+    		observer: '_selectedBoxChanged'
+    	},
+		toasttext: {
+			type: String
+		},
+		otap: {
+			type: String,
+			value: 'https://test.geodan.nl'
+		},
+		startlocation: {
+    		observer: 'activate'
+    	}
+    },
+    ready: function(){
+    	var self = this;
+    	this.$.cowcore.connect();
+    	this.addEventListener('logout',function(){
+    		self.$.cascore.logout();
+    		self.selected = 'nouser';
+    	});
+    	this.addEventListener('newincident',function(e){
+			var msg = e.detail.msg;
+			/* TODO: doen we nog even niets mee
+			self.core.projects({})
+				.data('name',msg.name)
+				.data('date',new Date().getTime())
+				
+				.data('incidentLocation',{lng: msg.center[0],lat: msg.center[1], zoom: msg.zoom})
+				.sync();
+				*/
+		});
+    	this.addEventListener('gotolocation',function(d){
+    		self.gotolocation(d);
+    	});
+    	this.$.drawer.closeDrawer();
+    	this.map = this.$.mapelement.map;
+
+		//TODO: Would like to automise this
+		this.$.layermanager.layers = this.map.layers;
+
+		//Add all layers from selected config
+		this.addEventListener('configselected', function(c){
+			var layers = c.detail.layers;
+            layers.map(function(layer){layer.addTo(self.map)});
+			//OBS?
+			//self.$.layermanager.layers = self.map.layers;
+        });
+        function getAttention(point){
+            //fire circle
+            var screencoords = self.map.projection(point);
+            self.map.svg.append('circle')
+                .attr('cx',screencoords[0])
+                .attr('cy',screencoords[1])
+                .attr('r',20)
+                .style('stroke','red')
+                .style('fill','none')
+                .each(function(){
+                    d3.select(this).transition().duration(10000)
+                        .style('opacity',0)
+                        .attr('r',1)
+                        .remove();
+                });
+        }
+		this.addEventListener('goto-coords',function(c){
+
+            window.setTimeout(function(){getAttention(c.detail)},0);
+            self.map.center = c.detail;
+		});
+    },
+    _accountChanged: function(acc){
+    	switch (acc.OrganisationCode){
+    		/*
+    	case 'GEOF7646XXXX':
+    		this.cowconfig = {
+    			protocol: 'wss',
+    			url: 'sslgw.geodan.nl/eaglewater/',
+    			port: 8081,
+    			dir: 'geofort',
+    			key: 'geofort'
+    		};
+    		break;
+    		*/
+    	default:
+    		this.cowconfig = {
+				protocol: 'wss',
+				url: 'websocket.geodan.nl',
+				port: 443,
+				dir: 'eaglewaterdemo',
+				key: 'eaglewaterdemo'
+			};
+    		break;
+    	}
+    },
+    _projectChanged: function(){
+    	var self = this;
+    	this.selected = 'map';
+    	//TODO: add layers and other info in sceneario
+    	var scenario = this.core.project().data('scenario');
+    	if (scenario){
+    		/*WORKING ON THIS
+    		scenario.layers.forEach(function(l){
+    			new d3.mappu.RasterLayer(l.data.layer.title,{
+    				ogc_type: 'wms',
+    				url: l.data.layer.url,
+    				layers: [l.data.layer.name]
+    			}).addTo(self.map);
+    		});
+    		*/
+    	}
+    	
+    },
+    _activeuserChanged: function(){
+    	if (this.activeuser){
+    		this.selected = 'projects';
+    	}
+    	else {
+    		this.selected = 'nouser';
+    	}
+    },
+    _selectedChanged: function(s){
+    	this.$.drawerpanel.closeDrawer();
+    	if (this.selected == 'map'){
+    		this.activate();
+    	}
+    },
+    _selectedBoxChanged: function(item){
+    	if (item!='mylocation'){
+    		this.$.drawer.openDrawer();
+    	}
+	},
+	activate: function(){
+    	if (this.startlocation){//TODO
+			var center = this.startlocation;
+			this.map.center = [center.lng,center.lat];
+			this.map.zoom = center.zoom;
+			var self = this;
+			window.setTimeout(function(){
+				self.map.resize();
+			});
+		}
+	},
+	enterFullscreen: function () {
+		var self = this;
+		this.$.mapelement.webkitRequestFullscreen();
+		//TODO: this should be a promise or something...
+		window.setTimeout(function(){
+			self.map.resize();
+		},1000);
+    },
+    shareExtent: function(){
+    	var extent = null;
+    	var ll = this.map.extent[0];
+    	var ur = this.map.extent[1];
+    	var feat = {type: "Feature", bbox: [ll[0], ll[1], ur[0], ur[1]], geometry: {type: 'Point', coordinates: [0,0]}};
+    	this.core.messenger().sendData({command: 'ZoomToBbox',data: feat}, 'command');
+    },
+    login: function(){
+    	this.$.cas.login();
+    },
+    gotolocation: function(d){
+    	var text = d.detail.text;
+    	var items = this.featureitems.filter(function(d){
+			return d.data('feature').properties
+				&& d.data('feature').properties.label
+				&& d.data('feature').properties.label == text;
+		});
+		if (items[0]){
+			var feature = items[0].data('feature');
+			this.$.textmap.cowlayer.zoomToFeature(feature);
+		}
+		else {
+			console.log('no location found');
+			this.toasttext = 'No such location found';
+			this.$.toast.show();
+		}
+    },
+    gotoMylocation: function(){
+        this.map.center = this.mylocation;
+    },
+    zoomtoextent: function(e){
+    	this.map.zoomToExtent(e.detail.bbox);
+    }
+});
+</script>

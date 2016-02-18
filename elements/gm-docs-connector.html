@@ -7,7 +7,7 @@
 		<iron-ajax
 		auto
 		url="{{listUrl}}"
-		id="getList"		
+		id="getList"
 		verbose="true"
 		handle-as="json"
 		with-credentials="true"
@@ -27,21 +27,25 @@
 		configs: {
 			type: Array,
 			notify: true
+		},
+		otap: {
+		  type: String,
+		  value: 'https://services.geodan.nl'
 		}
 	},
 	_accountHandler: function(acc){
-		if(acc.ID) {
-			this.listUrl = this.baseUrl + "/document/api/"+ acc.OrganisationCode + "/config/";
+		if(acc.id) {
+			this.listUrl = this.baseUrl + "/document/api/"+ acc.groups[0].value + "/config/";
 		}
 	},
     // add a callback to the element's prototype
-	handleList: function(d){		
+	handleList: function(d){
 		this.documents =d.detail.xhr.response;
 		this.error = '';
 		this.configs = this.documents.filter(function(d){
 			return d.service == 'config';
 		});
-	},	
+	},
 	handleError: function(e){
 		if(e.detail.request.xhr.status==404) {
 			this.error = "Er zijn geen documenten gevonden"
@@ -49,22 +53,16 @@
 	},
 	makeUrl: function(item){
 		if(item.public) {
-			var url = this.baseUrl + '/public/document/'+ this.account.OrganisationCode + '/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
-			return url 
+			var url = this.baseUrl + '/public/document/'+ this.account.groups[0].value + '/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
+			return url
 		}
 		else {
-			return this.baseUrl + '/document/api/data/'+this.account.OrganisationCode +'/'+item.service+'/'+item.name;
+			return this.baseUrl + '/document/api/data/'+this.account.groups[0].value +'/'+item.service+'/'+item.name;
 		}
 	},
     ready: function() {
-		this.account = this.account || {};		
-		switch(this.otap) {
-			case "ontw":
-				this.baseUrl = "https://ontw.geodan.nl";
-				break;
-			default:
-				this.baseUrl = "https://services.geodan.nl";
-		}
+		this.account = this.account || {};
+		this.baseUrl = this.otap;
     }
   });
 </script>

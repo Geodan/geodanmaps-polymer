@@ -1,0 +1,53 @@
+<link rel="import"
+      href="../bower_components/polymer/polymer.html">
+
+<dom-module id="gm-mappu-mylocation">
+<style>
+
+</style>
+	<template>
+
+	</template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "gm-mappu-mylocation",
+	properties: {
+		coords: {
+            type: Array,
+            notify: true,
+            value: function(){return []}
+        },
+        accuracy: {
+            type: Number,
+            notify: true
+        },
+        timestamp: {
+            type: Number,
+            notify: true
+        }
+	},
+    _getLocation: function(){
+        var self = this;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos){
+                console.log(pos);
+                self.coords = [pos.coords.longitude,pos.coords.latitude];
+            });
+        } else {
+            console.warn = "Geolocation is not supported by this browser.";
+        }
+
+    },
+
+    ready: function() {
+        this._getLocation();
+    },
+
+  });
+</script>
+
+
+
+</dom-module>

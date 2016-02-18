@@ -1,11 +1,18 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <script src="../bower_components/d3/d3.min.js"></script>
-<!-- debug version!! -->
+<!--
 <script src="../../d3.mappu/bower_components/d3-plugins/geo/tile/tile.js"></script>
 <script src="../../d3.mappu/dist/d3.mappu.js"></script>
+-->
+<!-- debug version!! -->
+
+<script src="../../d3.mappu/bower_components/d3-plugins/geo/tile/tile.js"></script>
+<script src="../../d3.mappu/dist/d3.mappu.js"></script>
+
 <dom-module id="gm-mappu-map">
  <style>
  	#mapdiv {
+ 		position: absolute;
  		display: inline-block;
 		width: 100%;
 		height: 100%;
@@ -16,7 +23,7 @@
  	<!--Nothing else than the map svg shall be put in mapdiv-->
  	<div id="mapdiv"></div>
  </template>
- 
+
 </dom-module>
 
 <script>
@@ -30,32 +37,34 @@ Polymer({
     	},
     	center: {
     		type: Array,
-    		value: [5,52]
+    		value: [0,0]
     	}
     },
     ready: function(){
     	this.map = new d3.mappu.Map(this.$.mapdiv,{
-            center: this.center
+            center: this.center,
+            maxZoom: 30
          });
-        
+
         //Edit functionality
         new d3.mappu.Sketch().addTo(this.map);
         
         //Background layer;
     	new d3.mappu.RasterLayer('Topografie',  {
             ogc_type: 'tms',
-            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q',
+            url: 'https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpamVuY3cxbzAwMG12ZGx4cGljbGtqMGUifQ.vpDqms08MBqoRgp667Yz5Q',
             //url: 'http://{s}.tiles.mapbox.com/v3/examples.map-i86nkdio/{z}/{x}/{y}.png',
             visible: true
 		 })
 		 .addTo(this.map);
+		 
     },
     created: function(){
     },
     resize: function(){
     	this.map.resize();
     }
-    
-    
+
+
 });
 </script>

@@ -2,6 +2,7 @@
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
@@ -33,25 +34,28 @@
 		</paper-item-body>
 		<iron-icon icon="social:person-outline" ></iron-icon>
 	</template>
-	
+
 	<template is="dom-if" if="[[loggedin]]">
 		<paper-item-body two-line>
-			<div>{{account.FirstName}} {{account.LastName}}</div>
-			<div secondary>{{account.ID}}</div>
+			<div>{{account.displayName}}</div>
+			<div secondary>{{account.id}}</div>
+			<!-- not working in new accounting
+			<div secondary>{{account.Organisation}}, {{account.Department}}</div>
+			-->
 		</paper-item-body>
 		<iron-icon icon="icons:account-circle"></iron-icon>
 	</template>
-	
+
 </paper-item>
 <iron-collapse id="accountmenu" class='collapse-content' opened="{{!loggedin}}">
 	<iron-selector attr-for-selected="name" selected="{{selected}}">
-	
+
 		<template is="dom-if" if="{{!loggedin}}">
 			<paper-item class='menu' name='login' on-click='login'>
 				<a href="{{_loginurl(otap)}}?service={{host}}">Inloggen</a>
 			</paper-item>
 		</template>
-		
+
 		<template is="dom-if" if="{{loggedin}}">
 			<paper-item class='menu' name='logout' on-click='logout'>
 				Uitloggen
@@ -61,7 +65,7 @@
 				-->
 			</paper-item>
 		</template>
-	
+
 	</iron-selector>
 </iron-collapse>
 </template>
@@ -83,20 +87,17 @@ Polymer({
 		},
 		otap: {
 			type: String,
-			value: "prod"
+			value: 'https://services.geodan.nl'
+		},
+		selected:{
+			type: Object
 		}
 	},
 	ready: function() {
 	},
-	_loginurl:  function(otap){
-		switch(otap) {
-			case "ontw":
-				return "https://ontw.geodan.nl/cas/login"
-				break;
-			default:
-				return "https://services.geodan.nl/cas/login";
-		}
-	}, 
+	_loginurl:  function(){
+		return this.otap + '/cas/login';
+	},
 	toggleLogin: function(){
 		this.$.accountmenu.toggle();
 	},
@@ -109,6 +110,6 @@ Polymer({
 	}
 });
 </script>
-  
+
 
 </dom-module>
